@@ -8,7 +8,7 @@
 
 **Organization**: Tasks are grouped by user story. Delivery is grouped into four pull requests so the team reviews a small number of changes. The Verification section from pull request #4, and the amended FR-010 and FR-016 through FR-018 text, are the commands and requirements these tasks satisfy.
 
-Status: Approved by Jorge — PR #PLANPR
+Status: Approved by Jorge — PR #5
 
 ## Format: `[ID] [P?] [Story] Description`
 

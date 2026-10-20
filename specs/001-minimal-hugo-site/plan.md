@@ -4,7 +4,7 @@
 
 **Input**: Feature specification from `/specs/001-minimal-hugo-site/spec.md`
 
-Status: Approved by Jorge — PR #PLANPR
+Status: Approved by Jorge — PR #5
 
 ## Summary
 
