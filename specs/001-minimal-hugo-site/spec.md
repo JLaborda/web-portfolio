@@ -407,3 +407,9 @@ The draft build writes to `/tmp/public-drafts` and does not modify `public/`.
 - The exact Hugo extended release and the exact PaperMod tag are chosen in the plan. This specification requires only that each is a single pinned release, not a floating branch. PaperMod v8 reading-time text for English is `1 min` or `N min`, and the table-of-contents wrapper is `<div class="toc">`.
 - The status line is `Status: Approved by Jorge — PR #6`. A later change to the scope of this specification still requires its own spec pull request. That pull request replaces the status line with `Status: Approved by Jorge — PR #N` for that pull request before the new scope is implemented.
 - No product question is left open. Language, social links, the absence of email, the author name, the placeholder headline, and the welcome post title and slug are fixed above.
+
+## Clarifications
+
+### Session 2026-10-20
+
+- No critical ambiguities found; no questions asked.
