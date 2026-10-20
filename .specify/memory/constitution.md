@@ -4,36 +4,68 @@
 
 ### I. Spec-driven y aprobación del PO
 
-Ningún desarrollo MUST comenzar sin un `spec.md` aprobado por Jorge
+El desarrollo MUST NOT comenzar sin un `spec.md` aprobado por Jorge
 (Product Owner). El flujo de cada feature MUST ser, en este orden:
 `/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`,
-`/speckit-converge`. No MUST saltarse una fase.
+`/speckit-converge`. MUST NOT saltarse ninguna fase.
 
-Jorge MUST aprobar esta constitución y cada `spec.md` y `tasks.md` antes de
-avanzar a la fase siguiente. Nadie salvo Jorge MUST hacer merge.
+Solo Jorge MAY hacer merge. Cualquier otra persona o bot MUST NOT hacerlo.
 
-Cada feature MUST vivir en `specs/NNN-nombre/` (`spec.md`, `plan.md`,
-`tasks.md`) y en su propia rama `NNN-nombre`, con el nombre que asigna
-Spec Kit. Las PR de feature MUST tener como base `develop` y MUST
-fusionarse de una en una: no hay merges de features en paralelo. `main`
-MUST recibir solo releases desde `develop`, y ese merge MUST hacerlo
-siempre Jorge.
+La aprobación queda registrada solo así, y en este orden:
 
-**Comprobación:** no hay commits de implementación sin `spec.md` y
-`tasks.md` ya aprobados por Jorge; cada PR de feature apunta a `develop`;
-en `develop` no se solapan merges de dos features; el historial de `main`
-solo tiene merges desde `develop` hechos por Jorge.
+1. Una PR, desde la rama `NNN-nombre` y con base `develop`, que contiene
+   únicamente `specs/NNN-nombre/spec.md`. Jorge la fusiona. En esa PR el
+   fichero MUST llevar como primera línea
+   `Estado: Aprobada por Jorge — PR #N — AAAA-MM-DD`
+   (número de esa PR y fecha de la aprobación).
+2. Después, una segunda PR desde la misma rama `NNN-nombre`, con
+   `plan.md` y `tasks.md`. Jorge la fusiona. `plan.md` y `tasks.md` MUST
+   llevar la misma línea de cabecera, cada uno con el número de esta
+   segunda PR. `spec.md` MUST estar ya en `develop` antes de abrir esta PR:
+   Jorge aprueba la spec antes del plan y de las tareas.
+3. MUST NOT abrirse una PR de implementación antes de que la PR de
+   `tasks.md` esté fusionada en `develop`.
+
+Las PR de spec, plan y tareas salen de `NNN-nombre`. Cada PR de
+implementación sale de una rama efímera `NNN-nombre-tXX`, creada desde
+`develop`, y vuelve a `develop`. El prefijo `NNN-` se conserva para
+identificar `specs/NNN-*`. En Spec Kit 1.2.2 los scripts no deducen el
+directorio solo por la rama git: si falta el contexto, la sesión MUST
+exportar `SPECIFY_FEATURE=NNN-nombre` como fallback y, si el directorio
+sigue sin resolverse, `SPECIFY_FEATURE_DIRECTORY=specs/NNN-nombre`.
+
+Las PR de una feature MUST fusionarse de una en una. MUST NOT fusionarse
+en paralelo el trabajo de dos features. `main` MUST recibir solo releases
+desde `develop`, y ese merge MUST hacerlo Jorge.
+
+El fichero `.specify/workflows/speckit/workflow.yml` no gobierna este
+repo: acaba en implement, no incluye converge y su lista de integraciones
+es orientativa (no nombra `cursor-agent`). Manda el flujo de esta
+constitución. `/speckit-taskstoissues` está deprecado en 1.2.2 y MUST NOT
+usarse.
+
+**Comprobación:** `spec.md` en `develop` tiene la línea de estado con la
+PR que lo fusionó; `plan.md` y `tasks.md` tienen la de la segunda PR; no
+hay PR de implementación abierta antes de ese segundo merge; la base de
+cada PR de feature es `develop`; `main` solo tiene merges desde `develop`
+hechos por Jorge.
 
 ### II. Stack fijo
 
 El sitio MUST construirse con Hugo extended en una versión fijada en un
 solo sitio y documentada. El tema PaperMod MUST ser un git submodule en
 `themes/PaperMod` fijado a un tag de release, no a una rama. El tema MUST
-NOT editarse. La personalización MUST limitarse a `layouts/` o `assets/`.
+NOT editarse.
+
+La restricción de personalización se refiere a overrides del tema y a
+CSS o JS propio: eso MUST vivir solo en `layouts/` o `assets/`. MUST NOT
+aplicarse a la configuración ni al contenido. `hugo.yaml`, `content/`,
+`static/` (incluido un PDF o imágenes) e `i18n/` están permitidos.
 
 **Comprobación:** el puntero del submodule es un tag; el diff no modifica
 ficheros dentro de `themes/PaperMod` salvo ese puntero; no hay CSS ni JS
-propio fuera de `layouts/` y `assets/`.
+propio fuera de `layouts/` y `assets/`. `hugo.yaml`, `content/`, `static/`
+e `i18n/` no cuentan como edición del tema.
 
 ### III. Hosting en AWS como restricción
 
@@ -42,7 +74,7 @@ El hosting MUST ser AWS, con estas reglas:
 - Bucket S3 privado (Block Public Access activado) y CloudFront con Origin
   Access Control (OAC). El certificado ACM MUST estar en `us-east-1`.
 - La infraestructura MUST definirse con Terraform y estado remoto.
-- GitHub Actions MUST autenticarse con OIDC. MUST NOT haber claves de AWS
+- GitHub Actions MUST autenticarse con OIDC. MUST NOT usarse claves de AWS
   de larga duración. Los permisos MUST ser de mínimo privilegio.
 - MUST existir dos roles OIDC distintos. El rol de las PR MUST ser de solo
   lectura y MUST usarse para `terraform plan`; ese rol MUST NOT poder
@@ -62,14 +94,17 @@ estáticas.
 
 ### IV. Calidad verificable en CI
 
-Estos gates MUST pasar para poder hacer merge:
+Estos gates MUST pasar para poder hacer merge, en PR de feature y en PR
+que no son de feature:
 
 - `hugo --gc --minify --panicOnWarning` termina sin errores. En CI el sitio
   MUST construirse con un `baseURL` relativo o local (por ejemplo
   `--baseURL /`).
 - Los enlaces internos MUST comprobarse con lychee sobre `public/` usando
   `--root-dir` (apuntando a `public/`) para que las rutas absolutas del
-  sitio se resuelvan en local. Un enlace interno roto MUST fallar CI.
+  sitio se resuelvan en local. Un enlace interno roto MUST fallar CI. Un
+  enlace externo roto MUST NOT fallar el merge: lychee MUST tratarlo solo
+  como aviso.
 - El escaneo de secretos con gitleaks MUST pasar. La prueba de que el gate
   falla MUST usar un secreto sintético que el ruleset de gitleaks realmente
   detecte. MUST NOT usarse `AKIAIOSFODNN7EXAMPLE`: las reglas por defecto
@@ -80,26 +115,40 @@ Estos gates MUST pasar para poder hacer merge:
 
 Todo criterio de aceptación MUST ser comprobable en CI o mediante un paso
 manual concreto descrito en `spec.md` o `tasks.md`. Un gate obligatorio en
-rojo MUST bloquear el merge.
+rojo MUST bloquear el merge. Cuando existan esos workflows, `develop` y
+`main` MUST tener branch protection con esos checks como required. Jorge
+SHOULD NOT saltarse esa protección, aunque sea admin. Activar la
+protección es criterio de la spec que introduzca el CI.
 
 **Comprobación:** un shortcode inexistente, un enlace interno roto
 (por ejemplo `[x](/no-existe/)`) o el secreto sintético de la prueba hacen
 fallar el job correspondiente; sin ellos, el job pasa. `lychee` se invoca
-con `--root-dir` sobre el `public/` generado con `--baseURL /`.
+con `--root-dir` sobre el `public/` generado con `--baseURL /`. Un enlace
+externo roto queda en aviso y el job sigue en verde.
 
-### V. Una tarea por PR
+### V. PR de implementación acotada
 
-Cada PR de implementación MUST cubrir una sola tarea y MUST ser pequeña.
-MUST enlazar su `spec.md` y su `tasks.md`, MUST decir qué criterios de
-aceptación cubre y MUST explicar cómo probarlos.
+Cada PR de implementación MUST ser pequeña y MUST cubrir una tarea o un
+grupo pequeño y cohesionado de tareas de `tasks.md`. MUST salir de la rama
+`NNN-nombre-tXX`, creada desde `develop`, con base `develop`.
+
+Esa PR MUST enlazar `spec.md` y `tasks.md`. MUST explicar qué criterios de
+aceptación cubre y cómo probarlos. MUST listar en la descripción los ids
+de tarea que cierra (por ejemplo `T012`, `T013`). MUST marcar esos mismos
+ids como hechos (`[X]`) en `specs/NNN-nombre/tasks.md`, en el mismo cambio.
+Los ids de la descripción y los de `tasks.md` MUST coincidir.
+
+La última PR de implementación de la feature MUST incluir la ejecución de
+`/speckit-converge` con resultado `Converged`. MUST NOT fusionarse esa PR
+si el resultado es otro.
 
 El Reviewer MUST hacer la revisión de QA contra `spec.md`, `tasks.md` y
 esta constitución antes de pedir el merge a Jorge. Sin esa revisión, la PR
 MUST NOT fusionarse.
 
-**Comprobación:** la descripción de la PR nombra una sola tarea, enlaza
-los artefactos y describe la prueba; la revisión de QA está registrada
-antes del merge de Jorge.
+**Comprobación:** la descripción lista los ids, `tasks.md` los tiene en
+`[X]`, y no hay ids de más ni de menos. La última PR de la feature cita
+`Converged`. La revisión de QA está registrada antes del merge de Jorge.
 
 ### VI. Explicable en entrevista y barato
 
@@ -117,31 +166,57 @@ de Jorge en ese plan.
 
 ## Roles
 
-- **Jorge (Product Owner).** Aprueba esta constitución, cada `spec.md` y
-  cada `tasks.md`. Es la única persona que hace merge. Las releases de
+- **Jorge (Product Owner).** Aprueba esta constitución al fusionarla.
+  Aprueba cada `spec.md` en su PR y, después, `plan.md` y `tasks.md` en
+  una segunda PR. Es la única persona que hace merge. Las releases de
   `develop` a `main` las fusiona siempre Jorge.
 - **Tech Lead.** Ejecuta `/speckit-specify`, `/speckit-plan` y
   `/speckit-tasks`.
-- **Web Developer.** Ejecuta `/speckit-implement` y `/speckit-converge`.
+- **Web Developer.** Ejecuta `/speckit-implement` y, en la última PR de la
+  feature, `/speckit-converge`.
 - **Reviewer.** Hace la revisión de QA contra `spec.md`, `tasks.md` y esta
-  constitución antes de pedir el merge a Jorge.
+  constitución antes de pedir el merge a Jorge. Comprueba la línea de
+  estado, los ids de tarea y, en la última PR, el resultado `Converged`.
 
 ## Ramas y releases
 
 Spec Kit numera cada feature como `NNN-nombre` y crea
 `specs/NNN-nombre/spec.md`. `plan.md` y `tasks.md` viven en ese mismo
-directorio. La rama de la feature MUST llamarse igual, `NNN-nombre`.
+directorio. Las specs nuevas MUST vivir solo ahí. MUST NOT abrirse una
+feature en `docs/specs/`.
 
-El orden MUST ser: trabajo en la rama de la feature, PR hacia `develop`,
-merge de una feature cada vez, y release de `develop` a `main` solo cuando
-Jorge la fusiona. Una feature no empieza su merge a `develop` mientras
-otra feature siga sin fusionar.
+- La rama `NNN-nombre` MUST usarse para la PR de `spec.md` y para la PR
+  posterior de `plan.md` + `tasks.md`. Ambas tienen base `develop`.
+- Cada PR de implementación MUST usar una rama efímera `NNN-nombre-tXX`
+  (por ejemplo `001-sitio-hugo-t01`), creada desde `develop`, con PR a
+  `develop`. Puede cerrar una tarea o un grupo cohesionado; los ids van en
+  la descripción y se marcan `[X]` en `tasks.md`.
+- Esas PR MUST fusionarse de una en una. MUST NOT haber dos features
+  fusionándose a `develop` a la vez.
+- Si los scripts no resuelven la feature, exportar
+  `SPECIFY_FEATURE=NNN-nombre` y, si hace falta,
+  `SPECIFY_FEATURE_DIRECTORY=specs/NNN-nombre`. `.specify/feature.json` es
+  estado local y no se versiona.
+
+### Ramas que no son de feature
+
+`chore/`, `docs/`, `fix/` y `ci/` MAY usarse para un cambio sin
+comportamiento nuevo visible para el usuario (herramientas, documentación
+de proceso, correcciones sin cambio de producto, CI). La PR MUST ir a
+`develop`, MUST pasar los mismos gates de CI y MUST fusionarla Jorge.
+Cualquier comportamiento nuevo MUST tener spec (`specs/NNN-nombre/`) y
+MUST NOT colarse en estas ramas.
+
+Las enmiendas de esta constitución siguen esa regla (`chore/` o `docs/`)
+salvo que cambien comportamiento visible, en cuyo caso exigen spec. La
+release `develop` → `main` no es una rama de feature: MUST pasar los mismos
+gates y MUST fusionarla solo Jorge.
 
 ## Governance
 
 Esta constitución prevalece sobre la práctica informal. Una enmienda MUST
-proponerse en una pull request y MUST ser aprobada y fusionada por Jorge.
-Hasta ese merge, la enmienda no entra en vigor.
+proponerse en una pull request hacia `develop` y MUST ser aprobada y
+fusionada por Jorge. Hasta ese merge, la enmienda no entra en vigor.
 
 El versionado MUST seguir Semantic Versioning:
 
@@ -152,11 +227,14 @@ El versionado MUST seguir Semantic Versioning:
 - **PATCH:** aclaraciones, correcciones de redacción o cambios que no
   alteran el significado.
 
-Cada enmienda MUST actualizar la línea de versión y la fecha de última
-enmienda. La fecha de ratificación queda pendiente hasta que Jorge apruebe
-esta versión; después solo cambia con una ratificación explícita.
+Cada enmienda posterior a la ratificación MUST actualizar la línea de
+versión y la fecha de última enmienda. Esta v1.0.0 aún no está ratificada:
+las correcciones de esta PR no suben la versión. Queda ratificada cuando
+Jorge fusiona esta PR. La fecha de ratificación es 2026-10-20. Si el merge
+ocurre otro día, esa misma PR MUST actualizar la fecha de ratificación
+antes de fusionarse.
 
 Antes de pedir un merge, el Reviewer MUST comprobar el cumplimiento de
 esta constitución. Una PR que contradiga un principio MUST NOT fusionarse.
 
-**Version**: 1.0.0 | **Ratified**: TODO(RATIFICATION_DATE): pendiente de aprobación de Jorge | **Last Amended**: 2026-10-20
+**Version**: 1.0.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-10-20
