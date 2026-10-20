@@ -1,5 +1,7 @@
 # Tasks: Minimal Hugo Site
 
+Status: Approved by Jorge — PR #8
+
 **Input**: Design documents from `/specs/001-minimal-hugo-site/`
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/public-pages.md, quickstart.md
