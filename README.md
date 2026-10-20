@@ -1,50 +1,53 @@
 # web-portfolio
 Web that shows my portfolio
 
-## Flujo Spec Kit
+## Spec Kit workflow
 
-Este repositorio sigue GitHub Spec Kit. Los comandos se invocan en el chat
-de Cursor, no en la terminal. El orden de cada feature es:
+This repository follows GitHub Spec Kit. Commands are invoked in the Cursor
+chat, not in the terminal. The order for each feature is:
 
-1. `/speckit-specify` — `spec.md`, en una PR que solo contiene ese fichero
-2. `/speckit-plan` y `/speckit-tasks` — `plan.md` y `tasks.md`, en una
-   segunda PR, después de que Jorge haya fusionado la spec
-3. `/speckit-implement` — una tarea, o un grupo pequeño y cohesionado, por PR
-4. `/speckit-converge` — se repite hasta `Converged`. La última PR guarda
-   la salida en `specs/NNN-nombre/converge.md` (fecha, SHA y veredicto)
+1. `/speckit-specify` — `spec.md`, in a PR that contains only that file
+2. `/speckit-plan` and `/speckit-tasks` — `plan.md` and `tasks.md`, in a
+   second PR, after Jorge has merged the spec
+3. `/speckit-implement` — one task, or a small cohesive group, per PR
+4. `/speckit-converge` — repeat until `Converged`. The last PR stores the
+   output in `specs/NNN-name/converge.md` (date, SHA, and verdict)
 
-Jorge aprueba al fusionar en `develop`. En `spec.md` el Tech Lead sustituye
-`**Status**: Draft` por `Estado: Aprobada por Jorge — PR #N` (sin fecha; la
-fecha es el merge). En `plan.md` y `tasks.md` esa línea es el único estado.
-No se abre una PR de implementación antes de que la PR de tareas esté
-fusionada. Si converge añade tareas dentro de la spec, se implementan en
-PR posteriores y se vuelve a ejecutar converge. Si cambian el alcance de
-la spec, primero va otra PR de `spec.md` aprobada por Jorge.
-Los principios están en `.specify/memory/constitution.md`. El workflow
-empaquetado `.specify/workflows/speckit/workflow.yml` no sustituye este
-flujo. `/speckit-taskstoissues` no se usa.
+Jorge approves by merging into `develop`. In `spec.md` the Tech Lead
+replaces `**Status**: Draft` with `Status: Approved by Jorge — PR #N` (no
+date; the date is the merge commit). In `plan.md` and `tasks.md` that line
+is the only status field. An implementation PR is not opened before the
+tasks PR is merged. If converge appends tasks that stay inside the spec,
+they are implemented in later PRs and converge is run again. If they would
+change the spec's scope, another `spec.md` PR approved by Jorge comes
+first. The principles are in `.specify/memory/constitution.md`. The bundled
+workflow `.specify/workflows/speckit/workflow.yml` does not replace this
+flow. `/speckit-taskstoissues` is not used.
+
+Repository files, site content, and GitHub communication (commits, PR
+titles and descriptions, reviews, and comments) are in English.
 
 ### Roles
 
-- **Jorge (Product Owner):** aprueba la constitución, la PR de `spec.md` y
-  la PR de `plan.md` + `tasks.md`. Es la única persona que hace merge.
-- **Tech Lead:** `/speckit-specify`, `/speckit-plan` y `/speckit-tasks`.
-- **Web Developer:** `/speckit-implement` y `/speckit-converge`.
-- **Reviewer:** revisión de QA contra `spec.md`, `tasks.md` y la
-  constitución antes de pedir el merge a Jorge.
+- **Jorge (Product Owner):** approves the constitution, the `spec.md` PR,
+  and the `plan.md` + `tasks.md` PR. He is the only person who merges.
+- **Tech Lead:** `/speckit-specify`, `/speckit-plan`, and `/speckit-tasks`.
+- **Web Developer:** `/speckit-implement` and `/speckit-converge`.
+- **Reviewer:** QA review against `spec.md`, `tasks.md`, and the
+  constitution before asking Jorge to merge.
 
-### Ramas
+### Branches
 
-La spec y el plan viven en `specs/NNN-nombre/` (`spec.md`, `plan.md`,
-`tasks.md`). Sus PR salen de la rama `NNN-nombre`. Cada PR de
-implementación sale de `NNN-nombre-tXX`, creada desde `develop`, y vuelve
-a `develop`. La descripción lista los ids que cierra y `tasks.md` los marca
-`[X]`. Las features se fusionan de una en una. En una rama de tarea hay
-que exportar `SPECIFY_FEATURE_DIRECTORY=specs/NNN-nombre`.
-`SPECIFY_FEATURE` no localiza el directorio. `.specify/feature.json` es
-local y no se versiona.
+The spec and the plan live in `specs/NNN-name/` (`spec.md`, `plan.md`,
+`tasks.md`). Their PRs come from branch `NNN-name`. Each implementation PR
+comes from `NNN-name-tXX`, created from `develop`, and targets `develop`.
+The description lists the ids it closes and `tasks.md` marks them `[X]`.
+Features are merged one at a time. On a task branch, export
+`SPECIFY_FEATURE_DIRECTORY=specs/NNN-name`. `SPECIFY_FEATURE` does not
+locate the directory. `.specify/feature.json` is local and is not
+committed.
 
-`chore/`, `docs/`, `fix/` y `ci/` sirven para cambios sin comportamiento
-nuevo visible. Van a `develop`, pasan los mismos gates y las fusiona Jorge.
-Cualquier comportamiento nuevo exige spec. `main` solo recibe releases
-desde `develop`, siempre fusionadas por Jorge.
+`chore/`, `docs/`, `fix/`, and `ci/` are for changes with no new visible
+behavior. They target `develop`, pass the same gates, and Jorge merges
+them. Any new behavior requires a spec. `main` receives only releases from
+`develop`, always merged by Jorge.
