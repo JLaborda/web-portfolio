@@ -4,7 +4,7 @@
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/public-pages.md, quickstart.md
 
-**Tests**: The specification does not request a test framework. Each implementation pull request runs the verification command named for its group. There are no separate test tasks.
+**Tests**: The specification does not request a test framework. Each implementation pull request runs the verification command named for its group. There are no separate test tasks. The amended FR-010 and FR-016 through FR-018 sentences are in pull request #6.
 
 **Organization**: Tasks are grouped by user story. Delivery is grouped into four pull requests so the team reviews a small number of changes. The Verification section from pull request #4, and the amended FR-010 and FR-016 through FR-018 text, are the commands and requirements these tasks satisfy.
 

@@ -10,7 +10,7 @@ Status: Approved by Jorge — PR #5
 
 Publish a minimal English Hugo portfolio and blog for ML Engineering and MLOps recruiters in fintech. The site uses PaperMod profile mode, four menu sections (Projects, Now, About, Posts), a home-page Search button, a site feed advertised on the home page, and a draft welcome post that is absent from the published build.
 
-The authoritative acceptance text for this plan is the Verification section from pull request #4 plus the requirement amendments QA requested on that review (FR-010 scoped to the home page, and FR-016, FR-017, and FR-018 covering pull requests to `develop` and `main`, with gitleaks using `fetch-depth: 0` and the pull-request SHA range). Pull request #4 is not the spec of record: those amendments land on branch `001-minimal-hugo-site`. This plan follows that amended text even if the amendment pull request is still open.
+The authoritative acceptance text for this plan is the Verification section from pull request #4 plus the requirement amendments QA requested on that review (FR-010 scoped to the home page, and FR-016, FR-017, and FR-018 covering pull requests to `develop` and `main`, with gitleaks using `fetch-depth: 0` and the pull-request SHA range). Pull request #4 is not the spec of record. The amended sentences are in pull request #6 on branch `001-minimal-hugo-site`. This plan follows that text.
 
 Hugo extended is pinned to **0.145.0**, not the latest stable 0.168.0, because 0.168.0 cannot build the latest PaperMod release tag. PaperMod is pinned to **v8.0**, which is the latest release tag. Lychee **0.24.2** and gitleaks **8.30.1** are pinned together with their GitHub Actions. The incompatibility and the measured build are recorded in [research.md](./research.md).
 
