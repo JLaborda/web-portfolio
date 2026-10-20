@@ -1,2 +1,7 @@
 # Local Spec Kit pointer (also listed in .specify/.gitignore). Do not commit.
 .specify/feature.json
+
+# Hugo generated output
+public/
+resources/_gen/
+.hugo_build.lock

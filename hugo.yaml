@@ -1,0 +1,15 @@
+baseURL: https://example.org/
+title: Jorge D. Laborda Sicilia
+theme: PaperMod
+defaultContentLanguage: en
+
+outputs:
+  home:
+    - HTML
+    - RSS
+    - JSON
+
+params:
+  author: Jorge D. Laborda Sicilia
+  disableThemeToggle: false
+  ShowBreadCrumbs: true

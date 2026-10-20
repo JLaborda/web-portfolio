@@ -47,10 +47,10 @@ Expected: the diff does not add Terraform, an AWS template, an analytics snippet
 
 **Pull request**: `001-minimal-hugo-site-t01`
 
-- [ ] T001 Add the PaperMod git submodule at `themes/PaperMod` pinned to tag `v8.0` (`a2eb47bb4b805116dcd34c1605d39835121f8dbe`) and record that URL in `.gitmodules`
-- [ ] T002 Create `hugo.yaml` with `theme: PaperMod`, `baseURL: https://example.org/`, `defaultContentLanguage: en`, title `Jorge D. Laborda Sicilia`, author `Jorge D. Laborda Sicilia`, `disableThemeToggle: false`, `ShowBreadCrumbs: true`, no email field, and home outputs `HTML`, `RSS`, and `JSON`
-- [ ] T003 Add `public/`, `resources/_gen/`, and `.hugo_build.lock` to `.gitignore`
-- [ ] T004 Document in `README.md` that the site is a portfolio and blog for ML Engineering and MLOps recruiters and hiring managers in fintech, and document Hugo extended `0.145.0`, `git clone --recurse-submodules`, and `hugo server -D`
+- [X] T001 Add the PaperMod git submodule at `themes/PaperMod` pinned to tag `v8.0` (`a2eb47bb4b805116dcd34c1605d39835121f8dbe`) and record that URL in `.gitmodules`
+- [X] T002 Create `hugo.yaml` with `theme: PaperMod`, `baseURL: https://example.org/`, `defaultContentLanguage: en`, title `Jorge D. Laborda Sicilia`, author `Jorge D. Laborda Sicilia`, `disableThemeToggle: false`, `ShowBreadCrumbs: true`, no email field, and home outputs `HTML`, `RSS`, and `JSON`
+- [X] T003 Add `public/`, `resources/_gen/`, and `.hugo_build.lock` to `.gitignore`
+- [X] T004 Document in `README.md` that the site is a portfolio and blog for ML Engineering and MLOps recruiters and hiring managers in fintech, and document Hugo extended `0.145.0`, `git clone --recurse-submodules`, and `hugo server -D`
 
 ---
 
@@ -62,10 +62,10 @@ Expected: the diff does not add Terraform, an AWS template, an analytics snippet
 
 **Pull request**: `001-minimal-hugo-site-t01`
 
-- [ ] T005 [P] Add `static/favicon.ico`, `static/favicon-16x16.png`, `static/favicon-32x32.png`, `static/apple-touch-icon.png`, and `static/safari-pinned-tab.svg` so PaperMod's default icon links resolve
-- [ ] T006 [P] Add `layouts/partials/templates/schema_json.html` copied from `themes/PaperMod/layouts/partials/templates/schema_json.html` at tag `v8.0`, changing only the BreadcrumbList commas to the `scratch` key `item` so `hugo --minify` accepts `/projects/smartwealthai/`
-- [ ] T007 [P] Add `layouts/partials/templates/opengraph.html` and `layouts/partials/templates/twitter_cards.html` copied from `themes/PaperMod/layouts/partials/templates/opengraph.html` and `twitter_cards.html` at tag `v8.0`, deleting only the `else` branches that call `site.Social.facebook_admin` and `site.Social.twitter`
-- [ ] T008 Run `hugo --gc --minify --panicOnWarning --baseURL /` from the repository root and require exit 0. Do not add a project stylesheet or script; theme overrides stay in `layouts/`
+- [X] T005 [P] Add `static/favicon.ico`, `static/favicon-16x16.png`, `static/favicon-32x32.png`, `static/apple-touch-icon.png`, and `static/safari-pinned-tab.svg` so PaperMod's default icon links resolve
+- [X] T006 [P] Add `layouts/partials/templates/schema_json.html` copied from `themes/PaperMod/layouts/partials/templates/schema_json.html` at tag `v8.0`, changing only the BreadcrumbList commas to the `scratch` key `item` so `hugo --minify` accepts `/projects/smartwealthai/`
+- [X] T007 [P] Add `layouts/partials/templates/opengraph.html` and `layouts/partials/templates/twitter_cards.html` copied from `themes/PaperMod/layouts/partials/templates/opengraph.html` and `twitter_cards.html` at tag `v8.0`, deleting only the `else` branches that call `site.Social.facebook_admin` and `site.Social.twitter`
+- [X] T008 Run `hugo --gc --minify --panicOnWarning --baseURL /` from the repository root and require exit 0. Do not add a project stylesheet or script; theme overrides stay in `layouts/`
 
 **Checkpoint**: The empty site builds strictly. Theme files under `themes/PaperMod` are unchanged.
 
