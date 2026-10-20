@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-20
 
-Status: Approved by Jorge — PR #3, amended in PR #SPECPR
+Status: Approved by Jorge — PR #3, amended in PR #6
 
 **Input**: User description: "Minimal Hugo site with the PaperMod theme. Portfolio and blog for ML Engineering and MLOps recruiters in fintech. Sections: Projects (SmartWealthAI placeholder), Now, About, and Posts (welcome post as a draft). Menu with those four links. PaperMod search, RSS, and table of contents enabled. Site language English. Social links: GitHub https://github.com/JLaborda and LinkedIn https://www.linkedin.com/in/jorge-daniel-laborda-sicilia. No email in this feature. CI on pull requests to develop: hugo build with --baseURL /, lychee on public/ with --root-dir, gitleaks with a synthetic secret that is not AKIAIOSFODNN7EXAMPLE. Pinned Hugo extended and PaperMod as a git submodule on a tag. Out of scope: AWS deployment, Terraform, domain, DNS, email, analytics, and real project content."
 
