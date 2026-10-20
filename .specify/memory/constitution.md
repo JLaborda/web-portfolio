@@ -5,28 +5,57 @@
 ### I. Spec-driven development and PO approval
 
 Development MUST NOT start without a `spec.md` approved by Jorge (Product
-Owner). The flow for each feature MUST be, in this order:
-`/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`,
-`/speckit-converge`. A phase MUST NOT be skipped.
+Owner). `/speckit-constitution` is set once for the project. A later
+amendment is its own pull request and is not a feature step.
+
+A feature MUST follow the full path, in this order: `/speckit-specify`,
+`/speckit-clarify`, `/speckit-plan`, `/speckit-checklist`,
+`/speckit-tasks`, `/speckit-analyze`, `/speckit-implement`,
+`/speckit-converge`. On that path a step MUST NOT be skipped.
+
+The short path MAY be used only for a small change. It is, in this order:
+`/speckit-specify`, `/speckit-plan`, `/speckit-tasks`,
+`/speckit-implement`, `/speckit-converge`. The Tech Lead MUST label that
+choice in the spec pull request description as a small change that uses
+the short path. Jorge's merge of that pull request approves the label.
+Nothing else approves it. On the short path, `/speckit-clarify`,
+`/speckit-checklist`, and `/speckit-analyze` are the only steps that MAY
+be omitted.
 
 Only Jorge MAY merge. Any other person or bot MUST NOT merge.
 
 Approval is recorded only as follows, and in this order:
 
 1. A PR from branch `NNN-name`, with base `develop`, that contains only
-   `specs/NNN-name/spec.md`. In that PR the Tech Lead MUST replace the
-   template field `**Status**: Draft` with
+   `specs/NNN-name/spec.md`. That file is the result of
+   `/speckit-specify`. On the full path it is also the result of
+   `/speckit-clarify`, and it MUST contain the Clarifications section that
+   command writes. When clarify accepts answers, that section records each
+   one. When clarify finds nothing material, that section states that no
+   material ambiguity remained. On the short path, clarify is not run, that
+   section is not required, and the description carries the small-change
+   label. In that PR the Tech Lead MUST replace the template field
+   `**Status**: Draft` with
    `Status: Approved by Jorge — PR #N`
    (N is that PR's number). The field is replaced: `Status: Draft` MUST NOT
    remain, and a second status field MUST NOT be added. The line MUST NOT
    include a date. The approval date is the merge commit in git history.
    Jorge merges it.
-2. Then a second PR from the same branch `NNN-name`, containing `plan.md`
-   and `tasks.md`. Those templates have no `Status` field. The Tech Lead
-   MUST add the same line to each file, with this second PR's number, as
-   the only status field. Another status field MUST NOT be added.
-   `spec.md` MUST already be on `develop` before this PR is opened: Jorge
-   approves the spec before the plan and the tasks.
+2. Then a second PR from the same branch `NNN-name`. It MUST contain
+   `plan.md`, every supporting file `/speckit-plan` wrote beside it, and
+   `tasks.md`. On the full path it MUST also contain `checklists/*.md`
+   from `/speckit-checklist`. Every item in those files MUST be marked
+   `[x]`, or left unchecked with an explicit waiver and a reason written
+   on that item. The agent MUST NOT mark an item `[x]`. The reviewer does.
+   The description MUST paste the `/speckit-analyze` report, and that
+   report MUST leave no CRITICAL or HIGH finding open. On the short path,
+   the checklist files and the analyze report are not required, and the
+   description MUST point at the merged spec's small-change label. Those
+   templates have no `Status` field. The Tech Lead MUST add the same line
+   to `plan.md` and to `tasks.md`, with this second PR's number, as the
+   only status field. Another status field MUST NOT be added. `spec.md`
+   MUST already be on `develop` before this PR is opened: Jorge approves
+   the spec before the plan and the tasks.
 3. An implementation PR MUST NOT be opened before the `tasks.md` PR is
    merged into `develop`.
 
@@ -60,10 +89,15 @@ governs. `/speckit-taskstoissues` is deprecated in 1.2.2 and MUST NOT be
 used.
 
 **Check:** on `develop`, `spec.md` has
-`Status: Approved by Jorge — PR #N` and does not have `Status: Draft`;
-`plan.md` and `tasks.md` have their PR's line and no other status; no
-implementation PR is open before that second merge; every feature PR
-targets `develop`; `main` has only merges from `develop` made by Jorge.
+`Status: Approved by Jorge — PR #N` and does not have `Status: Draft`.
+On the full path that file contains a Clarifications section. `plan.md`
+and `tasks.md` have their PR's line and no other status. On the full path
+every checklist item is `[x]` or waived with a reason, and the plan PR
+description's analyze report has no open CRITICAL or HIGH finding. No
+implementation PR is open before that second merge. At most one spec,
+plan, or constitution PR is open, and its branch is based on the already
+merged `develop`. Every feature PR targets `develop`. `main` has only
+merges from `develop` made by Jorge.
 `git check-ignore -v .specify/feature.json` reports an ignore rule.
 
 ### II. Fixed stack
@@ -170,8 +204,9 @@ the same rules. `/speckit-converge` MUST then be run again until
 
 If an appended task would require changing the scope of `spec.md`, it MUST
 NOT be implemented before a new spec PR. That PR only updates `spec.md`,
-replaces the status with `Status: Approved by Jorge — PR #N` for that PR,
-and Jorge merges it.
+follows principle I (the full path, unless the Tech Lead labels a small
+change and Jorge's merge approves the short path), replaces the status
+with `Status: Approved by Jorge — PR #N` for that PR, and Jorge merges it.
 
 The last implementation PR of the feature is the one that gets
 `Converged`. It MUST add `specs/NNN-name/converge.md` with the full output
@@ -179,8 +214,9 @@ of that final run, the date, the SHA of the commit it ran on, and the
 verdict `Converged`. The PR description MUST paste that verdict. QA MUST
 block the PR if the file is missing or the verdict is not `Converged`.
 
-The Reviewer MUST review against `spec.md`, `tasks.md`, `converge.md` when
-it is the last PR, and this constitution before asking Jorge to merge.
+The Reviewer MUST review against `spec.md`, `plan.md`, `tasks.md`, the
+checklist files when the full path applies, `converge.md` when it is the
+last PR, and this constitution before asking Jorge to merge.
 Without that review, the PR MUST NOT be merged.
 
 **Check:** the description lists the ids, `tasks.md` has them as `[X]`,
@@ -216,18 +252,24 @@ review, or comment fails review. Pages under `content/` are English.
 ## Roles
 
 - **Jorge (Product Owner).** Approves this constitution by merging it.
-  Approves each `spec.md` in its PR and, after that, `plan.md` and
-  `tasks.md` in a second PR. He is the only person who merges. Releases
-  from `develop` to `main` are always merged by Jorge.
-- **Tech Lead.** Runs `/speckit-specify`, `/speckit-plan`, and
-  `/speckit-tasks`. Writes the `Status: Approved by Jorge — PR #N` line
-  in those PRs.
+  Approves each `spec.md` in its PR, including a short-path label when one
+  is present, and, after that, the plan and tasks PR. He is the only person
+  who merges. Releases from `develop` to `main` are always merged by Jorge.
+- **Tech Lead.** On the full path, runs `/speckit-specify`,
+  `/speckit-clarify`, `/speckit-plan`, `/speckit-checklist`,
+  `/speckit-tasks`, and `/speckit-analyze`. On a small change, labels the
+  short path in the spec PR and runs `/speckit-specify`, `/speckit-plan`,
+  and `/speckit-tasks`. Writes the `Status: Approved by Jorge — PR #N`
+  line in those PRs.
 - **Web Developer.** Runs `/speckit-implement` and, on the feature's last
   PR, `/speckit-converge`.
-- **Reviewer.** Reviews against `spec.md`, `tasks.md`, and this
-  constitution before asking Jorge to merge. Checks that `Status: Approved
-  by Jorge — PR #N` replaces `Status: Draft`, checks the task ids, and, on
-  the last PR, checks that `converge.md` exists and says `Converged`.
+- **Reviewer.** Reviews against `spec.md`, `plan.md`, `tasks.md`, the
+  checklist files when the full path applies, and this constitution before
+  asking Jorge to merge. Checks that `Status: Approved by Jorge — PR #N`
+  replaces `Status: Draft`, that checklist items are `[x]` or waived with
+  a reason, that the analyze report has no open CRITICAL or HIGH finding,
+  checks the task ids, and, on the last PR, checks that `converge.md`
+  exists and says `Converged`. The reviewer marks checklist items `[x]`.
 
 ## Branches and releases
 
@@ -244,6 +286,9 @@ under `docs/specs/`.
   description and are marked `[X]` in `tasks.md`.
 - Those PRs MUST be merged one at a time. Two features MUST NOT be merging
   into `develop` at the same time.
+- At most one spec, plan, or constitution pull request MAY be open. It
+  MUST be based on what is already merged in `develop`. The next one is
+  opened only after Jorge merges the previous one.
 - On a branch `NNN-name-tXX` the session MUST export
   `SPECIFY_FEATURE_DIRECTORY=specs/NNN-name` before the scripts.
   `SPECIFY_FEATURE` is optional and does not locate the directory.
@@ -279,12 +324,11 @@ Versioning MUST follow Semantic Versioning:
   the meaning.
 
 Each amendment after ratification MUST update the version line and the
-last-amended date. This v1.0.0 is not ratified yet: corrections in this PR
-do not bump the version. It is ratified when Jorge merges this PR. The
-ratification date is 2026-10-20. If the merge happens on another day, that
-same PR MUST update the ratification date before it is merged.
+last-amended date. Version 1.0.0 was ratified when Jorge merged it. The
+ratification date is 2026-10-20 and does not change. This amendment is
+1.1.0. Its last-amended date is 2026-10-20.
 
 Before asking for a merge, the Reviewer MUST check compliance with this
 constitution. A PR that contradicts a principle MUST NOT be merged.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-10-20
+**Version**: 1.1.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-10-20
