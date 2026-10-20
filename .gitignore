@@ -1,0 +1,2 @@
+# Puntero local de Spec Kit (también en .specify/.gitignore). No se versiona.
+.specify/feature.json

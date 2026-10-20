@@ -14,25 +14,40 @@ Solo Jorge MAY hacer merge. Cualquier otra persona o bot MUST NOT hacerlo.
 La aprobación queda registrada solo así, y en este orden:
 
 1. Una PR, desde la rama `NNN-nombre` y con base `develop`, que contiene
-   únicamente `specs/NNN-nombre/spec.md`. Jorge la fusiona. En esa PR el
-   fichero MUST llevar como primera línea
-   `Estado: Aprobada por Jorge — PR #N — AAAA-MM-DD`
-   (número de esa PR y fecha de la aprobación).
+   únicamente `specs/NNN-nombre/spec.md`. El Tech Lead, en esa PR, MUST
+   sustituir el campo `**Status**: Draft` de la plantilla por
+   `Estado: Aprobada por Jorge — PR #N`
+   (N es el número de esa PR). Ese campo se reemplaza: MUST NOT quedar
+   `Status: Draft` ni un segundo campo de estado. La línea MUST NOT llevar
+   fecha. La fecha de la aprobación es el commit de merge en el historial.
+   Jorge la fusiona.
 2. Después, una segunda PR desde la misma rama `NNN-nombre`, con
-   `plan.md` y `tasks.md`. Jorge la fusiona. `plan.md` y `tasks.md` MUST
-   llevar la misma línea de cabecera, cada uno con el número de esta
-   segunda PR. `spec.md` MUST estar ya en `develop` antes de abrir esta PR:
-   Jorge aprueba la spec antes del plan y de las tareas.
+   `plan.md` y `tasks.md`. Esas plantillas no traen `Status`. El Tech Lead
+   MUST añadir en cada uno, como único campo de estado, la misma línea con
+   el número de esta segunda PR. MUST NOT añadirse otro campo de estado.
+   `spec.md` MUST estar ya en `develop` antes de abrir esta PR: Jorge
+   aprueba la spec antes del plan y de las tareas.
 3. MUST NOT abrirse una PR de implementación antes de que la PR de
    `tasks.md` esté fusionada en `develop`.
 
 Las PR de spec, plan y tareas salen de `NNN-nombre`. Cada PR de
 implementación sale de una rama efímera `NNN-nombre-tXX`, creada desde
-`develop`, y vuelve a `develop`. El prefijo `NNN-` se conserva para
-identificar `specs/NNN-*`. En Spec Kit 1.2.2 los scripts no deducen el
-directorio solo por la rama git: si falta el contexto, la sesión MUST
-exportar `SPECIFY_FEATURE=NNN-nombre` como fallback y, si el directorio
-sigue sin resolverse, `SPECIFY_FEATURE_DIRECTORY=specs/NNN-nombre`.
+`develop`, y vuelve a `develop`. El prefijo `NNN-` es una convención
+humana para leer la rama junto a `specs/NNN-nombre/`. Los scripts de
+Spec Kit 1.2.2 no resuelven el directorio por el nombre de la rama git.
+
+En `get_feature_paths()` (`.specify/scripts/bash/common.sh`) el directorio
+sale solo de `SPECIFY_FEATURE_DIRECTORY` o de `.specify/feature.json`.
+En una rama de tarea, antes de esos scripts, la sesión MUST exportar
+`SPECIFY_FEATURE_DIRECTORY=specs/NNN-nombre`. Sin eso, y sin
+`feature.json`, el script termina en error. `SPECIFY_FEATURE` es
+opcional: `get_current_branch()` solo lo copia a `CURRENT_BRANCH`. Por sí
+solo MUST NOT usarse para encontrar la feature.
+
+`.specify/feature.json` es estado por desarrollador. `_persist_feature_json`
+lo reescribe al usar `SPECIFY_FEATURE_DIRECTORY`, salvo `--paths-only` o
+`--no-persist`. MUST NOT versionarse. Está ignorado en `.gitignore` y en
+`.specify/.gitignore`.
 
 Las PR de una feature MUST fusionarse de una en una. MUST NOT fusionarse
 en paralelo el trabajo de dos features. `main` MUST recibir solo releases
@@ -44,11 +59,12 @@ es orientativa (no nombra `cursor-agent`). Manda el flujo de esta
 constitución. `/speckit-taskstoissues` está deprecado en 1.2.2 y MUST NOT
 usarse.
 
-**Comprobación:** `spec.md` en `develop` tiene la línea de estado con la
-PR que lo fusionó; `plan.md` y `tasks.md` tienen la de la segunda PR; no
-hay PR de implementación abierta antes de ese segundo merge; la base de
-cada PR de feature es `develop`; `main` solo tiene merges desde `develop`
-hechos por Jorge.
+**Comprobación:** en `develop`, `spec.md` tiene
+`Estado: Aprobada por Jorge — PR #N` y no tiene `Status: Draft`; `plan.md`
+y `tasks.md` tienen la línea de su PR y ningún otro estado; no hay PR de
+implementación abierta antes de ese segundo merge; la base de cada PR de
+feature es `develop`; `main` solo tiene merges desde `develop` hechos por
+Jorge. `git check-ignore -v .specify/feature.json` señala un ignore.
 
 ### II. Stack fijo
 
@@ -138,17 +154,44 @@ de tarea que cierra (por ejemplo `T012`, `T013`). MUST marcar esos mismos
 ids como hechos (`[X]`) en `specs/NNN-nombre/tasks.md`, en el mismo cambio.
 Los ids de la descripción y los de `tasks.md` MUST coincidir.
 
-La última PR de implementación de la feature MUST incluir la ejecución de
-`/speckit-converge` con resultado `Converged`. MUST NOT fusionarse esa PR
-si el resultado es otro.
+Salvo el caso de converge de abajo, una PR de implementación MUST cambiar
+`tasks.md` solo para marcar `[X]` los ids que cierra.
 
-El Reviewer MUST hacer la revisión de QA contra `spec.md`, `tasks.md` y
-esta constitución antes de pedir el merge a Jorge. Sin esa revisión, la PR
-MUST NOT fusionarse.
+`/speckit-converge` lee `spec.md`, `plan.md` y `tasks.md`. Si queda
+trabajo, el resultado es `tasks_appended`: solo añade
+`## Phase N: Convergence` al final de `tasks.md`. MUST NOT reescribir
+tareas ya existentes y MUST NOT modificar `spec.md` ni `plan.md`. Si no
+queda trabajo, el resultado es `Converged` y `tasks.md` no cambia. El
+skill no guarda esa salida en un fichero: la PR MUST hacerlo, como se
+dice más abajo.
+
+Si las tareas añadidas caben en el `spec.md` ya aprobado, se quedan en
+`tasks.md` y MUST implementarse en PR posteriores `NNN-nombre-tXX`, con
+las mismas reglas. Después MUST volver a ejecutarse `/speckit-converge`
+hasta `Converged`.
+
+Si una tarea añadida exigiría cambiar el alcance de `spec.md`, MUST NOT
+implementarse antes de una PR nueva de spec. Esa PR solo actualiza
+`spec.md`, sustituye el estado por `Estado: Aprobada por Jorge — PR #N`
+de esa PR, y la fusiona Jorge.
+
+La última PR de implementación de la feature es la que obtiene
+`Converged`. MUST añadir `specs/NNN-nombre/converge.md` con la salida
+completa de esa ejecución final, la fecha, el SHA del commit sobre el que
+se ejecutó y el veredicto `Converged`. La descripción de la PR MUST copiar
+ese veredicto. QA MUST bloquear la PR si el fichero no está o el veredicto
+no es `Converged`.
+
+El Reviewer MUST hacer la revisión de QA contra `spec.md`, `tasks.md`,
+`converge.md` cuando sea la última PR, y esta constitución antes de pedir
+el merge a Jorge. Sin esa revisión, la PR MUST NOT fusionarse.
 
 **Comprobación:** la descripción lista los ids, `tasks.md` los tiene en
-`[X]`, y no hay ids de más ni de menos. La última PR de la feature cita
-`Converged`. La revisión de QA está registrada antes del merge de Jorge.
+`[X]`, y no hay ids de más ni de menos. Una PR que no es la de converge
+no reescribe tareas ni cambia `spec.md`. La última PR contiene
+`converge.md` con fecha, SHA y `Converged`, y la descripción repite el
+veredicto. Si falta el fichero o el veredicto es otro, QA bloquea. La
+revisión de QA está registrada antes del merge de Jorge.
 
 ### VI. Explicable en entrevista y barato
 
@@ -175,8 +218,9 @@ de Jorge en ese plan.
 - **Web Developer.** Ejecuta `/speckit-implement` y, en la última PR de la
   feature, `/speckit-converge`.
 - **Reviewer.** Hace la revisión de QA contra `spec.md`, `tasks.md` y esta
-  constitución antes de pedir el merge a Jorge. Comprueba la línea de
-  estado, los ids de tarea y, en la última PR, el resultado `Converged`.
+  constitución antes de pedir el merge a Jorge. Comprueba que `Estado`
+  sustituye a `Status: Draft`, los ids de tarea y, en la última PR, que
+  `converge.md` existe y dice `Converged`.
 
 ## Ramas y releases
 
@@ -193,10 +237,11 @@ feature en `docs/specs/`.
   la descripción y se marcan `[X]` en `tasks.md`.
 - Esas PR MUST fusionarse de una en una. MUST NOT haber dos features
   fusionándose a `develop` a la vez.
-- Si los scripts no resuelven la feature, exportar
-  `SPECIFY_FEATURE=NNN-nombre` y, si hace falta,
-  `SPECIFY_FEATURE_DIRECTORY=specs/NNN-nombre`. `.specify/feature.json` es
-  estado local y no se versiona.
+- En una rama `NNN-nombre-tXX` la sesión MUST exportar
+  `SPECIFY_FEATURE_DIRECTORY=specs/NNN-nombre` antes de los scripts.
+  `SPECIFY_FEATURE` es opcional y no localiza el directorio.
+  `.specify/feature.json` es estado local, ignorado por git, y MUST NOT
+  commitirse.
 
 ### Ramas que no son de feature
 
