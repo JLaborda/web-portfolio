@@ -70,9 +70,9 @@ Approval is recorded only as follows, and in this order:
    add or rewrite `checklists/requirements.md`, which landed in the spec
    PR. Every item
    in the `/speckit-checklist` files MUST be `[x]`, or left unchecked with
-   a waiver and a reason on that same line. The Tech Lead, and every
-   command except the Reviewer's commit below, MUST NOT mark an item `[x]`
-   in those files. The description MUST paste the `/speckit-analyze`
+   a waiver and a reason on that same line. No commit except the
+   `qa: checklist` commit below may mark an item `[x]` or add a waiver in
+   those files. The description MUST paste the `/speckit-analyze`
    report. That report MUST name the full head SHA it ran on and MUST leave
    no CRITICAL or HIGH finding open. After any later push that changes
    `spec.md`, `plan.md`, or `tasks.md`, analyze MUST be run again on that
@@ -88,16 +88,17 @@ Approval is recorded only as follows, and in this order:
 3. An implementation PR MUST NOT be opened before the `tasks.md` PR is
    merged into `develop`.
 
-A waiver leaves the item as `- [ ]` and puts the reason on that same line.
-The Tech Lead writes it. The Reviewer accepts or rejects it in the review.
-An unchecked item whose waiver the Reviewer has not accepted blocks the
-pull request.
+A waiver on `checklists/requirements.md` leaves the item as `- [ ]` and
+puts the reason on that same line. The Tech Lead writes it. The Reviewer
+accepts or rejects it in the review. An unchecked item whose waiver the
+Reviewer has not accepted blocks the pull request.
 
-The Reviewer records `[x]` on a `/speckit-checklist` item in a commit on
-branch `NNN-name` whose subject starts with `qa: checklist`. The Reviewer
-then reviews that new head before asking Jorge to merge. Git author does
-not identify who marked an item: every bot commits as `JLaborda`. The
-message prefix is the record. This limit does not apply to
+For a file from `/speckit-checklist`, QA records each item in its GitHub
+review as checked or waived, with the reason for each waiver. QA cannot
+push. The pull request author applies exactly those marks in one commit
+on branch `NNN-name` titled `qa: checklist`, and the commit message links
+that review. QA then verifies that the commit matches the review before
+asking Jorge to merge. This limit does not apply to
 `checklists/requirements.md`, which specify and clarify maintain.
 
 `/speckit-implement` MUST stop and ask when any checklist item is
@@ -173,8 +174,9 @@ its line. On the full path, `spec.md` contains `## Clarifications` and
 line `- No critical ambiguities found; no questions asked.` A short-path
 spec PR description contains the exact line `Path: short (small change)`.
 `plan.md` and `tasks.md` have their PR's line and no other status. On the
-full path, `[x]` marks in `/speckit-checklist` files appear only in commits
-whose subject starts with `qa: checklist`, the analyze report names the
+full path, `[x]` marks and waivers in `/speckit-checklist` files appear
+only in a commit titled `qa: checklist` that links the QA review, that
+review records the same checked and waived items, the analyze report names the
 head SHA, and that report has no open CRITICAL or HIGH finding. For
 feature 001, the plan PR diff to `spec.md` is only the Session 2026-10-20
 block above, and it adds `checklists/requirements.md`. No implementation
@@ -347,7 +349,9 @@ review, or comment fails review. Pages under `content/` are English.
   material, adds the `## Clarifications` section by hand. On a small
   change, puts `Path: short (small change)` in the spec PR description and
   runs `/speckit-specify`, `/speckit-plan`, and `/speckit-tasks`. Writes
-  waivers on unchecked checklist items. Writes the
+  waivers on unchecked `checklists/requirements.md` items. After QA's
+  review, applies the `/speckit-checklist` marks in a commit titled
+  `qa: checklist` that links the review. Writes the
   `Status: Approved by Jorge — PR #N` line in those PRs.
 - **Web Developer.** Runs `/speckit-implement` and, on the feature's last
   PR, `/speckit-converge`. When implement stops on an unchecked checklist
@@ -357,9 +361,10 @@ review, or comment fails review. Pages under `content/` are English.
   `checklists/requirements.md`, `plan.md`, `tasks.md`, the
   `/speckit-checklist` files when the full path applies, and this
   constitution before asking Jorge to merge. Accepts or rejects each
-  waiver. Records `[x]` on `/speckit-checklist` items in a commit on
-  `NNN-name` whose subject starts with `qa: checklist`, then reviews that
-  new head. Checks the status line, the Clarifications text, the analyze
+  waiver on `checklists/requirements.md`. Records each
+  `/speckit-checklist` item as checked or waived, with reasons, in the
+  GitHub review. After the `qa: checklist` commit, verifies that it matches
+  that review. Checks the status line, the Clarifications text, the analyze
   report's head SHA and open findings, the task ids, and, on the last PR,
   that `converge.md` exists and says `Converged`.
 

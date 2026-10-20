@@ -16,9 +16,10 @@ project. A feature uses the full path:
 2. `/speckit-plan`, `/speckit-checklist`, `/speckit-tasks`, and
    `/speckit-analyze` — a second PR, after Jorge has merged the spec, with
    `plan.md`, the plan's supporting files, the `/speckit-checklist` files,
-   and `tasks.md`. The reviewer marks those checklist items `[x]` in a
-   commit whose subject starts with `qa: checklist`. The Tech Lead writes
-   a waiver on an unchecked item; the reviewer accepts it. The PR
+   and `tasks.md`. QA records each `/speckit-checklist` item as checked or
+   waived, with reasons, in its GitHub review. The pull request author
+   applies exactly those marks in a commit titled `qa: checklist` that
+   links the review, and QA verifies the commit matches. The PR
    description pastes the analyze report, names the head SHA, and leaves
    no CRITICAL or HIGH finding open. A finding that changes a requirement
    closes this PR; a spec PR lands first; then the plan PR opens again
@@ -64,15 +65,18 @@ titles and descriptions, reviews, and comments) are in English.
   (including `Path: short (small change)` when present), and the plan PR.
   He is the only person who merges.
 - **Tech Lead:** the specify, clarify, plan, checklist, tasks, and analyze
-  steps. Adds the empty Clarifications section by hand. Writes waivers.
-  On a small change, the short path and its description line.
+  steps. Adds the empty Clarifications section by hand. Writes waivers
+  on `checklists/requirements.md`. Applies QA's checklist marks in the
+  `qa: checklist` commit. On a small change, the short path and its
+  description line.
 - **Web Developer:** `/speckit-implement` and `/speckit-converge`. Answers
   yes to an unchecked checklist only when the reviewer has accepted a
   waiver on every such item.
 - **Reviewer:** QA review against the spec, `checklists/requirements.md`,
   the plan, the tasks, the `/speckit-checklist` files, and the constitution
-  before asking Jorge to merge. Marks those checklist items `[x]` with a
-  `qa: checklist` commit, then reviews that head.
+  before asking Jorge to merge. Records `/speckit-checklist` results in
+  the GitHub review, then verifies the author's `qa: checklist` commit
+  matches that review.
 
 ### Branches
 
