@@ -4,7 +4,7 @@ Decisions for feature 001. The governing text is `spec.md` on `develop` after pu
 
 ## Hugo extended pin
 
-- **Decision**: Pin Hugo extended **0.145.0** in the single workflow variable `HUGO_VERSION` and repeat `0.145.0` in `README.md`. Install `hugo_extended_0.145.0_linux-amd64.tar.gz`.
+- **Decision**: Pin Hugo extended **0.145.0** in the single workflow variable `HUGO_VERSION` and repeat `0.145.0` in `README.md`. Install `hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz`.
 - **Rationale**: The latest stable release on 2026-10-20 is **0.168.0** (published 2026-10-13, `e27a6760c5547237f87d353aebe0580feadb20f4`). Re-run the same day: `hugo v0.168.0+extended --gc --minify --panicOnWarning --baseURL /` on PaperMod v8.0 exited 1. Hugo reported that `.Language.LanguageDirection` was deprecated in v0.158.0 and that `partial "partials/templates/_funcs/get-page-images"` was not found. PaperMod v8.0 predates the template layout introduced in Hugo 0.146.0, and there is no newer PaperMod release tag. The releases API lists **0.145.0** (published 2025-02-26, `666444f0a52132f9fec9f71cf25b441cc6a4f355`) as the newest extended release before 0.146.0. With the layouts overrides below, `hugo v0.145.0+extended --gc --minify --panicOnWarning --baseURL /` exited 0 (17 pages).
 - **Alternatives considered**: Hugo 0.168.0 was rejected because the build fails. Hugo 0.146.0 and later were rejected for the same template break. Staying on 0.128.2 was rejected because 0.145.0 is a newer extended release that builds the same tag.
 
@@ -31,7 +31,7 @@ Decisions for feature 001. The governing text is `spec.md` on `develop` after pu
 
 ## Lychee pin
 
-- **Decision**: Install **lychee 0.24.2** from `https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-x86_64-unknown-linux-gnu.tar.gz` and run `lychee --offline --root-dir public public` in a `run:` step. The lychee job first checks out submodules and runs `hugo --gc --minify --panicOnWarning --baseURL /`, because `public/` is gitignored and is not present after checkout. The external step is a second `run:` with `continue-on-error: true` that runs `lychee --exclude https://www.linkedin.com/in/jorge-daniel-laborda-sicilia public` and prints `::warning::` plus the URL.
+- **Decision**: Install **lychee 0.24.2** from `https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-x86_64-unknown-linux-gnu.tar.gz` and run `lychee --offline --root-dir public public` in a `run:` step. The lychee job first checks out submodules and runs `hugo --gc --minify --panicOnWarning --baseURL /`, because `public/` is gitignored and is not present after checkout. The external step is a second `run:` with `continue-on-error: true` that runs `lychee --exclude https://www.linkedin.com/in/jorge-daniel-laborda-sicilia --root-dir public public` and prints `::warning::` plus the URL. Without `--root-dir`, lychee 0.24.2 reports `Cannot resolve root-relative link` for site-absolute paths and would warn on internal links.
 - **Rationale**: 0.24.2 (published 2026-05-01) is the latest release that is not a prerelease. The same day's releases list also contains `nightly`, which is a prerelease and is not pinned. `lychee-action` passes flags through `args:` and does not put the literal command in the workflow, so the FR-017 grep would fail. The CLI step contains that literal command.
 - **Alternatives considered**: `lycheeverse/lychee-action` was rejected because its `args:` input is not the string the specification greps. `nightly` was rejected because it is a prerelease.
 
