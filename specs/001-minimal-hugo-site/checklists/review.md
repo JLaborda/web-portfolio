@@ -10,47 +10,47 @@
 
 ## Requirement Completeness
 
-- [ ] CHK001 Are the audience and the four section destinations specified with exact labels and paths? [Completeness, Spec §FR-001, Spec §FR-004]
-- [ ] CHK002 Are the two social destinations specified as an exact set, and is an email address excluded from the feature? [Completeness, Spec §FR-003, Spec §FR-020]
-- [ ] CHK003 Is the single project specified as a placeholder with its repository URL and path? [Completeness, Spec §FR-005]
-- [ ] CHK004 Are Now and About specified as published English placeholder pages, with final wording left out of this feature? [Completeness, Spec §FR-006, Spec §FR-007, Spec §FR-020]
-- [ ] CHK005 Are requirements defined for the published search page and for the search index excluding the draft post? [Completeness, Spec §FR-009]
+- [x] CHK001 Are the audience and the four section destinations specified with exact labels and paths? [Completeness, Spec §FR-001, Spec §FR-004]
+- [x] CHK002 Are the two social destinations specified as an exact set, and is an email address excluded from the feature? [Completeness, Spec §FR-003, Spec §FR-020]
+- [x] CHK003 Is the single project specified as a placeholder with its repository URL and path? [Completeness, Spec §FR-005]
+- [x] CHK004 Are Now and About specified as published English placeholder pages, with final wording left out of this feature? [Completeness, Spec §FR-006, Spec §FR-007, Spec §FR-020]
+- [x] CHK005 Are requirements defined for the published search page and for the search index excluding the draft post? [Completeness, Spec §FR-009]
 
 ## Requirement Clarity
 
-- [ ] CHK006 Is the home-page identity specified with the exact name and the exact headline? [Clarity, Spec §FR-003]
-- [ ] CHK007 Is the Search control specified as outside the menu, with the class value and the href value named? [Clarity, Spec §FR-009]
-- [ ] CHK008 Is the welcome post specified with the exact title, slug, draft flag, word bound, and the two heading texts? [Clarity, Spec §FR-008]
-- [ ] CHK009 Is the draft preview destination specified so the published tree stays without the welcome page? [Clarity, Spec §FR-012]
-- [ ] CHK010 Is light/dark switching specified by an identifiable control on the home page? [Clarity, Spec §FR-011]
-- [ ] CHK011 Is the pull-request branch check specified as an exact match on `develop` and `main`? [Clarity, Spec §FR-016]
+- [x] CHK006 Is the home-page identity specified with the exact name and the exact headline? [Clarity, Spec §FR-003]
+- [x] CHK007 Is the Search control specified as outside the menu, with the class value and the href value named? [Clarity, Spec §FR-009]
+- [x] CHK008 Is the welcome post specified with the exact title, slug, draft flag, word bound, and the two heading texts? [Clarity, Spec §FR-008]
+- [x] CHK009 Is the draft preview destination specified so the published tree stays without the welcome page? [Clarity, Spec §FR-012]
+- [x] CHK010 Is light/dark switching specified by an identifiable control on the home page? [Clarity, Spec §FR-011]
+- [x] CHK011 Is the pull-request branch check specified as an exact match on `develop` and `main`? [Clarity, Spec §FR-016]
 
 ## Requirement Consistency
 
-- [ ] CHK012 Do the published HTML tree, the feed, and the search index all exclude the welcome draft? [Consistency, Spec §FR-008, Spec §FR-009, Spec §FR-010]
-- [ ] CHK013 Is the site-feed advertisement scoped to the home page in both the requirement and the check? [Consistency, Spec §FR-010]
-- [ ] CHK014 Does the menu contract in the plan stay inside the four links FR-004 requires, with order fixed only as a plan choice? [Consistency, Spec §FR-004]
-- [ ] CHK015 Does the Clarifications section record the 2026-10-20 result without adding a requirement? [Consistency, Spec §Clarifications]
+- [x] CHK012 Do the published HTML tree, the feed, and the search index all exclude the welcome draft? [Consistency, Spec §FR-008, Spec §FR-009, Spec §FR-010]
+- [x] CHK013 Is the site-feed advertisement scoped to the home page in both the requirement and the check? [Consistency, Spec §FR-010]
+- [x] CHK014 Does the menu contract in the plan stay inside the four links FR-004 requires, with order fixed only as a plan choice? [Consistency, Spec §FR-004]
+- [x] CHK015 Does the Clarifications section record the 2026-10-20 result without adding a requirement? [Consistency, Spec §Clarifications]
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK016 Can each success criterion be judged without the reviewer choosing an unspecified value? [Measurability, Spec §SC-001, Spec §SC-005]
-- [ ] CHK017 Are the reading-time and table-of-contents outcomes specified as exact visible text? [Measurability, Spec §FR-012, Spec §SC-004]
+- [x] CHK016 Can each success criterion be judged without the reviewer choosing an unspecified value? [Measurability, Spec §SC-001, Spec §SC-005]
+- [x] CHK017 Are the reading-time and table-of-contents outcomes specified as exact visible text? [Measurability, Spec §FR-012, Spec §SC-004]
 
 ## Scenario Coverage
 
-- [ ] CHK018 Are the primary recruiter paths specified for the home page, the four sections, search, and the feed? [Coverage, Spec §User Story 1, Spec §User Story 3]
-- [ ] CHK019 Are the CI jobs specified for pull requests to `develop` and for release pull requests to `main`? [Coverage, Spec §FR-016, Spec §FR-017, Spec §FR-018]
+- [x] CHK018 Are the primary recruiter paths specified for the home page, the four sections, search, and the feed? [Coverage, Spec §User Story 1, Spec §User Story 3]
+- [x] CHK019 Are the CI jobs specified for pull requests to `develop` and for release pull requests to `main`? [Coverage, Spec §FR-016, Spec §FR-017, Spec §FR-018]
 
 ## Edge Case Coverage
 
-- [ ] CHK020 Are a missing theme submodule, a broken internal link, a broken external link, and a secret removed later on the same branch addressed? [Edge Case, Spec §Edge Cases, Spec §FR-017, Spec §FR-018]
-- [ ] CHK021 Is branch protection specified, including that only Jorge can apply it? [Completeness, Spec §FR-021]
+- [x] CHK020 Are a missing theme submodule, a broken internal link, a broken external link, and a secret removed later on the same branch addressed? [Edge Case, Spec §Edge Cases, Spec §FR-017, Spec §FR-018]
+- [x] CHK021 Is branch protection specified, including that only Jorge can apply it? [Completeness, Spec §FR-021]
 
 ## Dependencies and Assumptions
 
-- [ ] CHK022 Is a provisional base URL required in site configuration while the verification build still uses `--baseURL /`? [Consistency, Spec §FR-014]
-- [ ] CHK023 Are AWS, Terraform, a domain, analytics, comments, a contact form, and a second language documented as out of scope? [Coverage, Spec §FR-020]
+- [x] CHK022 Is a provisional base URL required in site configuration while the verification build still uses `--baseURL /`? [Consistency, Spec §FR-014]
+- [x] CHK023 Are AWS, Terraform, a domain, analytics, comments, a contact form, and a second language documented as out of scope? [Coverage, Spec §FR-020]
 
 ## Notes
 
