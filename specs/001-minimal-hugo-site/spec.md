@@ -123,7 +123,11 @@ hugo --gc --minify --panicOnWarning --baseURL /
 
 Expected: exit code 0, and `test -f public/index.html` succeeds.
 
-- **FR-002**: `grep -F 'lang="en"' public/index.html`. Expected: exit 0.
+Attribute checks use one extended-regular-expression form throughout. It matches the quoted attributes named in the requirements (`lang="en"`) and the unquoted attributes Hugo writes with `--minify` (`lang=en`). There is no second, unminified build. Element extracts use the element's own tags, not a line range, because `--minify` can place the head and the body on the same line.
+
+The draft build writes to `/tmp/public-drafts` and does not modify `public/`.
+
+- **FR-002**: `grep -E '<html[^>]* lang="?en"?' public/index.html`. Expected: exit 0.
 - **FR-003**:
 
   ```bash
@@ -131,19 +135,26 @@ Expected: exit code 0, and `test -f public/index.html` succeeds.
   grep -F 'Placeholder headline' public/index.html
   grep -F 'https://github.com/JLaborda' public/index.html
   grep -F 'https://www.linkedin.com/in/jorge-daniel-laborda-sicilia' public/index.html
-  if grep -F 'mailto:' public/index.html; then exit 1; fi
+  if grep -R -F 'mailto:' public --include='*.html'; then exit 1; fi
   ```
 
-  Expected: the four `grep -F` commands exit 0, and the `mailto:` guard exits 0.
+  Expected: the four `grep -F` commands exit 0, and the `mailto:` guard exits 0. The guard searches every published HTML file.
 - **FR-004**:
 
   ```bash
-  menu=$(sed -n '/<ul id="menu">/,/<\/ul>/p' public/index.html)
-  test "$(printf '%s\n' "$menu" | grep -o 'href="[^"]*"' | wc -l | tr -d ' ')" = 4
-  printf '%s\n' "$menu" | grep -F 'href="/projects/"'
-  printf '%s\n' "$menu" | grep -F 'href="/now/"'
-  printf '%s\n' "$menu" | grep -F 'href="/about/"'
-  printf '%s\n' "$menu" | grep -F 'href="/posts/"'
+  menu=$(python3 -c '
+  import re, pathlib, sys
+  html = pathlib.Path("public/index.html").read_text()
+  m = re.search(r"<ul id=\"?menu\"?>.*?</ul>", html, re.S)
+  if not m:
+      sys.exit(1)
+  sys.stdout.write(m.group(0))
+  ')
+  test "$(printf '%s\n' "$menu" | grep -oE 'href="?[^"[:space:]]+"?' | wc -l | tr -d ' ')" = 4
+  printf '%s\n' "$menu" | grep -E 'href="?/projects/"?([[:space:]>]|$)'
+  printf '%s\n' "$menu" | grep -E 'href="?/now/"?([[:space:]>]|$)'
+  printf '%s\n' "$menu" | grep -E 'href="?/about/"?([[:space:]>]|$)'
+  printf '%s\n' "$menu" | grep -E 'href="?/posts/"?([[:space:]>]|$)'
   printf '%s\n' "$menu" | grep -F 'Projects'
   printf '%s\n' "$menu" | grep -F 'Now'
   printf '%s\n' "$menu" | grep -F 'About'
@@ -151,7 +162,7 @@ Expected: exit code 0, and `test -f public/index.html` succeeds.
   if printf '%s\n' "$menu" | grep -F '/search/'; then exit 1; fi
   ```
 
-  Expected: exit 0. `wc -l` comparison prints nothing and succeeds. Each label and path grep exits 0. The `/search/` guard does not find a match.
+  Expected: exit 0. The count equals 4. Each label and path grep exits 0. The `/search/` guard does not find a match.
 - **FR-005**:
 
   ```bash
@@ -171,17 +182,19 @@ Expected: exit code 0, and `test -f public/index.html` succeeds.
   grep -F 'placeholder' public/now/index.html
   grep -F 'placeholder' public/about/index.html
   test ! -e public/posts/welcome/index.html
-  hugo --gc --minify --panicOnWarning --baseURL / -D
-  test -f public/posts/welcome/index.html
+  rm -rf /tmp/public-drafts
+  hugo --gc --minify --panicOnWarning --baseURL / -D --destination /tmp/public-drafts
+  test -f /tmp/public-drafts/posts/welcome/index.html
+  test ! -e public/posts/welcome/index.html
   ```
 
-  Expected: every command exits 0. The published tree has no welcome page; the draft build creates `public/posts/welcome/index.html`.
+  Expected: every command exits 0. `public/posts/welcome/index.html` is absent before the draft build and still absent after it.
 - **FR-009**:
 
   ```bash
   test -f public/search/index.html
   test -f public/index.json
-  grep -F 'class="button" href="/search/"' public/index.html
+  grep -E 'class="?button"? href="?/search/"?' public/index.html
   jq -e '[.[] | select(.title == "Welcome" or ((.permalink // "") | contains("/posts/welcome")))] | length == 0' public/index.json
   ```
 
@@ -190,38 +203,64 @@ Expected: exit code 0, and `test -f public/index.html` succeeds.
 
   ```bash
   test -f public/index.xml
-  grep -F 'rel="alternate" type="application/rss+xml" href="/index.xml"' public/index.html
+  grep -E '<link rel="?alternate"? type="?application/rss\+xml"? href="?/index.xml"?' public/index.html
   if grep -F '<title>Welcome</title>' public/index.xml; then exit 1; fi
   if grep -F '/posts/welcome/' public/index.xml; then exit 1; fi
-  menu=$(sed -n '/<ul id="menu">/,/<\/ul>/p' public/index.html)
+  menu=$(python3 -c '
+  import re, pathlib, sys
+  html = pathlib.Path("public/index.html").read_text()
+  m = re.search(r"<ul id=\"?menu\"?>.*?</ul>", html, re.S)
+  if not m:
+      sys.exit(1)
+  sys.stdout.write(m.group(0))
+  ')
   if printf '%s\n' "$menu" | grep -F 'index.xml'; then exit 1; fi
-  if grep -F 'social-icons' -A 40 public/index.html | grep -F 'index.xml'; then exit 1; fi
+  icons=$(python3 -c '
+  import re, pathlib, sys
+  html = pathlib.Path("public/index.html").read_text()
+  m = re.search(r"<div class=\"?social-icons\"?[^>]*>.*?</div>", html, re.S)
+  if not m:
+      sys.exit(1)
+  sys.stdout.write(m.group(0))
+  ')
+  if printf '%s\n' "$icons" | grep -F 'index.xml'; then exit 1; fi
   ```
 
-  Expected: exit 0. The alternate-link grep matches. The three guards find no welcome title, no welcome path, and no feed link in the menu or social icons.
-- **FR-011**: `grep -F 'id="theme-toggle"' public/index.html`. Expected: exit 0.
-- **FR-012**: After the draft build from FR-008:
+  Expected: exit 0. The alternate-link grep matches the home page. The guards find no welcome title, no welcome path, and no feed link inside the menu element or the social-icons element.
+- **FR-011**: `grep -E 'id="?theme-toggle"?' public/index.html`. Expected: exit 0.
+- **FR-012**: After the draft build from FR-008. The file under test is `/tmp/public-drafts/posts/welcome/index.html`.
 
   ```bash
-  grep -F '<div class="toc">' public/posts/welcome/index.html
-  grep -F 'Table of Contents' public/posts/welcome/index.html
-  grep -F 'href="#first-section"' public/posts/welcome/index.html
-  grep -F 'href="#second-section"' public/posts/welcome/index.html
-  awk '/<div class="post-meta">/,/<\/div>/' public/posts/welcome/index.html | grep -F '1 min'
+  draft=/tmp/public-drafts/posts/welcome/index.html
+  grep -E '<div class="?toc"?>' "$draft"
+  grep -F 'Table of Contents' "$draft"
+  grep -E 'href="?#first-section"?' "$draft"
+  grep -E 'href="?#second-section"?' "$draft"
+  python3 -c '
+  import re, pathlib, sys
+  html = pathlib.Path("/tmp/public-drafts/posts/welcome/index.html").read_text()
+  m = re.search(r"<div class=\"?post-meta\"?[^>]*>.*?</div>", html, re.S)
+  if not m:
+      sys.exit(1)
+  text = m.group(0)
+  if "1 min" not in text:
+      sys.exit(1)
+  print(text)
+  '
   ```
 
-  Expected: all five commands exit 0. The last command prints a line containing `1 min` and nothing that is only the substring `min`.
+  Expected: all five commands exit 0. The last command prints the post-meta element, and that element contains `1 min`.
 - **FR-013**:
 
   ```bash
   git -C themes/PaperMod describe --tags --exact-match HEAD
   git ls-tree HEAD themes/PaperMod | grep -E '^[0-9]+ commit '
-  test "$(grep -R '^HUGO_VERSION:' -n .github/workflows | wc -l | tr -d ' ')" = 1
-  version=$(grep -R '^HUGO_VERSION:' .github/workflows | head -1 | sed 's/.*: *"\{0,1\}\([^"]*\)"\{0,1\}/\1/')
+  test "$(grep -R -E '^[[:space:]]*HUGO_VERSION:' .github/workflows | wc -l | tr -d ' ')" = 1
+  version=$(grep -R -E '^[[:space:]]*HUGO_VERSION:' .github/workflows | head -1 | sed -E 's/.*HUGO_VERSION:[[:space:]]*"?([^"[:space:]]+)"?.*/\1/')
   grep -F "$version" README.md
   ```
 
-  Expected: `describe` prints one tag and exits 0. `ls-tree` prints one `commit` gitlink. The workflow count equals 1. The README grep exits 0.
+  Expected: `describe` prints one tag and exits 0. `ls-tree` prints one `commit` gitlink. The workflow count equals 1. `HUGO_VERSION` is matched with leading whitespace so an indented `env:` entry counts. The README grep exits 0.
 - **FR-014**:
 
   ```bash
@@ -236,45 +275,100 @@ Expected: exit code 0, and `test -f public/index.html` succeeds.
 - **FR-015**:
 
   ```bash
-  version=$(grep -R '^HUGO_VERSION:' .github/workflows | head -1 | sed 's/.*: *"\{0,1\}\([^"]*\)"\{0,1\}/\1/')
+  version=$(grep -R -E '^[[:space:]]*HUGO_VERSION:' .github/workflows | head -1 | sed -E 's/.*HUGO_VERSION:[[:space:]]*"?([^"[:space:]]+)"?.*/\1/')
   grep -F "$version" README.md
   grep -F 'git clone --recurse-submodules' README.md
   grep -F 'hugo server -D' README.md
   ```
 
   Expected: all three greps exit 0.
-- **FR-016**: `.github/workflows/ci.yml` contains the job name `hugo`, `actions/checkout` with `submodules: true` (or `recursive`), and the command `hugo --gc --minify --panicOnWarning --baseURL /`. Warning proof, on a branch that is deleted afterward and not merged:
+- **FR-016**: `.github/workflows/ci.yml` contains the job name `hugo`, `actions/checkout` with `submodules: true` (or `recursive`), and the command `hugo --gc --minify --panicOnWarning --baseURL /`. The `pull_request` branch list contains `develop` and `main`, so the same jobs report a status on a release pull request.
+
+  ```bash
+  grep -E '^[[:space:]]+hugo:' .github/workflows/ci.yml
+  grep -E 'submodules:[[:space:]]*(true|recursive)' .github/workflows/ci.yml
+  grep -F 'hugo --gc --minify --panicOnWarning --baseURL /' .github/workflows/ci.yml
+  grep -E '^[[:space:]]*- develop$' .github/workflows/ci.yml
+  grep -E '^[[:space:]]*- main$' .github/workflows/ci.yml
+  ```
+
+  Expected: each grep exits 0.
+
+  Warning proof, on a branch that is deleted afterward and not pushed:
 
   ```bash
   git switch -c spec-001-warnf
   mkdir -p layouts/shortcodes
   printf '%s\n' '{{ warnf "spec-001 warning probe" }}' > layouts/shortcodes/warn-test.html
-  # call {{< warn-test >}} from content/about.md, then:
-  hugo --gc --minify --baseURL /
-  hugo --gc --minify --panicOnWarning --baseURL /
+  printf '\n{{< warn-test >}}\n' >> content/about.md
+  git add layouts/shortcodes/warn-test.html content/about.md
+  git commit -m "test: warning probe"
+  set +e
+  hugo --gc --minify --baseURL / --destination /tmp/public-warn
+  first=$?
+  hugo --gc --minify --panicOnWarning --baseURL / --destination /tmp/public-warn
+  second=$?
+  set -e
   git switch -
   git branch -D spec-001-warnf
+  test "$first" -eq 0
+  test "$second" -ne 0
   ```
 
-  Expected: the first hugo command exits 0. The second exits non-zero. The branch is deleted and is not pushed.
-- **FR-017**: `.github/workflows/ci.yml` job `lychee` runs `lychee --offline --root-dir public public` and a second lychee invocation with `--exclude https://www.linkedin.com/in/jorge-daniel-laborda-sicilia` and `continue-on-error: true` that prints `::warning::` plus the URL for each external failure. Internal proof, on a branch that is not merged: add `[x](/does-not-exist/)` to `content/about.md`, run `lychee --offline --root-dir public public`, and expect exit code non-zero. External proof, on a branch that is not merged: add `[x](https://example.invalid/spec-001-missing)` to `content/about.md`. Expected: the job conclusion is `success`, the step log contains `https://example.invalid/spec-001-missing`, and the log contains the line `::warning::https://example.invalid/spec-001-missing`.
-- **FR-018**: `.github/workflows/ci.yml` job `gitleaks` contains `gitleaks detect --redact --log-opts="origin/develop..HEAD"`. Local failure proof, with no push:
+  Expected: `first` is 0 and `second` is not 0. Both builds use `/tmp/public-warn`, so `public/` stays the published tree. The branch is deleted and is not pushed.
+- **FR-017**: `.github/workflows/ci.yml` job `lychee` runs `lychee --offline --root-dir public public` and a second lychee invocation with `--exclude https://www.linkedin.com/in/jorge-daniel-laborda-sicilia` and `continue-on-error: true` that prints `::warning::` plus the URL for each external failure.
 
   ```bash
+  grep -F 'lychee --offline --root-dir public public' .github/workflows/ci.yml
+  grep -F 'continue-on-error: true' .github/workflows/ci.yml
+  grep -F 'https://www.linkedin.com/in/jorge-daniel-laborda-sicilia' .github/workflows/ci.yml
+  grep -F '::warning::' .github/workflows/ci.yml
+  lychee --offline --root-dir public public
+  ```
+
+  Expected: the four greps exit 0 and the lychee command exits 0.
+
+  Internal proof, on a branch that is deleted afterward and not pushed. The build uses a separate destination so `public/` is not replaced:
+
+  ```bash
+  git switch -c spec-001-lychee
+  printf '\n[x](/does-not-exist/)\n' >> content/about.md
+  git add content/about.md
+  git commit -m "test: broken internal link"
+  rm -rf /tmp/public-lychee
+  hugo --gc --minify --panicOnWarning --baseURL / --destination /tmp/public-lychee
+  set +e
+  lychee --offline --root-dir /tmp/public-lychee /tmp/public-lychee
+  lychee_status=$?
+  set -e
+  git switch -
+  git branch -D spec-001-lychee
+  test "$lychee_status" -ne 0
+  ```
+
+  Expected: `lychee_status` is not 0. External proof, on a branch that is not merged: add `[x](https://example.invalid/spec-001-missing)` to `content/about.md`. Expected: the job conclusion is `success`, the step log contains `https://example.invalid/spec-001-missing`, and the log contains the line `::warning::https://example.invalid/spec-001-missing`.
+- **FR-018**: The gitleaks job checks out with `fetch-depth: 0` and runs `gitleaks detect --redact --log-opts="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"`. A default pull-request checkout does not have `origin/develop`; the base and head SHAs are the CI form of that range. Local failure proof, with no push, still uses `origin/develop..HEAD` on a throwaway branch:
+
+  ```bash
+  grep -F 'fetch-depth: 0' .github/workflows/ci.yml
+  grep -F 'gitleaks detect --redact --log-opts="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"' .github/workflows/ci.yml
   git switch -c spec-001-gitleaks
-  python3 -c 'import random,string; alphabet=string.ascii_uppercase+string.digits; key="AKIA"+"".join(random.choice(alphabet) for _ in range(16));
+  python3 -c 'import random,string; alphabet=string.ascii_uppercase+"234567"; key="AKIA"+"".join(random.choice(alphabet) for _ in range(16));
   assert key != "AKIAIOSFODNN7EXAMPLE";
   open("leak-test.txt","w").write("aws_access_key_id = %s\n"%key)'
   git add leak-test.txt
   git commit -m "test: synthetic gitleaks fixture"
-  gitleaks detect --redact --log-opts="origin/develop..HEAD"
-  status=$?
+  status=0
+  gitleaks detect --redact --no-banner --log-opts="origin/develop..HEAD" --report-format json --report-path /tmp/gitleaks-report.json || status=$?
+  jq -r '.[0].RuleID' /tmp/gitleaks-report.json
   git switch -
   git branch -D spec-001-gitleaks
   test "$status" -ne 0
+  test "$(jq -r '.[0].RuleID' /tmp/gitleaks-report.json)" = "aws-access-token"
+  test ! -e leak-test.txt
   ```
 
-  Expected: `gitleaks` exits non-zero, `status` is not 0, and `leak-test.txt` is not on `develop` or on the feature branch. The spec file does not contain the generated key.
+  Expected: `status` is not 0 and the rule id is `aws-access-token`. The alphabet is `A-Z` and `234567`, which is what that rule matches after `AKIA` (`[A-Z2-7]{16}`). The value is not `AKIAIOSFODNN7EXAMPLE` and is not written into this specification. `leak-test.txt` is not left on `develop` or on the feature branch.
 - **FR-019**:
 
   ```bash
@@ -285,7 +379,7 @@ Expected: exit code 0, and `test -f public/index.html` succeeds.
   ```
 
   Expected: the three greps exit 0. `git status --short` does not list `public/`.
-- **FR-020**: `git diff --stat origin/develop...HEAD` does not list Terraform files, an AWS template, an analytics snippet, a contact form, a comments partial, a second language, or an email address. Expected: the spec-only pull request lists only `specs/001-minimal-hugo-site/spec.md`. The implementation pull requests for this feature are checked the same way against those forbidden additions.
+- **FR-020**: `git diff --stat origin/develop...HEAD` does not list Terraform files, an AWS template, an analytics snippet, a contact form, a comments partial, a second language, or an email address. Expected: this pull request lists only `specs/001-minimal-hugo-site/spec.md`. The implementation pull requests for this feature are checked the same way against those forbidden additions.
 - **FR-021**: After the workflow is on `develop`, and after Jorge has saved branch protection:
 
   ```bash
