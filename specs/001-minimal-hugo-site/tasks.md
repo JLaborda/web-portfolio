@@ -149,8 +149,8 @@ Expected: the diff does not add Terraform, an AWS template, an analytics snippet
 
 Jorge applies branch protection on `develop` and `main`, requiring `hugo`, `lychee`, and `gitleaks`, after `t03` is merged and before this pull request declares `Converged`.
 
-- [ ] T023 Run the FR-021 `gh api` loop for `develop` and `main` and write both outputs, `["gitleaks","hugo","lychee"]`, into `specs/001-minimal-hugo-site/converge.md` before the verdict
-- [ ] T024 Run `/speckit-converge` on the last implementation pull request and commit its full output, the date, the commit SHA it ran on, and the verdict `Converged` to `specs/001-minimal-hugo-site/converge.md`
+- [X] T023 Run the FR-021 `gh api` loop for `develop` and `main` and write both outputs, `["gitleaks","hugo","lychee"]`, into `specs/001-minimal-hugo-site/converge.md` before the verdict
+- [X] T024 Run `/speckit-converge` on the last implementation pull request and commit its full output, the date, the commit SHA it ran on, and the verdict `Converged` to `specs/001-minimal-hugo-site/converge.md`
 
 ---
 
