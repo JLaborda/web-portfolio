@@ -27,6 +27,10 @@ Status: Approved by Jorge — PR #11
 - Q: What if `infra/` already exists on the base and `AWS_PLAN_ROLE_ARN` is empty? → A: The step prints `::error::AWS_PLAN_ROLE_ARN is unset and infra/ already exists on the base` and exits 1. Clearing the variable later fails the job. It does not skip plan.
 - Q: In what order does Jorge merge the first pull request that adds `infra/`? → A: He runs Bootstrap from that head, sets `AWS_PLAN_ROLE_ARN`, re-runs `terraform`, and merges only when the latest run executed plan and is green. A skipped-plan run is not merged. There is no admin bypass.
 - Q: Which command turns on the required status checks? → A: `gh api -X PUT repos/JLaborda/web-portfolio/branches/{develop,main}/protection` with contexts `gitleaks`, `hugo`, `lychee`, and `terraform`, `enforce_admins` true, and reviews and push restrictions null. Jorge runs it after the `terraform` job has reported, and before that first `infra/` pull request merges.
+- Q: How does Verification prove that plan ran, without matching text the runner echoes from the script? → A: On the latest attempt, the log contains at least two Terraform summary lines, `No changes. Your infrastructure matches the configuration.` or `Plan: N to add,`. Those lines are not in the workflow file. One line is `infra/shared` and one is `infra/site`. FR-017 stays unchanged.
+- Q: How does Verification prove the skip notice and the error did not fire? → A: `gh api repos/JLaborda/web-portfolio/check-runs/$JOB_ID/annotations` has no message containing `terraform plan skipped` and no annotation whose level is `failure`. `$JOB_ID` is the `terraform` job of that attempt. `gh run view` is called with `--attempt` set to the run's latest attempt.
+- Q: Which pull request does the first-infra merge order govern? → A: The pull request into `develop` whose base commit has no `infra/` tree. The later pull request into `main` is not a second bootstrap.
+- Q: Can a direct push to `develop` or `main` deploy after protection is on? → A: No. `enforce_admins` is true, so the push is rejected even for Jorge. A deploy follows a merge. The protection read also checks `.enforce_admins.enabled` is true.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -79,7 +83,7 @@ Jorge is emailed when actual AWS spend for the month is greater than 1 USD. The 
 ### Edge Cases
 
 - A Hugo build that exits non-zero does not sync and does not invalidate. The previous live site stays as it was.
-- A direct push to `develop` or `main` still deploys. Required status checks stop a failing pull request from merging onto those branches. Feature 001 requires `hugo`, `lychee`, and `gitleaks`. Once `.github/workflows/terraform.yml` is on `develop`, both branches also require the job `terraform`. This feature does not re-run the feature 001 jobs.
+- After branch protection is on, a direct push to `develop` or `main` is rejected, including a push by Jorge, because `enforce_admins` is true. A deploy follows a merge onto that branch. Feature 001 requires `hugo`, `lychee`, and `gitleaks`. Once `.github/workflows/terraform.yml` is on `develop`, both branches also require the job `terraform`. This feature does not re-run the feature 001 jobs.
 - `terraform plan` in Actions uses `-lock=false`. It does not write the S3 lock file. A plan that races an apply Jorge is running locally can be stale; it still must not change infrastructure.
 - A pull request that does not change `infra/**` still runs `.github/workflows/terraform.yml`. The paths-filter step skips the Terraform steps and the `terraform` job reports success. The workflow has no `paths:` filter, so the required check does not stay pending.
 - The plan step prints `::notice::AWS_PLAN_ROLE_ARN is unset; terraform plan skipped until bootstrap` and exits 0 only when the base commit has no `infra/` tree and `AWS_PLAN_ROLE_ARN` is empty or whitespace. Fmt, validate, and tflint still gate that run. That green skip is not a merge. If the base commit already has an `infra/` tree and the variable is empty, the step prints `::error::AWS_PLAN_ROLE_ARN is unset and infra/ already exists on the base` and exits 1. A non-empty variable runs plan. A failing plan blocks the merge. Jorge does not bypass it.
@@ -110,9 +114,9 @@ Jorge is emailed when actual AWS spend for the month is greater than 1 USD. The 
 - **FR-016**: Cache-Control is `public, max-age=0, must-revalidate` for `*.html`, `*.xml`, `*.json`, and `robots.txt`. It is `public, max-age=31536000, immutable` when the object key matches `\.[0-9a-f]{8,}\.` and is not one of those four names. Every other object is `public, max-age=3600`. The first sync may set the one-hour default and is the only sync that passes `--delete`. Later copies overwrite Cache-Control for the short and long groups and do not pass `--delete`.
 - **FR-017**: `.github/workflows/terraform.yml` runs on every `pull_request` whose base is `develop` or `main`. It has no `paths` filter. It has one job named `terraform`. That job checks out with `actions/checkout` at `3d3c42e5aac5ba805825da76410c181273ba90b1` and `fetch-depth: 0`. A step with id `paths` sets output `infra` to `true` when `git diff --name-only` between `github.event.pull_request.base.sha` and `github.event.pull_request.head.sha` lists a path under `infra/`, and to `false` otherwise. Every step that runs `terraform`, `tflint`, or assumes `web-portfolio-plan` uses `if: steps.paths.outputs.infra == 'true'` and has no `continue-on-error`. Those steps run `terraform fmt -check -recursive`, `terraform -chdir=infra/shared validate`, `terraform -chdir=infra/site validate`, and `tflint` `0.64.0` with the AWS ruleset `0.49.0` in `infra/shared` and in `infra/site`. Those commands use no AWS credentials. The plan step uses that same `if`. It reads repository variable `AWS_PLAN_ROLE_ARN` from `${{ vars.AWS_PLAN_ROLE_ARN }}` and removes whitespace. GitHub supplies an empty string when the variable does not exist. It runs `git ls-tree -d "${{ github.event.pull_request.base.sha }}" infra`. Empty output means the base commit has no `infra/` tree. The step skips `terraform plan`, prints `::notice::AWS_PLAN_ROLE_ARN is unset; terraform plan skipped until bootstrap`, and exits 0 only when that output is empty and the variable is empty. That is the first pull request that introduces `infra/`. If the variable is non-empty, the step assumes `web-portfolio-plan` in that same script and runs `terraform plan -lock=false -input=false` in `infra/shared` and in `infra/site`, including on that first pull request. If the base commit has an `infra/` tree and the variable is empty, the step prints `::error::AWS_PLAN_ROLE_ARN is unset and infra/ already exists on the base` and exits 1. A non-zero plan exit also fails the job. When `infra` is `false`, the Terraform steps are skipped and the job conclusion is `success`. When the notice skip applies, fmt, validate, and tflint still gate the job, and the job is `success` only if those commands passed. The job does not apply. A green skip is not a merge. FR-021 is.
 - **FR-018**: Feature 001's jobs `hugo`, `lychee`, and `gitleaks` stay required status checks. This feature does not redefine them. Once `.github/workflows/terraform.yml` is on `develop`, the job `terraform` is required as well, as FR-020 states. A deploy happens after a push to `develop` or `main`, which is how a merge that passed the required checks becomes the deployed commit.
-- **FR-019**: Bootstrap is the manual procedure in the Bootstrap section. Jorge runs it from the head of the first pull request that adds `infra/`, with his SSO session, before that pull request merges and before the first deploy. Its last step sets the repository variable `AWS_PLAN_ROLE_ARN`. He then re-runs the `terraform` job on that same head.
+- **FR-019**: Bootstrap is the manual procedure in the Bootstrap section. Jorge runs it from the head of the pull request into `develop` that first adds `infra/`, with his SSO session, before that pull request merges and before the first deploy. Its last step sets the repository variable `AWS_PLAN_ROLE_ARN`. He then re-runs the `terraform` job on that same head. The later pull request into `main` does not run Bootstrap again.
 - **FR-020**: Once `.github/workflows/terraform.yml` is on `develop` and the job `terraform` has completed at least once, Jorge runs the `gh api -X PUT` command in Bootstrap on `develop` and on `main`. The required contexts are `gitleaks`, `hugo`, `lychee`, and `terraform`. `enforce_admins` is true, so an administrator cannot bypass those checks. `required_pull_request_reviews` and `restrictions` are null. `strict` is false. The first `infra/` pull request is not merged until this protection is in place and FR-021 is satisfied. A red `terraform` check blocks the merge.
-- **FR-021**: The first pull request whose base commit has no `infra/` tree is merged only in this order. Jorge runs Bootstrap from that pull request's head. Bootstrap sets `AWS_PLAN_ROLE_ARN`. He re-runs the `terraform` job on that same head. He merges only when the latest run for that head has conclusion `success`, the log contains `terraform plan -lock=false -input=false`, and the log does not contain `::notice::AWS_PLAN_ROLE_ARN is unset; terraform plan skipped until bootstrap`. He does not merge a run that skipped plan. He does not use an admin bypass.
+- **FR-021**: The pull request into `develop` whose base commit has no `infra/` tree is merged only in this order. Jorge runs Bootstrap from that pull request's head. Bootstrap sets `AWS_PLAN_ROLE_ARN`. He re-runs the `terraform` job on that same head. He merges only when the latest attempt of that run has conclusion `success`, the log contains at least two Terraform summary lines (`No changes. Your infrastructure matches the configuration.` or `Plan: N to add,`), and the `terraform` job's annotations contain neither `terraform plan skipped` nor a failure. He does not merge a run that skipped plan. He does not use an admin bypass. This order does not apply to the pull request into `main`.
 
 ### Key Entities
 
@@ -380,23 +384,31 @@ Commands that read AWS use Jorge's SSO profile or the read-only plan role. They 
   for branch in develop main; do
     gh api "repos/JLaborda/web-portfolio/branches/${branch}/protection" \
       --jq '[.required_status_checks.contexts[], .required_status_checks.checks[].context] | unique | sort'
+    gh api "repos/JLaborda/web-portfolio/branches/${branch}/protection" \
+      --jq '.enforce_admins.enabled'
   done
   ```
 
-  Expected: each command exits 0 and prints `["gitleaks","hugo","lychee","terraform"]`. An HTTP 404 means protection is missing. A list that drops `hugo`, `lychee`, or `gitleaks` does not pass. Only Jorge, as repository admin, runs the Bootstrap `gh api -X PUT` command that creates this protection. `enforce_admins` true means he cannot bypass a red check. The check failing before he saves protection is expected, and it is not a reason to merge the first `infra/` pull request early.
+  Expected: each contexts command exits 0 and prints `["gitleaks","hugo","lychee","terraform"]`. Each `enforce_admins` command prints `true`. An HTTP 404 means protection is missing. A list that drops `hugo`, `lychee`, or `gitleaks` does not pass. Only Jorge, as repository admin, runs the Bootstrap `gh api -X PUT` command that creates this protection. `enforce_admins` true means he cannot bypass a red check. The check failing before he saves protection is expected, and it is not a reason to merge the first `infra/` pull request early.
 
-- **FR-021**: On the first pull request that adds `infra/`, after the re-run. `HEAD_SHA` is that pull request's head.
+- **FR-021**: On the pull request into `develop` that first adds `infra/`, after the re-run. `HEAD_SHA` is that pull request's head. The base ref is `develop`.
 
   ```bash
-  RUN=$(gh run list --commit "$HEAD_SHA" --workflow terraform.yml --json databaseId,conclusion,createdAt \
-    --jq 'sort_by(.createdAt) | reverse | .[0] | select(.conclusion == "success") | .databaseId')
+  ROW=$(gh run list --commit "$HEAD_SHA" --workflow terraform.yml --json databaseId,conclusion,createdAt,attempt \
+    --jq 'sort_by(.createdAt) | reverse | .[0] | select(.conclusion == "success")')
+  RUN=$(printf '%s\n' "$ROW" | jq -r '.databaseId')
+  ATTEMPT=$(printf '%s\n' "$ROW" | jq -r '.attempt')
   test -n "$RUN"
-  gh run view "$RUN" --log > /tmp/terraform-run.log
-  grep -F 'terraform plan -lock=false -input=false' /tmp/terraform-run.log
-  if grep -F '::notice::AWS_PLAN_ROLE_ARN is unset; terraform plan skipped until bootstrap' /tmp/terraform-run.log; then exit 1; fi
+  test -n "$ATTEMPT"
+  gh run view "$RUN" --attempt "$ATTEMPT" --log > /tmp/terraform-run.log
+  test "$(grep -E -c 'No changes\. Your infrastructure matches the configuration\.|Plan: [0-9]+ to add,' /tmp/terraform-run.log || true)" -ge 2
+  JOB_ID=$(gh run view "$RUN" --attempt "$ATTEMPT" --json jobs --jq '.jobs[] | select(.name == "terraform") | .databaseId')
+  test -n "$JOB_ID"
+  gh api "repos/JLaborda/web-portfolio/check-runs/${JOB_ID}/annotations" \
+    --jq '[.[] | select((.message | contains("terraform plan skipped")) or .annotation_level == "failure")] | length == 0'
   ```
 
-  Expected: `RUN` is non-empty, the plan grep exits 0, and the notice guard does not take the `exit 1` branch. The latest successful run executed plan. A run that only skipped plan does not pass, and it is not merged.
+  Expected: `RUN` and `ATTEMPT` are non-empty. `--attempt` is the latest attempt of that run, which is what a re-run updates. The summary count is at least 2, one for `infra/shared` and one for `infra/site`. Those lines are Terraform's own plan text. They are not in `.github/workflows/terraform.yml`, and the echoed `run:` script does not contain them. The annotations command prints `true`: no annotation message contains `terraform plan skipped`, and none has level `failure`. A skipped plan does not pass, and it is not merged.
 
 ## Out of Scope
 
