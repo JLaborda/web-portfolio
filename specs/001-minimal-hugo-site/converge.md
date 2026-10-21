@@ -141,9 +141,9 @@ No actionable findings.
 - Findings by gap type: missing 0, partial 0, contradicts 0, unrequested 0
 - Findings by severity: CRITICAL 0, HIGH 0, MEDIUM 0, LOW 0
 
-## Known deviation (not an actionable finding)
+## Known deviation (closed by the spec-fix pull request)
 
-`spec.md` FR-017 and `tasks.md` T022 still name the external-link probe `https://example.invalid/spec-001-missing`. Lychee 0.24.2 excludes the `.invalid` TLD, so that URL never produces `::warning::`. Jorge approved `https://httpbin.org/status/404` for the T022 proof on 2026-10-21: https://github.com/JLaborda/web-portfolio/pull/12#issuecomment-6310516548. The throwaway run is recorded on pull request #12. The spec text is a later spec pull request. This run does not edit `spec.md` or `plan.md`, and it does not append a task. A task to change that sentence would change the approved spec. A task to put `example.invalid` back into the proof would not produce the warning FR-017 requires.
+The converge assessment on `5ceda202939d15f9892d16b45179ce4b51a1b8f8` found FR-017 and T022 naming `https://example.invalid/spec-001-missing`. Lychee 0.24.2 excludes the `.invalid` TLD, so that URL never produces `::warning::`. Jorge approved `https://httpbin.org/status/404` for the T022 proof on 2026-10-21: https://github.com/JLaborda/web-portfolio/pull/12#issuecomment-6310516548. The throwaway run is recorded on pull request #12. The spec-fix pull request sets the FR-017 verification and T022 to that URL. The converge run itself did not edit `spec.md` or `plan.md`, and it did not append a task.
 
 ## Next actions
 
