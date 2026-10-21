@@ -1,3 +1,28 @@
+<!--
+Sync Impact Report
+- Version change: 1.1.0 → 1.2.0
+- Bump rationale: MINOR. New governance for who merges. No principle removed.
+- Modified principles:
+  - I. Spec-driven development and PO approval (merge authority)
+  - V. Scoped implementation PRs (review, then who merges)
+- Modified sections: Roles; Branches and releases (when a branch must be current)
+- Added sections: none. The new rules sit inside principle I. Roles gains Scrum Master Dev.
+- Removed sections: none
+- Replaced v1.1.0 sentences:
+  - "Only Jorge MAY merge. Any other person or bot MUST NOT merge."
+  - "QA then verifies that the commit matches the review before asking Jorge to merge."
+  - "The Reviewer MUST review ... before asking Jorge to merge."
+  - "The QA review is recorded before Jorge's merge."
+  - Roles: "He is the only person who merges."
+  - Reviewer: "before asking Jorge to merge."
+  - Branches: "before Jorge merges."
+- Kept, and not replaced: Jorge merges the spec pull request, the converge
+  pull request, a constitution amendment, a non-feature pull request, a
+  flagged pull request, and every release from develop to main.
+- Follow-up TODOs: none
+- Templates and commands: unchanged. They read this file at runtime.
+-->
+
 # web-portfolio Constitution
 
 ## Core Principles
@@ -26,7 +51,61 @@ approves it. On the short path, `/speckit-clarify`,
 `/speckit-checklist`, and `/speckit-analyze` are the only steps that MAY
 be omitted.
 
-Only Jorge MAY merge. Any other person or bot MUST NOT merge.
+v1.1.0 said: "Only Jorge MAY merge. Any other person or bot MUST NOT
+merge." That sentence is replaced. It no longer covers an intermediate
+pull request. The sentences that still give a merge to Jorge are listed
+with the rules below, and they stay in force.
+
+Jorge (Product Owner) approves and merges the spec pull request that
+starts a feature and the converge pull request that closes it. He also
+merges an amendment of this constitution, a non-feature pull request, a
+pull request the Scrum Master Dev has flagged, and every release from
+`develop` to `main`.
+
+An intermediate pull request is every pull request between that spec pull
+request and that converge pull request. That includes the plan and tasks
+pull request, a clarify that changes the plan or the tasks, an
+implementation task pull request, and the pull request that carries a
+`qa: checklist` commit. A clarify that changes `spec.md` is a spec pull
+request under rule 1 below, not an intermediate pull request. Reviewer QA
+approves an intermediate pull request. When that approval is recorded and
+the required checks are green, the pull request merges automatically.
+Jorge does not merge it by hand. Reviewer QA MUST NOT merge by hand.
+
+When the author opens an intermediate pull request, the author enables
+GitHub auto-merge with squash:
+
+`gh pr merge --auto --squash`
+
+Auto-merge runs only after Reviewer QA has approved and the required
+checks are green.
+
+Exception: the Scrum Master Dev flags a step that needs Jorge's personal
+verification. The flag is a comment on that pull request, written by the
+Scrum Master Dev. Auto-merge stays off, and the pull request waits for
+Jorge to merge it. The flag covers a step that creates or changes real
+AWS resources or costs, including bootstrap and apply, a step that changes
+IAM permissions or secrets, and a step that changes branch protection.
+
+When implementation of a spec is finished, Reviewer QA gives a final
+sign-off on the converge pull request. Jorge then verifies the feature
+personally. If he approves, he merges that close. If he does not approve,
+the work returns to the point that needs it: the spec, through
+`/speckit-clarify`, or the implementation, through a new task pull
+request.
+
+The repository setting "Allow auto-merge" MUST be enabled by Jorge, the
+repository admin, before auto-merge can run. Until that setting is
+enabled, an intermediate pull request waits for a manual squash merge
+after Reviewer QA approves and the required checks are green. Reviewer QA
+still MUST NOT merge by hand. That wait is not Jorge's approval of the
+start or of the close.
+
+These v1.1.0 rules stay. At most one spec, plan, or constitution pull
+request is open. A pull request MUST NOT depend on an unmerged pull
+request. A spec pull request comes from branch `NNN-name`. The only commit
+that may mark a `/speckit-checklist` item `[x]`, or add a waiver there, is
+a commit titled `qa: checklist`.
 
 Approval is recorded only as follows, and in this order:
 
@@ -97,8 +176,11 @@ For a file from `/speckit-checklist`, QA records each item in its GitHub
 review as checked or waived, with the reason for each waiver. QA cannot
 push. The pull request author applies exactly those marks in one commit
 on branch `NNN-name` titled `qa: checklist`, and the commit message links
-that review. QA then verifies that the commit matches the review before
-asking Jorge to merge. This limit does not apply to
+that review. QA then verifies that the commit matches the review. That
+verification is the Reviewer QA approval of this intermediate pull
+request. v1.1.0 said QA verifies the commit "before asking Jorge to
+merge." That sentence is replaced: Jorge is not asked to merge it, unless
+the Scrum Master Dev has flagged it. This limit does not apply to
 `checklists/requirements.md`, which specify and clarify maintain.
 
 `/speckit-implement` MUST stop and ask when any checklist item is
@@ -185,7 +267,13 @@ constitution PR is open.
 `git merge-base --is-ancestor origin/develop HEAD` exits 0 on its branch.
 Every feature PR targets `develop`. `main` has only merges from `develop`
 made by Jorge. `git check-ignore -v .specify/feature.json` reports an
-ignore rule.
+ignore rule. An intermediate pull request shows squash auto-merge enabled
+with `gh pr merge --auto --squash`, unless the Scrum Master Dev has
+commented a flag or the repository setting "Allow auto-merge" is off.
+Reviewer QA's approving review is on that pull request before it merges,
+and Reviewer QA is not the account that merged it. Jorge merges the spec
+pull request and the converge pull request. The converge pull request has
+Reviewer QA's sign-off before Jorge's merge.
 
 ### II. Fixed stack
 
@@ -301,17 +389,24 @@ of that final run, the date, the SHA of the commit it ran on, and the
 verdict `Converged`. The PR description MUST paste that verdict. QA MUST
 block the PR if the file is missing or the verdict is not `Converged`.
 
-The Reviewer MUST review against `spec.md`, `plan.md`, `tasks.md`, the
+Reviewer QA MUST review against `spec.md`, `plan.md`, `tasks.md`, the
 checklist files when the full path applies, `converge.md` when it is the
-last PR, and this constitution before asking Jorge to merge.
-Without that review, the PR MUST NOT be merged.
+last PR, and this constitution. v1.1.0 said that review comes "before
+asking Jorge to merge." That sentence is replaced. On an intermediate
+pull request, the review is the approval that allows auto-merge, and
+Jorge does not merge it unless it is flagged. On the converge pull
+request, the review is the final sign-off, and Jorge merges only after
+it. Without that review, the pull request MUST NOT be merged.
 
 **Check:** the description lists the ids, `tasks.md` has them as `[X]`,
 and there are no extra or missing ids. A PR that is not the converge PR
 does not rewrite tasks or change `spec.md`. The last PR contains
 `converge.md` with the date, the SHA, and `Converged`, and the description
 repeats the verdict. If the file is missing or the verdict is anything
-else, QA blocks the PR. The QA review is recorded before Jorge's merge.
+else, QA blocks the PR. v1.1.0 said "The QA review is recorded before
+Jorge's merge." That sentence is replaced for an intermediate pull
+request: the review is recorded before auto-merge. On the converge pull
+request, the review is still recorded before Jorge's merge.
 
 ### VI. Explainable in an interview, and cheap
 
@@ -339,10 +434,14 @@ review, or comment fails review. Pages under `content/` are English.
 ## Roles
 
 - **Jorge (Product Owner).** Approves this constitution by merging it.
-  Approves each spec PR, including `Path: short (small change)` when that
-  line is present, and, after that, the plan and tasks PR. He is the only
-  person who merges. Releases from `develop` to `main` are always merged
-  by Jorge.
+  Approves and merges each spec pull request that starts a feature,
+  including `Path: short (small change)` when that line is present, and
+  the converge pull request that closes it. v1.1.0 said "He is the only
+  person who merges." That sentence is replaced. He does not manually
+  merge an intermediate pull request. He does merge one the Scrum Master
+  Dev has flagged, a non-feature pull request, and every release from
+  `develop` to `main`. He enables the repository setting "Allow
+  auto-merge".
 - **Tech Lead.** On the full path, runs `/speckit-specify`,
   `/speckit-clarify`, `/speckit-plan`, `/speckit-checklist`,
   `/speckit-tasks`, and `/speckit-analyze`. When clarify finds nothing
@@ -352,21 +451,37 @@ review, or comment fails review. Pages under `content/` are English.
   waivers on unchecked `checklists/requirements.md` items. After QA's
   review, applies the `/speckit-checklist` marks in a commit titled
   `qa: checklist` that links the review. Writes the
-  `Status: Approved by Jorge — PR #N` line in those PRs.
+  `Status: Approved by Jorge — PR #N` line in those PRs. When opening the
+  plan and tasks pull request, enables squash auto-merge with
+  `gh pr merge --auto --squash`, unless the Scrum Master Dev has flagged
+  that pull request or "Allow auto-merge" is still off.
 - **Web Developer.** Runs `/speckit-implement` and, on the feature's last
   PR, `/speckit-converge`. When implement stops on an unchecked checklist
   item, the Web Developer MAY answer yes only when every unchecked item
-  carries a waiver the Reviewer has accepted.
-- **Reviewer.** Reviews against `spec.md`,
+  carries a waiver the Reviewer has accepted. When opening an
+  implementation pull request that is not the converge pull request,
+  enables squash auto-merge with `gh pr merge --auto --squash`, unless
+  that pull request is flagged or "Allow auto-merge" is still off. The
+  converge pull request stays without auto-merge, for Jorge.
+- **Reviewer (QA).** Reviewer QA is this role. Reviews against `spec.md`,
   `checklists/requirements.md`, `plan.md`, `tasks.md`, the
   `/speckit-checklist` files when the full path applies, and this
-  constitution before asking Jorge to merge. Accepts or rejects each
-  waiver on `checklists/requirements.md`. Records each
-  `/speckit-checklist` item as checked or waived, with reasons, in the
-  GitHub review. After the `qa: checklist` commit, verifies that it matches
-  that review. Checks the status line, the Clarifications text, the analyze
-  report's head SHA and open findings, the task ids, and, on the last PR,
-  that `converge.md` exists and says `Converged`.
+  constitution. v1.1.0 said that review is done "before asking Jorge to
+  merge." That sentence is replaced. Approving an intermediate pull
+  request allows auto-merge. Reviewer QA MUST NOT merge by hand. On the
+  converge pull request, Reviewer QA gives the final sign-off and Jorge
+  merges after his own verification. Accepts or rejects each waiver on
+  `checklists/requirements.md`. Records each `/speckit-checklist` item as
+  checked or waived, with reasons, in the GitHub review. After the
+  `qa: checklist` commit, verifies that it matches that review. Checks the
+  status line, the Clarifications text, the analyze report's head SHA and
+  open findings, the task ids, and, on the last PR, that `converge.md`
+  exists and says `Converged`.
+- **Scrum Master Dev.** Does not merge. When a step needs Jorge's personal
+  verification, leaves a comment on that pull request and leaves
+  auto-merge off. The comment names the reason: real AWS resources or
+  costs (including bootstrap and apply), IAM permissions or secrets, or
+  branch protection.
 
 ## Branches and releases
 
@@ -387,8 +502,10 @@ under `docs/specs/`.
   draft counts as open. The branch MUST already contain the merged
   `develop`: `git merge-base --is-ancestor origin/develop HEAD` exits 0.
   If `develop` moves while the pull request is open, the branch MUST be
-  rebased onto that new `develop` before Jorge merges. The next pull
-  request is opened only after that merge.
+  rebased onto that new `develop` before the pull request merges. v1.1.0
+  said "before Jorge merges." That sentence is replaced, because an
+  intermediate pull request merges by auto-merge. The next pull request
+  is opened only after that merge.
 - On a branch `NNN-name-tXX` the session MUST export
   `SPECIFY_FEATURE_DIRECTORY=specs/NNN-name` before the scripts.
   `SPECIFY_FEATURE` is optional and does not locate the directory.
@@ -433,4 +550,4 @@ the last-amended date to the merge date before it is merged.
 Before asking for a merge, the Reviewer MUST check compliance with this
 constitution. A PR that contradicts a principle MUST NOT be merged.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-10-20
+**Version**: 1.2.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-10-21
