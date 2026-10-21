@@ -34,6 +34,7 @@ Status: Approved by Jorge — PR #11
 - Q: How does the plan summary stay matchable when Terraform 1.16.6 colors `Plan:` and `No changes.` even when stdout is not a terminal? → A: FR-017 runs `terraform plan -lock=false -input=false -no-color` in CI. FR-021 still strips ANSI before the grep with `sed -E 's/\x1b\[[0-9;]*m//g'`.
 - Q: How does Verification stop the workflow file from containing the summary strings the log grep looks for? → A: FR-017 Verification exits 1 when `.github/workflows/terraform.yml` matches `No changes. Your infrastructure` or `Plan: N to add,`.
 - Q: What if the plan prints only `Changes to Outputs:` and neither summary line? → A: Jorge re-applies Terraform locally from that head and re-runs the job. He does not bypass the check.
+- Q: How does `terraform init` name the state bucket when the S3 backend block cannot use variables? → A: Partial backend configuration. The `backend "s3"` block in `infra/shared` and `infra/site` sets only `region = "eu-west-1"` and `use_lockfile = true`. It omits `bucket` and `key`. Every init that uses the backend passes `-backend-config="bucket=${STATE_BUCKET}"` and `-backend-config="key=..."`. `STATE_BUCKET` is `web-portfolio-tfstate-${ACCOUNT}`. The account id is never committed. In CI the account id is taken from the plan role ARN.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -162,15 +163,15 @@ He then applies Terraform 1.16.6 from a checkout of the head of the open pull re
 
 ```bash
 export TF_VAR_budget_alert_email=<address-known-to-jorge>
-terraform -chdir=infra/shared init -input=false
+terraform -chdir=infra/shared init -input=false -backend-config="bucket=${STATE_BUCKET}" -backend-config="key=shared/terraform.tfstate"
 terraform -chdir=infra/shared apply -input=false
-terraform -chdir=infra/site init -input=false -backend-config="key=staging/terraform.tfstate" -reconfigure
+terraform -chdir=infra/site init -input=false -backend-config="bucket=${STATE_BUCKET}" -backend-config="key=staging/terraform.tfstate" -reconfigure
 terraform -chdir=infra/site apply -input=false -var environment=staging
-terraform -chdir=infra/site init -input=false -backend-config="key=production/terraform.tfstate" -reconfigure
+terraform -chdir=infra/site init -input=false -backend-config="bucket=${STATE_BUCKET}" -backend-config="key=production/terraform.tfstate" -reconfigure
 terraform -chdir=infra/site apply -input=false -var environment=production
 ```
 
-`infra/shared` and `infra/site` both use the backend bucket `$STATE_BUCKET`, region `eu-west-1`, and `use_lockfile = true`. The shared key is `shared/terraform.tfstate`. The site key is selected with `-backend-config` as above.
+The `backend "s3"` block in `infra/shared` and in `infra/site` omits `bucket` and `key`. It sets `region = "eu-west-1"` and `use_lockfile = true`. Both `bucket` and `key` are passed with `-backend-config` at init, as above. `bucket` is `${STATE_BUCKET}` and is not a literal in the backend block. The account id is never committed.
 
 He then creates the GitHub Environments and the branch policies. The environment update sets no reviewers.
 
@@ -282,7 +283,7 @@ Commands that read AWS use Jorge's SSO profile or the read-only plan role. They 
   terraform version | head -1 | grep -F 'v1.16.6'
   grep -F 'version = "6.69.1"' infra/shared/*.tf infra/site/*.tf
   grep -F 'use_lockfile = true' infra/shared/*.tf infra/site/*.tf
-  grep -F 'shared/terraform.tfstate' infra/shared/*.tf
+  if grep -R -n -E 'bucket[[:space:]]*=' infra/shared/*.tf infra/site/*.tf; then exit 1; fi
   terraform fmt -check -recursive
   terraform -chdir=infra/shared init -backend=false -input=false
   terraform -chdir=infra/shared validate
@@ -290,7 +291,7 @@ Commands that read AWS use Jorge's SSO profile or the read-only plan role. They 
   terraform -chdir=infra/site validate
   ```
 
-  Expected: every command exits 0. `terraform version` prints a line containing `v1.16.6`.
+  Expected: every command exits 0. `terraform version` prints a line containing `v1.16.6`. The `bucket` guard exits 0, so `bucket` is not a literal in the backend files.
 
 - **FR-007, FR-010, FR-011**:
 
