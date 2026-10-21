@@ -93,11 +93,12 @@ jobs:
           printf '%s' "$token" > "${RUNNER_TEMP}/aws-web-identity-token"
           export AWS_ROLE_ARN="$arn"
           export AWS_WEB_IDENTITY_TOKEN_FILE="${RUNNER_TEMP}/aws-web-identity-token"
+          account=$(printf '%s' "$arn" | cut -d: -f5)
           d=infra/shared
-          terraform -chdir="$d" init -input=false -lock=false -reconfigure -backend-config="key=shared/terraform.tfstate"
+          terraform -chdir="$d" init -input=false -lock=false -reconfigure -backend-config="bucket=web-portfolio-tfstate-${account}" -backend-config="key=shared/terraform.tfstate"
           (cd "$d" && terraform plan -lock=false -input=false -no-color)
           d=infra/site
-          terraform -chdir="$d" init -input=false -lock=false -reconfigure -backend-config="key=staging/terraform.tfstate"
+          terraform -chdir="$d" init -input=false -lock=false -reconfigure -backend-config="bucket=web-portfolio-tfstate-${account}" -backend-config="key=staging/terraform.tfstate"
           (cd "$d" && terraform plan -lock=false -input=false -no-color -var environment=staging)
-          terraform -chdir="$d" init -input=false -lock=false -reconfigure -backend-config="key=production/terraform.tfstate"
+          terraform -chdir="$d" init -input=false -lock=false -reconfigure -backend-config="bucket=web-portfolio-tfstate-${account}" -backend-config="key=production/terraform.tfstate"
           (cd "$d" && terraform plan -lock=false -input=false -no-color -var environment=production)
