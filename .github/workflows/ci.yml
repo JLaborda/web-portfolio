@@ -80,7 +80,9 @@ jobs:
           status=$?
           set -euo pipefail
           cat /tmp/lychee-external.json
+          printf '\n'
           jq -r '[((.error_map // {})[][]?.url), ((.timeout_map // {})[][]?.url)] | map(select(. != null)) | unique | .[]' /tmp/lychee-external.json | while IFS= read -r url; do
+            [ -n "$url" ] || continue
             printf '::warning::%s\n' "$url"
           done
           exit "$status"
