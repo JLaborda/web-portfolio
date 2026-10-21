@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-21
 
-Status: Approved by Jorge — PR #11
+Status: Approved by Jorge — PR #21
 
 **Input**: User description: "Continuous deployment of the Hugo site to AWS. Staging on develop, production on main. Private S3 and CloudFront with Origin Access Control in eu-west-1. No custom domain. Terraform remote state. GitHub OIDC, no long-lived keys. Jorge bootstraps with SSO. Budget about 1 USD. Deploy syncs public/ and invalidates CloudFront."
 
