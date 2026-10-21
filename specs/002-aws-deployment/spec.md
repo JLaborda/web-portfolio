@@ -6,7 +6,7 @@
 
 Status: Approved by Jorge — PR #21
 
-Workflow: first feature run under the start/close approval rule (Jorge approves the spec and the converge; Reviewer QA validates intermediate PRs). See constitution amendment (pending).
+Workflow: this feature will be the first run under the start/close approval rule (Jorge approves and merges the spec and the converge; Reviewer QA validates intermediate PRs, which merge automatically on QA approval). The rule takes effect only when constitution amendment v1.2.0 is merged; until then constitution v1.1.0 applies unchanged.
 
 **Input**: User description: "Continuous deployment of the Hugo site to AWS. Staging on develop, production on main. Private S3 and CloudFront with Origin Access Control in eu-west-1. No custom domain. Terraform remote state. GitHub OIDC, no long-lived keys. Jorge bootstraps with SSO. Budget about 1 USD. Deploy syncs public/ and invalidates CloudFront."
 
@@ -39,7 +39,7 @@ Workflow: first feature run under the start/close approval rule (Jorge approves 
 - Q: How does `terraform init` name the state bucket when the S3 backend block cannot use variables? → A: Partial backend configuration. The `backend "s3"` block in `infra/shared` and `infra/site` sets only `region = "eu-west-1"` and `use_lockfile = true`. It omits `bucket` and `key`. Every init that uses the backend passes `-backend-config="bucket=${STATE_BUCKET}"` and `-backend-config="key=..."`. `STATE_BUCKET` is `web-portfolio-tfstate-${ACCOUNT}`. The account id is never committed. In CI the account id is taken from the plan role ARN.
 - Q: How does Verification check that the backend block omits `bucket` and `key` when site resources also use `bucket =`? → A: For `infra/shared` and for `infra/site`, Verification extracts the `backend "s3"` block from that header through its closing brace. The block contains `region = "eu-west-1"` and `use_lockfile = true`, and it contains no `bucket` argument and no `key` argument. A `bucket =` argument on an S3 resource is outside that block and does not fail the check.
 - Q: How does the CI plan step name the state bucket on each backend init? → A: It sets `account` from `AWS_PLAN_ROLE_ARN` with `cut -d: -f5` and passes `-backend-config="bucket=web-portfolio-tfstate-${account}"` on each backend `terraform init`. That name is the same bucket as `STATE_BUCKET`.
-- Q: Which pull requests does Jorge approve on this feature? → A: Jorge approves the spec pull request and the converge. Reviewer QA validates each intermediate pull request against the spec's verifiable acceptance criteria. Jorge does not review each intermediate step. This is the first feature run under that rule. The constitution amendment is pending.
+- Q: Which pull requests does Jorge approve on this feature? → A: This feature will be the first run under the start/close approval rule. Jorge approves and merges the spec and the converge. Reviewer QA validates each intermediate pull request against the spec's verifiable acceptance criteria, and those pull requests merge automatically on QA approval. The rule takes effect only when constitution amendment v1.2.0 is merged. Until then constitution v1.1.0 applies unchanged.
 
 ## User Scenarios & Testing *(mandatory)*
 
