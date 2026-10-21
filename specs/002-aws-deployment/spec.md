@@ -17,6 +17,11 @@ Status: Approved by Jorge — PR #11
 - Q: Is staging authenticated, or only unlisted? → A: Unlisted and not authenticated. Staging publishes `robots.txt` with `Disallow: /` and sends the response header `X-Robots-Tag: noindex`. Production does neither.
 - Q: Who applies infrastructure changes? → A: Jorge applies Terraform locally with his existing SSO session. GitHub Actions never runs `terraform apply`. Actions may run `terraform plan` with a read-only role. Apply credentials are not given to Actions, because those credentials could destroy a bucket or a distribution.
 - Q: Where does the budget alert email live? → A: Outside git. Jorge passes it as `TF_VAR_budget_alert_email` or in an uncommitted tfvars file. The committed example value is `replace-me@example.com`.
+- Q: Once `.github/workflows/terraform.yml` exists, which status checks must branch protection require on `develop` and `main`? → A: The job `terraform`, which runs `terraform fmt -check`, `validate`, `tflint`, and `plan`, together with feature 001's `hugo`, `lychee`, and `gitleaks`.
+- Q: How does that required check report on a pull request that does not change `infra/**`? → A: The workflow runs on every pull request. A paths-filter step skips the Terraform steps and the job reports success when `infra/**` did not change. There is no workflow-level `paths:` filter.
+- Q: In what order is the first pull request that adds `infra/` merged, so a red plan before bootstrap does not force a bypass? → A: Jorge runs Bootstrap locally from that pull request's head, then the `terraform` job is re-run and must be green before the merge. No admin bypass.
+- Q: Does the budget email fire when monthly spend reaches 1 USD, or only when spend is greater than 1 USD? → A: Only when actual spend is greater than 1 USD (`GREATER_THAN`).
+- Q: Which command proves that tfvars files are ignored and that the example and the lock file are not? → A: `git check-ignore -q --no-index` on `x.tfvars` (ignored), `x.tfvars.example` (not ignored), and `.terraform.lock.hcl` (not ignored).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -54,7 +59,7 @@ Staging is a public URL that Jorge can share, and it is not a login wall. Crawle
 
 ### User Story 3 - Jorge can see cost and deploy again safely (Priority: P3)
 
-Jorge is emailed when actual AWS spend for the month reaches 1 USD. The address is not stored in the repository. A later content push updates the site, including removing pages that were deleted in git, and prints the site URL in the Actions job.
+Jorge is emailed when actual AWS spend for the month is greater than 1 USD. The address is not stored in the repository. A later content push updates the site, including removing pages that were deleted in git, and prints the site URL in the Actions job.
 
 **Why this priority**: The constitution caps this site at about 1 USD per month, and a deploy that only adds files would leave deleted pages online.
 
@@ -62,16 +67,17 @@ Jorge is emailed when actual AWS spend for the month reaches 1 USD. The address 
 
 **Acceptance Scenarios**:
 
-1. **Given** the budget exists, **When** actual monthly spend reaches 1 USD, **Then** AWS emails the address Jorge supplied, and that address is not in git.
+1. **Given** the budget exists, **When** actual monthly spend is greater than 1 USD, **Then** AWS emails the address Jorge supplied, and that address is not in git.
 2. **Given** a published page, **When** that page is removed from the Hugo build and the branch is pushed, **Then** the next deploy removes it from the bucket and the URL no longer returns the old page.
 3. **Given** a deploy job, **When** it succeeds, **Then** the job output includes the site URL.
 
 ### Edge Cases
 
 - A Hugo build that exits non-zero does not sync and does not invalidate. The previous live site stays as it was.
-- A direct push to `develop` or `main` still deploys. Feature 001's required checks are what stop a failing pull request from merging, and therefore from being pushed, onto those branches. This feature does not re-run those checks.
+- A direct push to `develop` or `main` still deploys. Required status checks stop a failing pull request from merging onto those branches. Feature 001 requires `hugo`, `lychee`, and `gitleaks`. Once `.github/workflows/terraform.yml` is on `develop`, both branches also require the job `terraform`. This feature does not re-run the feature 001 jobs.
 - `terraform plan` in Actions uses `-lock=false`. It does not write the S3 lock file. A plan that races an apply Jorge is running locally can be stale; it still must not change infrastructure.
-- Until Jorge finishes bootstrap, the plan job cannot read state. A failing plan before bootstrap is expected. After bootstrap, a valid plan exits 0.
+- A pull request that does not change `infra/**` still runs `.github/workflows/terraform.yml`. The paths-filter step skips the Terraform steps and the `terraform` job reports success. The workflow has no `paths:` filter, so the required check does not stay pending.
+- Until Bootstrap has been run, `terraform plan` cannot read state, so the `terraform` job is red on a pull request that changes `infra/**`. That red check blocks the merge. Jorge runs Bootstrap locally from that pull request's head, then re-runs the `terraform` job on that same head. He merges only after the re-run is green. He does not bypass the required check, including as an admin. After Bootstrap, a valid plan exits 0.
 - The CloudFront hostname does not exist until the first apply. The deploy job fails when `SITE_URL`, `BUCKET_NAME`, `DISTRIBUTION_ID`, or `AWS_ROLE_ARN` is empty.
 - Pretty URLs such as `/about/` must resolve to the `index.html` object. The S3 REST origin does not add index documents by itself.
 - HTTP requests are redirected to HTTPS. The bucket website endpoint is not used and is not public.
@@ -97,9 +103,10 @@ Jorge is emailed when actual AWS spend for the month reaches 1 USD. The address 
 - **FR-014**: The deploy workflow is `.github/workflows/deploy.yml`. It runs on `push` to `develop` and `main` and has no `pull_request` trigger. The job `deploy` uses GitHub Environment `staging` for `develop` and `production` for `main`. Those environments have custom branch policies (`develop` only, and `main` only), `wait_timer` 0, and no required reviewers. The job assumes `vars.AWS_ROLE_ARN` through `aws-actions/configure-aws-credentials` at commit `e1253824e5c10ff9df46874f81ed3ec929e19cfd` (v6.3.0), in region `eu-west-1`. Checkout is `actions/checkout` at `3d3c42e5aac5ba805825da76410c181273ba90b1` with submodules recursive.
 - **FR-015**: The deploy job installs Hugo extended from `hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz`, where `HUGO_VERSION` is the single existing workflow variable owned by feature 001. This feature does not add a second `HUGO_VERSION:` key. The build command is `hugo --gc --minify --panicOnWarning --baseURL "${SITE_URL}/"`. `SITE_URL` has no trailing slash. The job then writes `robots.txt` as FR-005 requires, syncs `public/` with `--delete`, sets cache headers as FR-016 requires, and runs `aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"`. The job output `site_url` is `SITE_URL`.
 - **FR-016**: Cache-Control is `public, max-age=0, must-revalidate` for `*.html`, `*.xml`, `*.json`, and `robots.txt`. It is `public, max-age=31536000, immutable` when the object key matches `\.[0-9a-f]{8,}\.` and is not one of those four names. Every other object is `public, max-age=3600`. The first sync may set the one-hour default and is the only sync that passes `--delete`. Later copies overwrite Cache-Control for the short and long groups and do not pass `--delete`.
-- **FR-017**: `.github/workflows/terraform.yml` runs on `pull_request` to `develop` and to `main` when `infra/**` changes. It runs `terraform fmt -check -recursive`, `terraform -chdir=infra/shared validate`, `terraform -chdir=infra/site validate`, `tflint` `0.64.0` with the AWS ruleset `0.49.0` in `infra/shared` and `infra/site`, and `terraform plan -lock=false -input=false` in both directories using `web-portfolio-plan`. It does not apply.
-- **FR-018**: Feature 001's jobs `hugo`, `lychee`, and `gitleaks` stay the merge gate. This feature does not redefine them. A deploy happens after a push to `develop` or `main`, which is how a merge that passed those checks becomes the deployed commit.
-- **FR-019**: Bootstrap is the manual procedure in the Bootstrap section. Jorge runs it once, with his SSO session, before the first deploy.
+- **FR-017**: `.github/workflows/terraform.yml` runs on every `pull_request` whose base is `develop` or `main`. It has no `paths` filter. It has one job named `terraform`. That job checks out with `actions/checkout` at `3d3c42e5aac5ba805825da76410c181273ba90b1` and `fetch-depth: 0`. A step with id `paths` sets output `infra` to `true` when `git diff --name-only` between `github.event.pull_request.base.sha` and `github.event.pull_request.head.sha` lists a path under `infra/`, and to `false` otherwise. Every step that runs `terraform`, `tflint`, or assumes `web-portfolio-plan` uses `if: steps.paths.outputs.infra == 'true'` and has no `continue-on-error`. Those steps run `terraform fmt -check -recursive`, `terraform -chdir=infra/shared validate`, `terraform -chdir=infra/site validate`, `tflint` `0.64.0` with the AWS ruleset `0.49.0` in `infra/shared` and in `infra/site`, and `terraform plan -lock=false -input=false` in both directories using `web-portfolio-plan`. When `infra` is `false`, those steps are skipped and the job conclusion is `success`. When `infra` is `true`, the job fails if any of those steps fails. The job does not apply.
+- **FR-018**: Feature 001's jobs `hugo`, `lychee`, and `gitleaks` stay required status checks. This feature does not redefine them. Once `.github/workflows/terraform.yml` is on `develop`, the job `terraform` is required as well, as FR-020 states. A deploy happens after a push to `develop` or `main`, which is how a merge that passed the required checks becomes the deployed commit.
+- **FR-019**: Bootstrap is the manual procedure in the Bootstrap section. Jorge runs it once, with his SSO session, from the head of the pull request that first adds `infra/`, and he runs it before that pull request is merged and before the first deploy. He then re-runs the `terraform` job on that same head. The re-run must be green before the merge. He does not bypass the required check, including as an admin.
+- **FR-020**: Once `.github/workflows/terraform.yml` is on `develop`, `develop` and `main` have branch protection whose required status checks are `gitleaks`, `hugo`, `lychee`, and `terraform`. The first three are feature 001's jobs and are not removed. `terraform` is the job in FR-017, and it is the required check that covers `terraform fmt -check`, `validate`, `tflint`, and `plan`. Applying that protection is a repository-admin action. Only Jorge can apply it. A red required check blocks the merge. The first pull request that changes `infra/` follows FR-019 so a red plan before Bootstrap is not merged by bypass.
 
 ### Key Entities
 
@@ -115,7 +122,7 @@ Jorge is emailed when actual AWS spend for the month reaches 1 USD. The address 
 - **SC-001**: A visitor can open the staging site and the production site over HTTPS within one minute of a successful deploy, and the two hostnames are different.
 - **SC-002**: A page removed from the build is absent from that environment after the next successful deploy of its branch.
 - **SC-003**: Staging asks crawlers not to index it. Production does not. Neither site asks the visitor to log in.
-- **SC-004**: The monthly hosting budget is 1 USD. Jorge receives an email when actual spend reaches that amount. The address is not in the repository.
+- **SC-004**: The monthly hosting budget is 1 USD. Jorge receives an email when actual spend is greater than that amount. The address is not in the repository.
 - **SC-005**: A reviewer can run every command in Verification and compare it to the expected result named there.
 
 ## Bootstrap
@@ -137,7 +144,7 @@ aws s3api put-bucket-encryption --bucket "$STATE_BUCKET" \
   --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"},"BucketKeyEnabled":true}]}'
 ```
 
-He then applies Terraform 1.16.6 from a checkout of the commit that contains `infra/`. The email is only in the environment, not in a committed file.
+He then applies Terraform 1.16.6 from a checkout of the head of the open pull request that contains `infra/`. He does this before that pull request merges. The email is only in the environment, not in a committed file.
 
 ```bash
 export TF_VAR_budget_alert_email=<address-known-to-jorge>
@@ -178,6 +185,8 @@ gh variable set SITE_URL --env production --body "https://<production-id>.cloudf
 gh variable set BUCKET_NAME --env production --body "web-portfolio-production-${ACCOUNT}"
 gh variable set DISTRIBUTION_ID --env production --body "<production distribution id>"
 ```
+
+After this procedure finishes, he re-runs the `terraform` job on that same pull request and merges only when the job is green. He does not bypass branch protection.
 
 ## Verification
 
@@ -276,14 +285,17 @@ Commands that read AWS use Jorge's SSO profile or the read-only plan role. They 
   aws budgets describe-subscribers-for-notification --account-id "$ACCOUNT" --budget-name web-portfolio-monthly --notification "$NOTIF" \
     | jq -e --arg email "$TF_VAR_budget_alert_email" '[.Subscribers[] | select(.SubscriptionType == "EMAIL" and .Address == $email)] | length == 1'
   if git grep -n -I -E 'budget_alert_email[[:space:]]*=[[:space:]]*"[^"]+"' | grep -v 'replace-me@example.com'; then exit 1; fi
-  grep -F '.terraform/' .gitignore
-  grep -F '*.tfvars' .gitignore
-  grep -F '!*.tfvars.example' .gitignore
   test -f infra/shared/terraform.tfvars.example
   test ! -e infra/shared/terraform.tfvars
+  git check-ignore -q --no-index .terraform/x
+  git check-ignore -q --no-index x.tfstate
+  git check-ignore -q --no-index x.tfstate.backup
+  git check-ignore -q --no-index x.tfvars
+  if git check-ignore -q --no-index x.tfvars.example; then exit 1; fi
+  if git check-ignore -q --no-index .terraform.lock.hcl; then exit 1; fi
   ```
 
-  Expected: each `jq -e` prints `true` and exits 0. The email guard exits 0. `terraform.tfvars` is not in the tree.
+  Expected: each `jq -e` prints `true` and exits 0. The email guard exits 0. `terraform.tfvars` is not in the tree. `git check-ignore -q --no-index` exits 0 for `.terraform/x`, `x.tfstate`, `x.tfstate.backup`, and `x.tfvars`. It exits non-zero for `x.tfvars.example` and `.terraform.lock.hcl`, so those two `if` commands do not take the `exit 1` branch. `--no-index` tests the ignore rule itself, including when `.terraform.lock.hcl` is tracked. `git check-ignore -v` is not the proof: with `-v`, the negation `!*.tfvars.example` still exits 0.
 
 - **FR-014**:
 
@@ -308,13 +320,34 @@ Commands that read AWS use Jorge's SSO profile or the read-only plan role. They 
 
   ```bash
   yq -e '[.on.pull_request.branches[] | select(. == "develop" or . == "main")] | unique | length == 2' .github/workflows/terraform.yml
-  yq -e '[.on.pull_request.paths[] | select(. == "infra/**")] | length == 1' .github/workflows/terraform.yml
+  yq -e '.on.pull_request | has("paths") | not' .github/workflows/terraform.yml
+  yq -e '.jobs | has("terraform")' .github/workflows/terraform.yml
+  yq -e --arg expected "steps.paths.outputs.infra == 'true'" '[.jobs.terraform.steps[] | select(.if != null) | .if] | unique == [$expected]' .github/workflows/terraform.yml
+  grep -F '3d3c42e5aac5ba805825da76410c181273ba90b1' .github/workflows/terraform.yml
+  grep -F 'fetch-depth: 0' .github/workflows/terraform.yml
+  grep -F 'id: paths' .github/workflows/terraform.yml
+  grep -F 'git diff --name-only' .github/workflows/terraform.yml
+  grep -F 'infra=true' .github/workflows/terraform.yml
+  grep -F 'infra=false' .github/workflows/terraform.yml
   grep -F 'terraform fmt -check -recursive' .github/workflows/terraform.yml
   grep -F 'terraform plan -lock=false -input=false' .github/workflows/terraform.yml
   tflint --version | grep -F '0.64.0'
   ```
 
-  Expected: both `yq` commands print `true` and exit 0. Both greps exit 0. `tflint --version` contains `0.64.0`.
+  Expected: every `yq` command prints `true` and exits 0. `.on.pull_request | has("paths") | not` prints `true`, so the pull request event has no `paths` filter. Every step that sets `if` uses `steps.paths.outputs.infra == 'true'`. Every `grep -F` exits 0. `tflint --version` contains `0.64.0`.
+
+- **FR-019**: Manual, on the first pull request that changes `infra/`. Bootstrap has been run from that pull request's head. The latest conclusion of the `terraform` job on that pull request is `success` before the merge. The merge does not use an admin bypass of a red or pending `terraform` check.
+
+- **FR-020**: After `.github/workflows/terraform.yml` is on `develop`, and after Jorge has saved branch protection:
+
+  ```bash
+  for branch in develop main; do
+    gh api "repos/JLaborda/web-portfolio/branches/${branch}/protection" \
+      --jq '[.required_status_checks.contexts[], .required_status_checks.checks[].context] | unique | sort'
+  done
+  ```
+
+  Expected: each command exits 0 and prints `["gitleaks","hugo","lychee","terraform"]`. An HTTP 404 means protection is missing. A list that drops `hugo`, `lychee`, or `gitleaks` does not pass. Only Jorge, as repository admin, can create or edit that protection. The check failing before he does so is expected and does not fall to another contributor, and it is not a reason to bypass a later red `terraform` job.
 
 ## Out of Scope
 
