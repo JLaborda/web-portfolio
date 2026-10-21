@@ -37,6 +37,9 @@ Sync Impact Report
 - Kept, and not replaced: Jorge merges the spec pull request, the converge
   pull request, a constitution amendment, a non-feature pull request, a
   flagged pull request, and every release from develop to main.
+- Jorge's approval over region, DNS and costs: unchanged; enforced via needs-jorge.
+- Only Jorge or the Scrum Master Dev may remove `needs-jorge`, and the
+  removal is a pull request comment that states the reason.
 - Follow-up TODOs: none
 - Templates and commands: unchanged. They read this file at runtime.
 -->
@@ -118,10 +121,14 @@ The label MUST exist in the repository. Whoever first needs it creates
 it once with `gh label create needs-jorge`. While the label is present,
 auto-merge stays off and the pull request waits for Jorge to merge it.
 If the label is added after auto-merge was enabled, the author runs
-`gh pr merge --disable-auto`. The flag covers a step that creates or
-changes real AWS resources or costs, including bootstrap and apply, a
-step that changes IAM permissions or secrets, and a step that changes
-branch protection.
+`gh pr merge --disable-auto`. The flag covers a change to the AWS region,
+a change to DNS or a custom domain, a step that creates or changes real
+AWS resources or costs,
+including bootstrap and apply, a step that changes IAM permissions or
+secrets, and a step that changes branch protection. Only Jorge or the
+Scrum Master Dev may remove `needs-jorge`. Whoever removes it MUST add a
+pull request comment that states the reason. No other role may remove
+the label.
 
 When implementation of a spec is finished, Reviewer QA gives a final
 sign-off on the converge pull request. Jorge then verifies the feature
@@ -373,15 +380,24 @@ Hosting MUST be AWS, with these rules:
   there) through a protected GitHub Environment.
 - An AWS Budgets alert of about 1 USD per month MUST exist.
 - The bucket region and DNS MUST be decided in the deployment feature's
-  plan. Jorge's product decision on region and DNS is recorded there
-  before implementation. That record is not an approval or a merge of
-  the plan pull request. This constitution does not fix region or DNS.
+  plan. v1.1.0 said: "The bucket region and DNS MUST be decided in the
+  deployment feature's plan, and that plan MUST have Jorge's approval
+  before it is implemented." That approval is unchanged. Any change to
+  the AWS region, to DNS or a custom domain, or to anything that creates
+  real AWS resources or costs needs Jorge's explicit approval. The pull
+  request that carries that change, whether it is a spec, plan, tasks, or
+  implementation pull request, MUST carry the label `needs-jorge`. Jorge
+  merges it. It never auto-merges. This constitution does not fix region
+  or DNS.
 
 **Check:** the plan role's policy does not allow apply or changes to S3 or
 CloudFront; the deploy role's Environment requires protection and is not
-available on PRs; the deployment feature's `plan.md` records Jorge's
-region and DNS decision, and that record is not his merge of the plan
-pull request; gitleaks finds no static keys.
+available on PRs; the deployment feature's `plan.md` records region and
+DNS with Jorge's approval. v1.1.0 said the plan "records region and DNS
+with Jorge's approval." That check is unchanged. A pull request that
+changes region, DNS, or a custom domain, or that creates real AWS
+resources or costs, carries `needs-jorge` and is merged by Jorge;
+gitleaks finds no static keys.
 
 ### IV. Verifiable quality in CI
 
@@ -490,16 +506,20 @@ Jorge's merge.
 
 Solutions SHOULD be simple and documented, so they can be explained
 end to end in an MLOps interview. The site's monthly cost MUST stay around
-0–1 USD, unless an exception is written in the plan as Jorge's product
-decision. That written exception is not a merge of the plan pull
-request. An opaque service that hides the infrastructure MUST NOT be added
+0–1 USD. v1.1.0 said this holds "unless an exception is documented in the
+plan and approved by Jorge." That approval is unchanged. A pull request
+that documents such an exception, or that creates real AWS resources or
+costs, MUST carry `needs-jorge`. Jorge merges it. It never auto-merges.
+An opaque service that hides the infrastructure MUST NOT be added
 when a documented primitive meets the requirement.
 
 **Check:** the feature's `plan.md` names the services and the expected
 monthly cost; a service outside principle III is not implemented without
-an amendment to this constitution or without Jorge's written product
-exception in that plan. That exception is not his merge of the plan
-pull request.
+an amendment to this constitution or without Jorge's explicit approval in
+that plan. v1.1.0 said the same sentence, ending "or without Jorge's
+explicit approval in that plan." That approval is unchanged. The pull
+request that carries the exception or the new service MUST have
+`needs-jorge`, and Jorge merges it. It never auto-merges.
 
 ### VII. English only
 
@@ -579,12 +599,15 @@ review, or comment fails review. Pages under `content/` are English.
 - **Scrum Master Dev.** Does not merge and does not run `gh pr merge`.
   When a step needs Jorge's personal verification, adds the label
   `needs-jorge` and a pull request comment with the reason, before
-  Reviewer QA's verdict. The reason is real AWS resources or costs
+  Reviewer QA's verdict. The reason is a change to the AWS region, a
+  change to DNS or a custom domain, real AWS resources or costs
   (including bootstrap and apply), IAM permissions or secrets, or branch
   protection. If the label does not exist yet, whoever first needs it
   creates it once with `gh label create needs-jorge`. If the label is
   added after auto-merge was enabled, the pull request author runs
-  `gh pr merge --disable-auto`.
+  `gh pr merge --disable-auto`. Only Jorge or the Scrum Master Dev may
+  remove `needs-jorge`. Whoever removes it MUST add a pull request
+  comment that states the reason. No other role may remove the label.
 
 ## Branches and releases
 
