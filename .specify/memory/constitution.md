@@ -3,7 +3,7 @@ Sync Impact Report
 - Version change: 1.1.0 → 1.2.0
 - Bump rationale: MINOR, and the version stays 1.2.0 because this
   amendment is not merged yet. Jorge still merges the spec, the converge,
-  a constitution amendment, a pull request labeled `needs-jorge`, a
+  a constitution amendment, a pull request labeled `needs-human`, a
   non-feature pull request, and every release from develop to main. The
   new rule adds who merges an intermediate pull request. It narrows
   "Only Jorge MAY merge" and does not remove those remaining duties, so
@@ -12,17 +12,22 @@ Sync Impact Report
   - Auto-merge is not enabled when a pull request is opened. The author
     runs `gh pr merge --auto --squash` only after a COMMENT review that
     starts with `QA verdict: APPROVED` and names the current head SHA,
-    and only when the label `needs-jorge` is absent.
+    and only when the label `needs-human` is absent.
   - A later push or that label requires `gh pr merge --disable-auto`.
   - `spec.md` and `converge.md` keep `Status: Approved by Jorge — PR #N`.
-    `plan.md`, `tasks.md`, and other intermediate artifacts in a pull
-    request opened after this amendment merges use
+    A plan, tasks, or other intermediate artifact merged with
+    `needs-human` uses `Status: Approved by Jorge — PR #N`. Without that
+    label, a pull request opened after this amendment merges uses
     `Status: Approved by Reviewer QA — PR #N`. Files already merged under
     v1.1.0, including specs/001 and the specs/002 plan and tasks, are not
     rewritten.
 - Modified principles:
   - I. Spec-driven development and PO approval (merge authority)
+  - III. AWS hosting as a constraint (region, DNS, and real AWS cost
+    still need Jorge's approval, enforced with `needs-human`)
   - V. Scoped implementation PRs (review, then who merges)
+  - VI. Explainable in an interview, and cheap (a cost exception still
+    needs Jorge's approval, enforced with `needs-human`)
 - Modified sections: Roles; Branches and releases (when a branch must be current)
 - Added sections: none. The new rules sit inside principle I. Roles gains Scrum Master Dev.
 - Removed sections: none
@@ -37,8 +42,8 @@ Sync Impact Report
 - Kept, and not replaced: Jorge merges the spec pull request, the converge
   pull request, a constitution amendment, a non-feature pull request, a
   flagged pull request, and every release from develop to main.
-- Jorge's approval over region, DNS and costs: unchanged; enforced via needs-jorge.
-- Only Jorge or the Scrum Master Dev may remove `needs-jorge`, and the
+- Jorge's approval over region, DNS and costs: unchanged; enforced via needs-human.
+- Only Jorge or the Scrum Master Dev may remove `needs-human`, and the
   removal is a pull request comment that states the reason.
 - Follow-up TODOs: none
 - Templates and commands: unchanged. They read this file at runtime.
@@ -90,7 +95,7 @@ implementation task pull request, and the pull request that carries a
 `qa: checklist` commit. A clarify that changes `spec.md` is a spec pull
 request under rule 1 below, not an intermediate pull request. Jorge
 does not merge an intermediate pull request by hand, unless it carries
-the label `needs-jorge`.
+the label `needs-human`.
 
 Reviewer QA approves an intermediate pull request in a COMMENT review
 that starts with `QA verdict: APPROVED` and names that pull request's
@@ -105,7 +110,7 @@ author runs `gh pr merge --auto --squash` only after that APPROVED
 verdict is posted on the current head SHA, and only when the Scrum
 Master Dev has not flagged the pull request. Before the command, the
 author runs `gh pr view <n> --json labels` and does not enable
-auto-merge if the label `needs-jorge` is present. GitHub then merges
+auto-merge if the label `needs-human` is present. GitHub then merges
 when the required checks are green.
 
 A push after that approval invalidates the verdict. The author first
@@ -114,11 +119,11 @@ Reviewer QA verdict that names the new head SHA before running
 `gh pr merge --auto --squash` again.
 
 Exception: the Scrum Master Dev flags a step that needs Jorge's personal
-verification. The flag is the GitHub label `needs-jorge` on the pull
+verification. The flag is the GitHub label `needs-human` on the pull
 request, plus a pull request comment that states the reason. The Scrum
 Master Dev adds the label and the comment before Reviewer QA's verdict.
 The label MUST exist in the repository. Whoever first needs it creates
-it once with `gh label create needs-jorge`. While the label is present,
+it once with `gh label create needs-human`. While the label is present,
 auto-merge stays off and the pull request waits for Jorge to merge it.
 If the label is added after auto-merge was enabled, the author runs
 `gh pr merge --disable-auto`. The flag covers a change to the AWS region,
@@ -126,7 +131,7 @@ a change to DNS or a custom domain, a step that creates or changes real
 AWS resources or costs,
 including bootstrap and apply, a step that changes IAM permissions or
 secrets, and a step that changes branch protection. Only Jorge or the
-Scrum Master Dev may remove `needs-jorge`. Whoever removes it MUST add a
+Scrum Master Dev may remove `needs-human`. Whoever removes it MUST add a
 pull request comment that states the reason. No other role may remove
 the label.
 
@@ -142,7 +147,7 @@ repository admin, before auto-merge can run. Until that setting is
 enabled, the same author runs `gh pr merge --squash` without `--auto`.
 That command is also forbidden at open time. The author runs it only
 after `QA verdict: APPROVED` names the current head SHA and
-`gh pr view <n> --json labels` shows no `needs-jorge` label. Reviewer QA
+`gh pr view <n> --json labels` shows no `needs-human` label. Reviewer QA
 never runs `gh pr merge`. Jorge does not merge that intermediate pull
 request by hand. That squash merge is not his approval of the start or
 of the close.
@@ -207,11 +212,14 @@ Approval is recorded only as follows, and in this order:
    PR. `plan.md` and `tasks.md` have no `Status` field in their templates.
    v1.1.0 told the Tech Lead to add `Status: Approved by Jorge — PR #N`
    to `plan.md` and to `tasks.md`. That sentence is replaced for a pull
-   request opened after this 1.2.0 amendment merges. The Tech Lead MUST
+   request opened after this 1.2.0 amendment merges, unless the pull
+   request carries `needs-human`. Without that label, the Tech Lead MUST
    add `Status: Approved by Reviewer QA — PR #N` to `plan.md` and to
    `tasks.md`, and to any other intermediate artifact that carries a
    status line, with this pull request's number, as the only status field
-   on each. `spec.md` and `converge.md` keep
+   on each. A plan, tasks, or other intermediate artifact merged with
+   `needs-human` uses `Status: Approved by Jorge — PR #N`. `spec.md` and
+   `converge.md` keep
    `Status: Approved by Jorge — PR #N`. Artifacts already merged under
    v1.1.0 are not rewritten. That includes `specs/001-minimal-hugo-site`
    and the `plan.md` and `tasks.md` already on `develop` for
@@ -221,7 +229,8 @@ Approval is recorded only as follows, and in this order:
    transition below, `spec.md` MUST already be on `develop` before this
    PR is opened, and this PR MUST NOT change it. Jorge merges the spec
    pull request before this plan and tasks pull request is opened. He
-   does not approve or merge this pull request.
+   does not approve or merge this pull request, unless the pull request
+   carries `needs-human`. Then Jorge approves and merges it.
 3. An implementation PR MUST NOT be opened before the `tasks.md` PR is
    merged into `develop`.
 
@@ -238,9 +247,9 @@ that review. QA then verifies that the commit matches the review. That
 verification is recorded in the review. It is not, by itself, the
 approval that arms auto-merge. That approval is the COMMENT review that
 starts with `QA verdict: APPROVED` and names the current head SHA, and
-it applies only when `needs-jorge` is absent. v1.1.0 said QA verifies
+it applies only when `needs-human` is absent. v1.1.0 said QA verifies
 the commit "before asking Jorge to merge." That sentence is replaced:
-Jorge is not asked to merge it, unless the label `needs-jorge` is
+Jorge is not asked to merge it, unless the label `needs-human` is
 present. This limit does not apply to
 `checklists/requirements.md`, which specify and clarify maintain.
 
@@ -319,7 +328,9 @@ spec PR description contains the exact line `Path: short (small change)`.
 `spec.md` has `Status: Approved by Jorge — PR #N`. For a pull request
 opened after 1.2.0 merges, `plan.md`, `tasks.md`, and any other
 intermediate artifact that carries a status line have
-`Status: Approved by Reviewer QA — PR #N` and no other status.
+`Status: Approved by Jorge — PR #N` when that pull request carries
+`needs-human`, and `Status: Approved by Reviewer QA — PR #N` when it
+does not. Each has no other status.
 `converge.md` has `Status: Approved by Jorge — PR #N`. Files already
 merged under v1.1.0 are not rewritten, including `specs/001-minimal-hugo-site`
 and the `plan.md` and `tasks.md` of `specs/002-aws-deployment`. On the
@@ -339,10 +350,10 @@ enabled when it is opened. Its approval is a COMMENT review that starts
 with `QA verdict: APPROVED` and names that pull request's current full
 head SHA. The author who opened it runs `gh pr view <n> --json labels`
 and runs `gh pr merge --auto --squash` only when that verdict matches
-the current head and `needs-jorge` is absent. Reviewer QA does not run
+the current head and `needs-human` is absent. Reviewer QA does not run
 `gh pr merge`. Before a later push, the author runs
 `gh pr merge --disable-auto` if auto-merge is on, and the next enable
-waits for a verdict that names the new head. If `needs-jorge` is added
+waits for a verdict that names the new head. If `needs-human` is added
 after auto-merge was enabled, the author runs
 `gh pr merge --disable-auto`. Jorge merges the spec pull request and,
 after Reviewer QA's sign-off, the converge pull request.
@@ -386,7 +397,7 @@ Hosting MUST be AWS, with these rules:
   the AWS region, to DNS or a custom domain, or to anything that creates
   real AWS resources or costs needs Jorge's explicit approval. The pull
   request that carries that change, whether it is a spec, plan, tasks, or
-  implementation pull request, MUST carry the label `needs-jorge`. Jorge
+  implementation pull request, MUST carry the label `needs-human`. Jorge
   merges it. It never auto-merges. This constitution does not fix region
   or DNS.
 
@@ -396,7 +407,9 @@ available on PRs; the deployment feature's `plan.md` records region and
 DNS with Jorge's approval. v1.1.0 said the plan "records region and DNS
 with Jorge's approval." That check is unchanged. A pull request that
 changes region, DNS, or a custom domain, or that creates real AWS
-resources or costs, carries `needs-jorge` and is merged by Jorge;
+resources or costs, carries `needs-human`. Jorge approves and merges it.
+`plan.md`, `tasks.md`, or another intermediate artifact in that pull
+request uses `Status: Approved by Jorge — PR #N`. It never auto-merges.
 gitleaks finds no static keys.
 
 ### IV. Verifiable quality in CI
@@ -484,7 +497,7 @@ pull request, the review that allows the author to run
 `gh pr merge --auto --squash` is a COMMENT review that starts with
 `QA verdict: APPROVED` and names the current full head SHA. The author
 MUST NOT run that command when the pull request is opened, after a push
-that the verdict does not name, or while `needs-jorge` is present.
+that the verdict does not name, or while `needs-human` is present.
 Jorge does not merge it unless that label is present. On the converge
 pull request, the review is the final sign-off, and Jorge merges only
 after it. Without that review on the current head, the pull request
@@ -509,7 +522,7 @@ end to end in an MLOps interview. The site's monthly cost MUST stay around
 0–1 USD. v1.1.0 said this holds "unless an exception is documented in the
 plan and approved by Jorge." That approval is unchanged. A pull request
 that documents such an exception, or that creates real AWS resources or
-costs, MUST carry `needs-jorge`. Jorge merges it. It never auto-merges.
+costs, MUST carry `needs-human`. Jorge merges it. It never auto-merges.
 An opaque service that hides the infrastructure MUST NOT be added
 when a documented primitive meets the requirement.
 
@@ -519,7 +532,7 @@ an amendment to this constitution or without Jorge's explicit approval in
 that plan. v1.1.0 said the same sentence, ending "or without Jorge's
 explicit approval in that plan." That approval is unchanged. The pull
 request that carries the exception or the new service MUST have
-`needs-jorge`, and Jorge merges it. It never auto-merges.
+`needs-human`, and Jorge merges it. It never auto-merges.
 
 ### VII. English only
 
@@ -539,7 +552,7 @@ review, or comment fails review. Pages under `content/` are English.
   the converge pull request that closes it. v1.1.0 said "He is the only
   person who merges." That sentence is replaced. He does not manually
   merge an intermediate pull request. He does merge one that carries
-  the label `needs-jorge`, a non-feature pull request, and every release from
+  the label `needs-human`, a non-feature pull request, and every release from
   `develop` to `main`. He enables the repository setting "Allow
   auto-merge".
 - **Tech Lead.** On the full path, runs `/speckit-specify`,
@@ -553,12 +566,15 @@ review, or comment fails review. Pages under `content/` are English.
   `qa: checklist` that links the review. Writes
   `Status: Approved by Jorge — PR #N` on `spec.md`. For a pull request
   opened after 1.2.0 merges, writes
-  `Status: Approved by Reviewer QA — PR #N` on `plan.md` and on
-  `tasks.md`. Does not rewrite a status line already merged under
+  `Status: Approved by Jorge — PR #N` on `plan.md` and on `tasks.md`
+  when the pull request carries `needs-human`, and
+  `Status: Approved by Reviewer QA — PR #N` when it does not. The same
+  split applies to any other intermediate artifact that carries a status
+  line. Does not rewrite a status line already merged under
   v1.1.0. Does not enable auto-merge when opening a pull request.
   After a COMMENT review starts with `QA verdict: APPROVED` and names
   the current head SHA, runs `gh pr view <n> --json labels`. If
-  `needs-jorge` is absent, runs `gh pr merge --auto --squash`. If
+  `needs-human` is absent, runs `gh pr merge --auto --squash`. If
   "Allow auto-merge" is still off, runs `gh pr merge --squash` without
   `--auto` under the same checks. Before a later push, first runs
   `gh pr merge --disable-auto`, then pushes, and waits for a verdict
@@ -570,7 +586,7 @@ review, or comment fails review. Pages under `content/` are English.
   when opening a pull request. On an implementation pull request that is
   not the converge pull request, runs `gh pr merge --auto --squash` only
   after `QA verdict: APPROVED` names the current head SHA and
-  `gh pr view <n> --json labels` shows no `needs-jorge`. If "Allow
+  `gh pr view <n> --json labels` shows no `needs-human`. If "Allow
   auto-merge" is still off, runs `gh pr merge --squash` without `--auto`
   under those same checks. Before a later push, first runs
   `gh pr merge --disable-auto`, then pushes, and waits for a verdict
@@ -586,7 +602,7 @@ review, or comment fails review. Pages under `content/` are English.
   COMMENT review that starts with `QA verdict: APPROVED` and names the
   full head SHA. Reviewer QA never runs `gh pr merge`, with or without
   `--auto`, and does not enable auto-merge. The author enables it only
-  after that verdict, and only when `needs-jorge` is absent. On the
+  after that verdict, and only when `needs-human` is absent. On the
   converge pull request, Reviewer QA gives
   the final sign-off and Jorge merges after his own verification.
   Accepts or rejects each waiver on
@@ -598,15 +614,15 @@ review, or comment fails review. Pages under `content/` are English.
   exists and says `Converged`.
 - **Scrum Master Dev.** Does not merge and does not run `gh pr merge`.
   When a step needs Jorge's personal verification, adds the label
-  `needs-jorge` and a pull request comment with the reason, before
+  `needs-human` and a pull request comment with the reason, before
   Reviewer QA's verdict. The reason is a change to the AWS region, a
   change to DNS or a custom domain, real AWS resources or costs
   (including bootstrap and apply), IAM permissions or secrets, or branch
   protection. If the label does not exist yet, whoever first needs it
-  creates it once with `gh label create needs-jorge`. If the label is
+  creates it once with `gh label create needs-human`. If the label is
   added after auto-merge was enabled, the pull request author runs
   `gh pr merge --disable-auto`. Only Jorge or the Scrum Master Dev may
-  remove `needs-jorge`. Whoever removes it MUST add a pull request
+  remove `needs-human`. Whoever removes it MUST add a pull request
   comment that states the reason. No other role may remove the label.
 
 ## Branches and releases
