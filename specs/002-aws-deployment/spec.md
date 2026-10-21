@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-21
 
-Status: Approved by Jorge — PR #21
+Status: Approved by Jorge — PR #24
 
 Workflow: this feature will be the first run under the start/close approval rule (Jorge approves and merges the spec and the converge; Reviewer QA validates intermediate PRs, which merge automatically on QA approval). The rule takes effect only when constitution amendment v1.2.0 is merged; until then constitution v1.1.0 applies unchanged.
 
@@ -40,6 +40,7 @@ Workflow: this feature will be the first run under the start/close approval rule
 - Q: How does Verification check that the backend block omits `bucket` and `key` when site resources also use `bucket =`? → A: For `infra/shared` and for `infra/site`, Verification extracts the `backend "s3"` block from that header through its closing brace. The block contains `region = "eu-west-1"` and `use_lockfile = true`, and it contains no `bucket` argument and no `key` argument. A `bucket =` argument on an S3 resource is outside that block and does not fail the check.
 - Q: How does the CI plan step name the state bucket on each backend init? → A: It sets `account` from `AWS_PLAN_ROLE_ARN` with `cut -d: -f5` and passes `-backend-config="bucket=web-portfolio-tfstate-${account}"` on each backend `terraform init`. That name is the same bucket as `STATE_BUCKET`.
 - Q: Which pull requests does Jorge approve on this feature? → A: This feature will be the first run under the start/close approval rule. Jorge approves and merges the spec and the converge. Reviewer QA validates each intermediate pull request against the spec's verifiable acceptance criteria, and those pull requests merge automatically on QA approval. The rule takes effect only when constitution amendment v1.2.0 is merged. Until then constitution v1.1.0 applies unchanged.
+- Q: Where is the deploy role's `cloudfront:CreateInvalidation` permission declared, given the distribution only exists after `infra/site` is applied? → A: `infra/site` declares one inline `aws_iam_role_policy` that grants `cloudfront:CreateInvalidation` only on that stack's own distribution ARN and attaches it to the deploy role looked up by name with `data "aws_iam_role"` `web-portfolio-${var.environment}-deploy`. No `terraform_remote_state`. The deploy roles, their trust policies, and their S3 permissions stay in `infra/shared`. `infra/shared` does not use `inline_policy` blocks or `aws_iam_role_policies_exclusive` on the deploy roles, so the inline policy owned by `infra/site` is not reverted by `infra/shared`. Bootstrap order is unchanged.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -112,10 +113,10 @@ Jorge is emailed when actual AWS spend for the month is greater than 1 USD. The 
 - **FR-005**: After the Hugo build, the staging deploy overwrites `public/robots.txt` with `User-agent: *` and `Disallow: /`. The production deploy overwrites it with `User-agent: *` and `Allow: /`. The staging distribution adds the response header `X-Robots-Tag: noindex`. The production distribution does not send `X-Robots-Tag`. Neither site requires authentication.
 - **FR-006**: Infrastructure is Terraform. The Terraform version is exactly `1.16.6`. The AWS provider is exactly `6.69.1` (`hashicorp/aws`). `.terraform.lock.hcl` is committed. Remote state is an S3 bucket in `eu-west-1` with versioning, SSE-S3 (`AES256`), and Block Public Access. The backend sets `use_lockfile = true`. State keys are `shared/terraform.tfstate`, `staging/terraform.tfstate`, and `production/terraform.tfstate`. A staging apply does not read production state.
 - **FR-007**: The state bucket name is `web-portfolio-tfstate-<account-id>`. The site bucket names are `web-portfolio-staging-<account-id>` and `web-portfolio-production-<account-id>`. `<account-id>` is the 12-digit account from `aws sts get-caller-identity`. Jorge creates the state bucket with the AWS CLI during bootstrap. Terraform does not create the bucket it stores state in.
-- **FR-008**: Layout is `infra/shared` (OIDC provider, IAM roles, budget) and `infra/site` (bucket, Origin Access Control, distribution, function, and the staging response-headers policy). `infra/site` takes a variable `environment` whose only values are `staging` and `production`. Jorge applies `infra/site` twice, once per state key.
+- **FR-008**: Layout is `infra/shared` (OIDC provider, IAM roles, budget) and `infra/site` (bucket, Origin Access Control, distribution, function, the staging response-headers policy, and one inline `aws_iam_role_policy`). That inline policy is the single IAM object owned by `infra/site`. It grants `cloudfront:CreateInvalidation` only on that stack's own distribution ARN and attaches to the deploy role looked up by name with `data "aws_iam_role"` `web-portfolio-${var.environment}-deploy`. There is no `terraform_remote_state`. The deploy roles, their trust policies, and their S3 permissions stay in `infra/shared`. `infra/shared` does not use `inline_policy` blocks or `aws_iam_role_policies_exclusive` on the deploy roles, so the inline policy owned by `infra/site` is not reverted by `infra/shared`. `infra/site` declares no `aws_iam_policy`, no `aws_iam_role_policy_attachment`, and no `aws_iam_role_policies_exclusive`. `infra/site` takes a variable `environment` whose only values are `staging` and `production`. Jorge applies `infra/site` twice, once per state key. Bootstrap order is unchanged.
 - **FR-009**: Jorge applies Terraform. GitHub Actions does not run `terraform apply`. `.github/workflows/deploy.yml` and `.github/workflows/terraform.yml` do not contain the string `terraform apply`.
 - **FR-010**: No IAM user is created. No long-lived access key is created or committed. Actions authenticates with GitHub's OIDC provider `https://token.actions.githubusercontent.com` and audience `sts.amazonaws.com`. On 2026-10-21, `GET /repos/JLaborda/web-portfolio/actions/oidc/customization/sub` reported `use_immutable_subject: true` and prefix `repo:JLaborda@15078416/web-portfolio@1427090788`. Trust policies use that prefix.
-- **FR-011**: Three roles exist. `web-portfolio-plan` trusts only `sub` `repo:JLaborda@15078416/web-portfolio@1427090788:pull_request`. It can read the state objects and call the read APIs Terraform needs to plan this configuration. It cannot `s3:PutObject`, `s3:DeleteObject`, `cloudfront:CreateInvalidation`, `cloudfront:UpdateDistribution`, `iam:CreateRole`, `iam:PutRolePolicy`, or `budgets:ModifyBudget`. `web-portfolio-staging-deploy` trusts `sub` `repo:JLaborda@15078416/web-portfolio@1427090788:environment:staging` and `ref` `refs/heads/develop`. `web-portfolio-production-deploy` trusts `sub` `repo:JLaborda@15078416/web-portfolio@1427090788:environment:production` and `ref` `refs/heads/main`. Each deploy role can `s3:ListBucket`, `s3:GetObject`, `s3:PutObject`, and `s3:DeleteObject` only on its own site bucket, and `cloudfront:CreateInvalidation` only on its own distribution. A deploy role cannot change IAM, budgets, the state bucket, or distribution configuration.
+- **FR-011**: Three roles exist. `web-portfolio-plan` trusts only `sub` `repo:JLaborda@15078416/web-portfolio@1427090788:pull_request`. It can read the state objects and call the read APIs Terraform needs to plan this configuration. It can also call `iam:GetRole` and `iam:GetRolePolicy`, which plan needs for the `data "aws_iam_role"` and the inline policy. It cannot `s3:PutObject`, `s3:DeleteObject`, `cloudfront:CreateInvalidation`, `cloudfront:UpdateDistribution`, `iam:CreateRole`, `iam:PutRolePolicy`, or `budgets:ModifyBudget`. `web-portfolio-staging-deploy` trusts `sub` `repo:JLaborda@15078416/web-portfolio@1427090788:environment:staging` and `ref` `refs/heads/develop`. `web-portfolio-production-deploy` trusts `sub` `repo:JLaborda@15078416/web-portfolio@1427090788:environment:production` and `ref` `refs/heads/main`. Each deploy role can `s3:ListBucket`, `s3:GetObject`, `s3:PutObject`, and `s3:DeleteObject` only on its own site bucket, and `cloudfront:CreateInvalidation` only on its own distribution. A deploy role cannot change IAM, budgets, the state bucket, or distribution configuration.
 - **FR-012**: One AWS Budget named `web-portfolio-monthly` has limit amount `1`, unit `USD`, and time unit `MONTHLY`. One notification has type `ACTUAL`, comparison `GREATER_THAN`, threshold `100`, and threshold type `PERCENTAGE`. The subscriber is an email address equal to `TF_VAR_budget_alert_email`. That value is not committed. `infra/shared/terraform.tfvars.example` sets `budget_alert_email` to `replace-me@example.com` and is the only committed assignment of that variable.
 - **FR-013**: `.gitignore` ignores `.terraform/`, `*.tfstate`, `*.tfstate.*`, and `*.tfvars`, and does not ignore `*.tfvars.example` or `.terraform.lock.hcl`.
 - **FR-014**: The deploy workflow is `.github/workflows/deploy.yml`. It runs on `push` to `develop` and `main` and has no `pull_request` trigger. The job `deploy` uses GitHub Environment `staging` for `develop` and `production` for `main`. Those environments have custom branch policies (`develop` only, and `main` only), `wait_timer` 0, and no required reviewers. The job assumes `vars.AWS_ROLE_ARN` through `aws-actions/configure-aws-credentials` at commit `e1253824e5c10ff9df46874f81ed3ec929e19cfd` (v6.3.0), in region `eu-west-1`. Checkout is `actions/checkout` at `3d3c42e5aac5ba805825da76410c181273ba90b1` with submodules recursive.
@@ -301,6 +302,17 @@ Commands that read AWS use Jorge's SSO profile or the read-only plan role. They 
       exit 1
     fi
   done
+  test "$(grep -R -o -F 'resource "aws_iam_role_policy"' infra/site/*.tf | wc -l | tr -d ' ')" = 1 || exit 1
+  if grep -R -n -E 'resource "aws_iam_role"' infra/site/*.tf | grep -v -F 'resource "aws_iam_role_policy"'; then exit 1; fi
+  ! grep -R -q -F 'resource "aws_iam_policy"' infra/site/*.tf || exit 1
+  ! grep -R -q -F 'aws_iam_role_policy_attachment' infra/site/*.tf || exit 1
+  ! grep -R -q -F 'aws_iam_role_policies_exclusive' infra/site/*.tf || exit 1
+  ! grep -R -q -F 'inline_policy' infra/shared/*.tf || exit 1
+  ! grep -R -q -F 'aws_iam_role_policies_exclusive' infra/shared/*.tf || exit 1
+  grep -R -F 'data "aws_iam_role"' infra/site/*.tf || exit 1
+  grep -R -F 'web-portfolio-${var.environment}-deploy' infra/site/*.tf || exit 1
+  grep -R -F 'cloudfront:CreateInvalidation' infra/site/*.tf || exit 1
+  if grep -R -n -F 'terraform_remote_state' infra/site/*.tf infra/shared/*.tf; then exit 1; fi
   terraform fmt -check -recursive
   terraform -chdir=infra/shared init -backend=false -input=false
   terraform -chdir=infra/shared validate
@@ -308,7 +320,7 @@ Commands that read AWS use Jorge's SSO profile or the read-only plan role. They 
   terraform -chdir=infra/site validate
   ```
 
-  Expected: every command exits 0. `terraform version` prints a line containing `v1.16.6`. For `infra/shared` and for `infra/site`, the loop prints one line containing `region = "eu-west-1"` and one line containing `use_lockfile = true`. The `bucket`/`key` guard prints nothing. A `bucket =` argument on `aws_s3_bucket`, `aws_s3_bucket_public_access_block`, or `aws_s3_bucket_policy` is outside the extracted block and does not fail the guard. A `bucket =` or `key =` argument inside `backend "s3"` makes the guard exit 1.
+  Expected: every command exits 0. `terraform version` prints a line containing `v1.16.6`. For `infra/shared` and for `infra/site`, the loop prints one line containing `region = "eu-west-1"` and one line containing `use_lockfile = true`. The `bucket`/`key` guard prints nothing. A `bucket =` argument on `aws_s3_bucket`, `aws_s3_bucket_public_access_block`, or `aws_s3_bucket_policy` is outside the extracted block and does not fail the guard. A `bucket =` or `key =` argument inside `backend "s3"` makes the guard exit 1. The `aws_iam_role_policy` count test prints nothing and exits 0, so `infra/site` contains that resource exactly once. The `aws_iam_role` guard prints nothing, so `infra/site` declares no `aws_iam_role` resource. Each `! grep ... || exit 1` prints nothing and exits 0. A match exits 1: `infra/site` must not contain `resource "aws_iam_policy"`, `aws_iam_role_policy_attachment`, or `aws_iam_role_policies_exclusive`, and `infra/shared` must not contain `inline_policy` or `aws_iam_role_policies_exclusive`. `data "aws_iam_policy_document"` is not `resource "aws_iam_policy"`. The three `grep -R -F` commands print the matching lines. The `terraform_remote_state` guard prints nothing.
 
 - **FR-007, FR-010, FR-011**:
 
@@ -322,9 +334,12 @@ Commands that read AWS use Jorge's SSO profile or the read-only plan role. They 
   aws iam get-role --role-name web-portfolio-production-deploy \
     | jq -e '.Role.AssumeRolePolicyDocument.Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:sub"] == "repo:JLaborda@15078416/web-portfolio@1427090788:environment:production" and .Role.AssumeRolePolicyDocument.Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:ref"] == "refs/heads/main"'
   if git grep -n -I -e 'AWS_ACCESS_KEY_ID' -e 'AWS_SECRET_ACCESS_KEY' -- .github infra; then exit 1; fi
+  grep -R -E 'iam:GetRole"' infra/shared/*.tf || exit 1
+  grep -R -F 'iam:GetRolePolicy' infra/shared/*.tf || exit 1
+  if grep -R -n -F 'iam:PutRolePolicy' infra/shared/*.tf; then exit 1; fi
   ```
 
-  Expected: `list-users` prints `0`. Each `jq -e` prints `true` and exits 0. The key-name guard exits 0.
+  Expected: `list-users` prints `0`. Each `jq -e` prints `true` and exits 0. The key-name guard exits 0. `grep -R -E 'iam:GetRole"'` and `grep -R -F 'iam:GetRolePolicy'` each print a matching line and exit 0. The `iam:PutRolePolicy` guard prints nothing, so the plan-role policy in `infra/shared` does not contain that action.
 
 - **FR-012, FR-013**:
 
