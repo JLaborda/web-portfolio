@@ -2,7 +2,7 @@
 
 **Branch**: `002-aws-deployment` | **Date**: 2026-10-21 | **Spec**: [spec.md](./spec.md)
 
-Status: Approved by Jorge — PR #22
+Status: Approved by Jorge — PR #16
 
 **Input**: Feature specification from `/specs/002-aws-deployment/spec.md`
 
@@ -10,7 +10,7 @@ Status: Approved by Jorge — PR #22
 
 Publish the Hugo site to AWS. Staging deploys on every push to `develop`. Production deploys on every push to `main`. Each environment is a private S3 bucket and a CloudFront distribution in `eu-west-1`, served on that distribution's `*.cloudfront.net` hostname. Jorge applies Terraform locally with SSO. GitHub Actions never runs `terraform apply`.
 
-`/speckit-clarify` on the original plan step found no new questions. The spec on `develop` is pull request #21 (`3aec65b`). It records Jorge's decisions, including partial backend configuration. This plan resolves the notes QA carried forward from pull request #11: how deploy reads `HUGO_VERSION`, how `infra/site` is planned per environment, the IAM simulation checks, the region and DNS record below, workflow permissions, the paths-filter `if`, and the order of the task pull requests.
+`/speckit-clarify` on this plan step found no new questions. The spec merged in pull request #11 (`5ceda20`) already records Jorge's decisions. This plan resolves the notes QA carried forward from that pull request: how deploy reads `HUGO_VERSION`, how `infra/site` is planned per environment, the IAM simulation checks, the region and DNS record below, workflow permissions, the paths-filter `if`, and the order of the task pull requests.
 
 ## Region and DNS
 
@@ -45,7 +45,7 @@ Jorge approved both on 2026-10-21, in the spec that pull request #11 merged:
 
 | Principle | Gate | Result |
 |-----------|------|--------|
-| I. Spec-driven, PO approval | `spec.md` is on `develop` as `Status: Approved by Jorge — PR #21` (merge `3aec65b`). This pull request aligns the plan and the tasks with that spec. Its diff against `develop` does not change `spec.md` or `checklists/requirements.md`. `checklists/review.md` was marked in the commit `qa: checklist`, which links review 5596913428. | Pass |
+| I. Spec-driven, PO approval | `spec.md` is on `develop` as `Status: Approved by Jorge — PR #11` (merge `5ceda20`). This pull request is the plan step. Its diff against `develop` does not change `spec.md` or `checklists/requirements.md`. `checklists/review.md` is marked in the last commit, `qa: checklist`, which links review 5596913428. | Pass |
 | II. Fixed stack | Hugo stays the feature 001 pin. This plan does not edit `themes/PaperMod`, `layouts/`, or `assets/`. | Pass |
 | III. AWS hosting | Private buckets, Block Public Access, CloudFront OAC, Terraform remote state, GitHub OIDC, no long-lived keys. The plan role is `web-portfolio-plan` (`pull_request` only). Each environment has its own deploy role, restricted by its GitHub Environment and branch ref. Those two deploy roles are the constitution's apply/deploy side, split so staging cannot write production. No ACM certificate is created. Region `eu-west-1` and no custom DNS are recorded above with Jorge's approval. | Pass |
 | IV. Verifiable CI | `terraform.yml` runs on every pull request to `develop` and `main`, with no workflow-level `paths:` filter. On a Terraform change it runs fmt, validate, tflint, and plan with `-no-color`. `develop` and `main` gain required check `terraform` before the first `infra/` pull request merges, beside `hugo`, `lychee`, and `gitleaks`. `enforce_admins` is true. | Pass |
@@ -88,7 +88,7 @@ infra/
 ├── shared/                  # t02: OIDC, three roles, one budget
 │   ├── terraform.tfvars.example
 │   └── .tflint.hcl
-└── site/                    # t02: bucket, OAC, distribution, function, headers policy, invalidation role policy
+└── site/                    # t02: bucket, OAC, distribution, function, headers policy
     └── .tflint.hcl
 ```
 
@@ -108,8 +108,6 @@ One bucket, `web-portfolio-tfstate-<account-id>`, created by the AWS CLI during 
 
 A staging apply does not read production state. Plan and the real `init` pass `-lock=false`, so the plan role never writes the lock object. Validate uses `init -backend=false`.
 
-The `backend "s3"` block in `infra/shared` and in `infra/site` contains only `region = "eu-west-1"` and `use_lockfile = true`. It contains no `bucket` and no `key`. Every `terraform init` that uses the backend passes `-backend-config="bucket=web-portfolio-tfstate-${ACCOUNT}"` and the key `shared/terraform.tfstate`, `staging/terraform.tfstate`, or `production/terraform.tfstate`. Bootstrap takes `ACCOUNT` from `aws sts get-caller-identity`. CI takes the account id from `AWS_PLAN_ROLE_ARN` with `cut -d: -f5` and passes `-backend-config="bucket=web-portfolio-tfstate-${account}"`. The account id is never committed. The budget email is only `TF_VAR_budget_alert_email` and is never committed.
-
 ### Plan command
 
 Validate keeps the spec's `-chdir` form, because FR-006 runs `terraform -chdir=infra/shared validate` and `terraform -chdir=infra/site validate` on the workstation.
@@ -120,7 +118,7 @@ Plan in CI does not use `-chdir`. Inside the single `terraform` job, after the r
 (cd "$d" && terraform plan -lock=false -input=false -no-color)
 ```
 
-The site rows append `-var "environment=${environment}"`. Before each plan, that same script sets `account` from `AWS_PLAN_ROLE_ARN` with `cut -d: -f5`. `init` is a separate line before the plan command, with `-input=false -lock=false -reconfigure -backend-config="bucket=web-portfolio-tfstate-${account}" -backend-config="key=${key}"`. `key` is `shared/terraform.tfstate`, `staging/terraform.tfstate`, or `production/terraform.tfstate`. The account id is not committed. After `002-aws-deployment-t02`, the workflow file contains the `(cd "$d" && …)` string, `cut -d: -f5`, and `backend-config="bucket=web-portfolio-tfstate-${account}"`. It does not contain `No changes. Your infrastructure` or `Plan: N to add,`. The copy on `develop` today still passes only the key, at about lines 97–102. `t02` changes those plan inits. This pull request does not edit the workflow.
+The site rows append `-var "environment=${environment}"`. `init` is a separate line before that command, with `-input=false -lock=false -reconfigure -backend-config="key=${key}"`. The workflow file contains the `(cd "$d" && …)` string. It does not contain `No changes. Your infrastructure` or `Plan: N to add,`.
 
 This is a matrix of three rows inside one job. It is not a GitHub Actions `strategy.matrix`. A strategy matrix would rename the job and break the spec's single job name `terraform`.
 
@@ -167,13 +165,11 @@ permissions:
 
 `t01` merges `.github/workflows/terraform.yml` and the `.gitignore` lines. It does not add `infra/`. The job reports success because the paths filter sets `infra=false`. After that job has completed at least once on `develop`, and before `t02` merges, Jorge runs the spec's `gh api -X PUT` protection command.
 
-`t02` is the pull request that first adds `infra/`. It also changes the plan inits in `.github/workflows/terraform.yml` (about lines 97–102) so each one passes `-backend-config="bucket=web-portfolio-tfstate-${account}"` with `account` from `AWS_PLAN_ROLE_ARN` via `cut -d: -f5`, plus the key for that row. Jorge runs Bootstrap from that head, sets `AWS_PLAN_ROLE_ARN` last, sets the repository secret `TF_VAR_budget_alert_email` to the real address before the re-run, re-runs `terraform`, and merges only when FR-021 passes. He does not merge a skipped plan and does not bypass. The later pull request into `main` is not a second bootstrap. The budget email and the account id stay out of git.
+`t02` is the pull request that first adds `infra/`. Jorge runs Bootstrap from that head, sets `AWS_PLAN_ROLE_ARN` last, sets the repository secret `TF_VAR_budget_alert_email` to the real address before the re-run, re-runs `terraform`, and merges only when FR-021 passes. He does not merge a skipped plan and does not bypass. The later pull request into `main` is not a second bootstrap.
 
 ### IAM simulation
 
 After Bootstrap creates the three roles, `t02` runs `aws iam simulate-principal-policy` once per action, with exactly one `--resource-arns` value. The commands are in [tasks.md](./tasks.md). A decision of `allowed` on a forbidden action fails the task. Passing more than one resource ARN in one call is not the proof: the API returns the most restrictive decision across those ARNs.
-
-`infra/shared` keeps each deploy role, its trust policy, and its S3 permissions. Shared is applied before either distribution exists, so it cannot name a distribution ARN without reading the site's remote state. `infra/site` therefore adds an `aws_iam_role_policy` that allows `cloudfront:CreateInvalidation` on that environment's distribution ARN. The policy attaches to the role looked up with `data "aws_iam_role"` named `web-portfolio-${var.environment}-deploy`. The two roots do not read each other's remote state. The plan role can `iam:GetRole` and `iam:GetRolePolicy` so that data source can be planned. It cannot `iam:PutRolePolicy`.
 
 ## Complexity Tracking
 
