@@ -1,0 +1,333 @@
+# Feature Specification: AWS Deployment
+
+**Feature Branch**: `002-aws-deployment`
+
+**Created**: 2026-10-21
+
+**Input**: User description: "Continuous deployment of the Hugo site to AWS. Staging on develop, production on main. Private S3 and CloudFront with Origin Access Control in eu-west-1. No custom domain. Terraform remote state. GitHub OIDC, no long-lived keys. Jorge bootstraps with SSO. Budget about 1 USD. Deploy syncs public/ and invalidates CloudFront."
+
+## Clarifications
+
+### Session 2026-10-21
+
+- Q: Where is the site served, and is a custom domain part of this feature? → A: Each environment is served only on its CloudFront default hostname (`*.cloudfront.net`). A custom domain, an ACM certificate, and Route 53 are out of scope.
+- Q: Which branch deploys which environment? → A: A push to `develop` deploys staging. A push to `main` deploys production. A pull request does not deploy.
+- Q: Is staging authenticated, or only unlisted? → A: Unlisted and not authenticated. Staging publishes `robots.txt` with `Disallow: /` and sends the response header `X-Robots-Tag: noindex`. Production does neither.
+- Q: Who applies infrastructure changes? → A: Jorge applies Terraform locally with his existing SSO session. GitHub Actions never runs `terraform apply`. Actions may run `terraform plan` with a read-only role. Apply credentials are not given to Actions, because those credentials could destroy a bucket or a distribution.
+- Q: Where does the budget alert email live? → A: Outside git. Jorge passes it as `TF_VAR_budget_alert_email` or in an uncommitted tfvars file. The committed example value is `replace-me@example.com`.
+
+## User Scenarios & Testing *(mandatory)*
+
+### User Story 1 - Visitor opens the published site (Priority: P1)
+
+A recruiter opens the portfolio over HTTPS. Staging and production are separate sites. Each site is the Hugo build of the commit that was pushed to its branch.
+
+**Why this priority**: Without a reachable site, the portfolio feature has no public URL.
+
+**Independent Test**: After Jorge has applied the infrastructure, a push to `develop` publishes staging and a push to `main` publishes production. `curl` against each CloudFront hostname returns the built home page over HTTPS.
+
+**Acceptance Scenarios**:
+
+1. **Given** a successful push to `develop`, **When** a visitor opens the staging URL, **Then** the home page is served over HTTPS from a `*.cloudfront.net` hostname and the page is the Hugo build of that commit.
+2. **Given** a successful push to `main`, **When** a visitor opens the production URL, **Then** the same is true of the production hostname, and that hostname is not the staging hostname.
+3. **Given** a pull request, **When** the pull request workflows finish, **Then** neither site is updated by that pull request.
+
+---
+
+### User Story 2 - Staging stays out of search indexes (Priority: P2)
+
+Staging is a public URL that Jorge can share, and it is not a login wall. Crawlers are told not to index it. Production is indexable.
+
+**Why this priority**: An unlisted staging site that sends no crawler directive will be indexed as if it were the portfolio.
+
+**Independent Test**: Response headers and `robots.txt` differ between the two hostnames.
+
+**Acceptance Scenarios**:
+
+1. **Given** the staging site, **When** a client fetches `/robots.txt` and the home page headers, **Then** the file contains `Disallow: /` and the headers contain `X-Robots-Tag: noindex`.
+2. **Given** the production site, **When** a client fetches the same two resources, **Then** the file does not contain `Disallow: /` and the headers do not contain `X-Robots-Tag`.
+3. **Given** either site, **When** a visitor opens it, **Then** no login is required.
+
+---
+
+### User Story 3 - Jorge can see cost and deploy again safely (Priority: P3)
+
+Jorge is emailed when actual AWS spend for the month reaches 1 USD. The address is not stored in the repository. A later content push updates the site, including removing pages that were deleted in git, and prints the site URL in the Actions job.
+
+**Why this priority**: The constitution caps this site at about 1 USD per month, and a deploy that only adds files would leave deleted pages online.
+
+**Independent Test**: The budget API shows a 1 USD monthly budget with an email subscriber equal to Jorge's uncommitted value, and a content change followed by a push changes the live site.
+
+**Acceptance Scenarios**:
+
+1. **Given** the budget exists, **When** actual monthly spend reaches 1 USD, **Then** AWS emails the address Jorge supplied, and that address is not in git.
+2. **Given** a published page, **When** that page is removed from the Hugo build and the branch is pushed, **Then** the next deploy removes it from the bucket and the URL no longer returns the old page.
+3. **Given** a deploy job, **When** it succeeds, **Then** the job output includes the site URL.
+
+### Edge Cases
+
+- A Hugo build that exits non-zero does not sync and does not invalidate. The previous live site stays as it was.
+- A direct push to `develop` or `main` still deploys. Feature 001's required checks are what stop a failing pull request from merging, and therefore from being pushed, onto those branches. This feature does not re-run those checks.
+- `terraform plan` in Actions uses `-lock=false`. It does not write the S3 lock file. A plan that races an apply Jorge is running locally can be stale; it still must not change infrastructure.
+- Until Jorge finishes bootstrap, the plan job cannot read state. A failing plan before bootstrap is expected. After bootstrap, a valid plan exits 0.
+- The CloudFront hostname does not exist until the first apply. The deploy job fails when `SITE_URL`, `BUCKET_NAME`, `DISTRIBUTION_ID`, or `AWS_ROLE_ARN` is empty.
+- Pretty URLs such as `/about/` must resolve to the `index.html` object. The S3 REST origin does not add index documents by itself.
+- HTTP requests are redirected to HTTPS. The bucket website endpoint is not used and is not public.
+- This feature creates no ACM certificate. A later feature that adds a custom domain must request that certificate in `us-east-1`, as the constitution requires. This feature does not choose a DNS name.
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+- **FR-001**: Two environments exist, `staging` and `production`. A push to `develop` deploys staging. A push to `main` deploys production. No workflow in this feature deploys on `pull_request`. The deploy publishes the Hugo build of the commit that was pushed.
+- **FR-002**: Each environment has its own S3 bucket in `eu-west-1` and its own CloudFront distribution. The bucket has Block Public Access enabled for all four settings (`BlockPublicAcls`, `IgnorePublicAcls`, `BlockPublicPolicy`, `RestrictPublicBuckets`), is not a website endpoint, and is readable by that distribution only, through Origin Access Control. The distribution uses price class `PriceClass_100`, default root object `index.html`, and viewer protocol policy `redirect-to-https`.
+- **FR-003**: The public URL of each environment is the distribution's default hostname, matching `*.cloudfront.net`. This feature does not create a custom domain, an ACM certificate, or a Route 53 record.
+- **FR-004**: A CloudFront Function on the viewer-request event rewrites directory URLs to Hugo's `index.html` objects. `/` serves `index.html`. A URI that ends in `/` appends `index.html`. A URI whose last segment contains no `.` appends `/index.html`. A URI whose last segment contains a `.` is unchanged. `/index.xml` and `/index.json` stay unchanged.
+- **FR-005**: After the Hugo build, the staging deploy overwrites `public/robots.txt` with `User-agent: *` and `Disallow: /`. The production deploy overwrites it with `User-agent: *` and `Allow: /`. The staging distribution adds the response header `X-Robots-Tag: noindex`. The production distribution does not send `X-Robots-Tag`. Neither site requires authentication.
+- **FR-006**: Infrastructure is Terraform. The Terraform version is exactly `1.16.6`. The AWS provider is exactly `6.69.1` (`hashicorp/aws`). `.terraform.lock.hcl` is committed. Remote state is an S3 bucket in `eu-west-1` with versioning, SSE-S3 (`AES256`), and Block Public Access. The backend sets `use_lockfile = true`. State keys are `shared/terraform.tfstate`, `staging/terraform.tfstate`, and `production/terraform.tfstate`. A staging apply does not read production state.
+- **FR-007**: The state bucket name is `web-portfolio-tfstate-<account-id>`. The site bucket names are `web-portfolio-staging-<account-id>` and `web-portfolio-production-<account-id>`. `<account-id>` is the 12-digit account from `aws sts get-caller-identity`. Jorge creates the state bucket with the AWS CLI during bootstrap. Terraform does not create the bucket it stores state in.
+- **FR-008**: Layout is `infra/shared` (OIDC provider, IAM roles, budget) and `infra/site` (bucket, Origin Access Control, distribution, function, and the staging response-headers policy). `infra/site` takes a variable `environment` whose only values are `staging` and `production`. Jorge applies `infra/site` twice, once per state key.
+- **FR-009**: Jorge applies Terraform. GitHub Actions does not run `terraform apply`. `.github/workflows/deploy.yml` and `.github/workflows/terraform.yml` do not contain the string `terraform apply`.
+- **FR-010**: No IAM user is created. No long-lived access key is created or committed. Actions authenticates with GitHub's OIDC provider `https://token.actions.githubusercontent.com` and audience `sts.amazonaws.com`. On 2026-10-21, `GET /repos/JLaborda/web-portfolio/actions/oidc/customization/sub` reported `use_immutable_subject: true` and prefix `repo:JLaborda@15078416/web-portfolio@1427090788`. Trust policies use that prefix.
+- **FR-011**: Three roles exist. `web-portfolio-plan` trusts only `sub` `repo:JLaborda@15078416/web-portfolio@1427090788:pull_request`. It can read the state objects and call the read APIs Terraform needs to plan this configuration. It cannot `s3:PutObject`, `s3:DeleteObject`, `cloudfront:CreateInvalidation`, `cloudfront:UpdateDistribution`, `iam:CreateRole`, `iam:PutRolePolicy`, or `budgets:ModifyBudget`. `web-portfolio-staging-deploy` trusts `sub` `repo:JLaborda@15078416/web-portfolio@1427090788:environment:staging` and `ref` `refs/heads/develop`. `web-portfolio-production-deploy` trusts `sub` `repo:JLaborda@15078416/web-portfolio@1427090788:environment:production` and `ref` `refs/heads/main`. Each deploy role can `s3:ListBucket`, `s3:GetObject`, `s3:PutObject`, and `s3:DeleteObject` only on its own site bucket, and `cloudfront:CreateInvalidation` only on its own distribution. A deploy role cannot change IAM, budgets, the state bucket, or distribution configuration.
+- **FR-012**: One AWS Budget named `web-portfolio-monthly` has limit amount `1`, unit `USD`, and time unit `MONTHLY`. One notification has type `ACTUAL`, comparison `GREATER_THAN`, threshold `100`, and threshold type `PERCENTAGE`. The subscriber is an email address equal to `TF_VAR_budget_alert_email`. That value is not committed. `infra/shared/terraform.tfvars.example` sets `budget_alert_email` to `replace-me@example.com` and is the only committed assignment of that variable.
+- **FR-013**: `.gitignore` ignores `.terraform/`, `*.tfstate`, `*.tfstate.*`, and `*.tfvars`, and does not ignore `*.tfvars.example` or `.terraform.lock.hcl`.
+- **FR-014**: The deploy workflow is `.github/workflows/deploy.yml`. It runs on `push` to `develop` and `main` and has no `pull_request` trigger. The job `deploy` uses GitHub Environment `staging` for `develop` and `production` for `main`. Those environments have custom branch policies (`develop` only, and `main` only), `wait_timer` 0, and no required reviewers. The job assumes `vars.AWS_ROLE_ARN` through `aws-actions/configure-aws-credentials` at commit `e1253824e5c10ff9df46874f81ed3ec929e19cfd` (v6.3.0), in region `eu-west-1`. Checkout is `actions/checkout` at `3d3c42e5aac5ba805825da76410c181273ba90b1` with submodules recursive.
+- **FR-015**: The deploy job installs Hugo extended from `hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz`, where `HUGO_VERSION` is the single existing workflow variable owned by feature 001. This feature does not add a second `HUGO_VERSION:` key. The build command is `hugo --gc --minify --panicOnWarning --baseURL "${SITE_URL}/"`. `SITE_URL` has no trailing slash. The job then writes `robots.txt` as FR-005 requires, syncs `public/` with `--delete`, sets cache headers as FR-016 requires, and runs `aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"`. The job output `site_url` is `SITE_URL`.
+- **FR-016**: Cache-Control is `public, max-age=0, must-revalidate` for `*.html`, `*.xml`, `*.json`, and `robots.txt`. It is `public, max-age=31536000, immutable` when the object key matches `\.[0-9a-f]{8,}\.` and is not one of those four names. Every other object is `public, max-age=3600`. The first sync may set the one-hour default and is the only sync that passes `--delete`. Later copies overwrite Cache-Control for the short and long groups and do not pass `--delete`.
+- **FR-017**: `.github/workflows/terraform.yml` runs on `pull_request` to `develop` and to `main` when `infra/**` changes. It runs `terraform fmt -check -recursive`, `terraform -chdir=infra/shared validate`, `terraform -chdir=infra/site validate`, `tflint` `0.64.0` with the AWS ruleset `0.49.0` in `infra/shared` and `infra/site`, and `terraform plan -lock=false -input=false` in both directories using `web-portfolio-plan`. It does not apply.
+- **FR-018**: Feature 001's jobs `hugo`, `lychee`, and `gitleaks` stay the merge gate. This feature does not redefine them. A deploy happens after a push to `develop` or `main`, which is how a merge that passed those checks becomes the deployed commit.
+- **FR-019**: Bootstrap is the manual procedure in the Bootstrap section. Jorge runs it once, with his SSO session, before the first deploy.
+
+### Key Entities
+
+- **Environment**: `staging` or `production`. Owns one bucket, one distribution, one deploy role, and one GitHub Environment.
+- **State bucket**: One bucket, three state keys, S3 lock files beside those keys.
+- **Budget**: One account-level monthly budget. Not per environment.
+- **Deploy variables**: Per GitHub Environment: `AWS_ROLE_ARN`, `SITE_URL`, `BUCKET_NAME`, `DISTRIBUTION_ID`. They are variables, not secrets. Jorge sets them after apply.
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: A visitor can open the staging site and the production site over HTTPS within one minute of a successful deploy, and the two hostnames are different.
+- **SC-002**: A page removed from the build is absent from that environment after the next successful deploy of its branch.
+- **SC-003**: Staging asks crawlers not to index it. Production does not. Neither site asks the visitor to log in.
+- **SC-004**: The monthly hosting budget is 1 USD. Jorge receives an email when actual spend reaches that amount. The address is not in the repository.
+- **SC-005**: A reviewer can run every command in Verification and compare it to the expected result named there.
+
+## Bootstrap
+
+Jorge runs this on his machine after `aws sso login` with the SSO profile he already uses. `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` are unset. Replace nothing except the profile name he already has.
+
+```bash
+export AWS_PROFILE=<jorge-sso-profile>
+export AWS_REGION=eu-west-1
+ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+STATE_BUCKET="web-portfolio-tfstate-${ACCOUNT}"
+aws s3api create-bucket --bucket "$STATE_BUCKET" --region eu-west-1 \
+  --create-bucket-configuration LocationConstraint=eu-west-1
+aws s3api put-bucket-versioning --bucket "$STATE_BUCKET" \
+  --versioning-configuration Status=Enabled
+aws s3api put-public-access-block --bucket "$STATE_BUCKET" \
+  --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+aws s3api put-bucket-encryption --bucket "$STATE_BUCKET" \
+  --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"},"BucketKeyEnabled":true}]}'
+```
+
+He then applies Terraform 1.16.6 from a checkout of the commit that contains `infra/`. The email is only in the environment, not in a committed file.
+
+```bash
+export TF_VAR_budget_alert_email=<address-known-to-jorge>
+terraform -chdir=infra/shared init -input=false
+terraform -chdir=infra/shared apply -input=false
+terraform -chdir=infra/site init -input=false -backend-config="key=staging/terraform.tfstate" -reconfigure
+terraform -chdir=infra/site apply -input=false -var environment=staging
+terraform -chdir=infra/site init -input=false -backend-config="key=production/terraform.tfstate" -reconfigure
+terraform -chdir=infra/site apply -input=false -var environment=production
+```
+
+`infra/shared` and `infra/site` both use the backend bucket `$STATE_BUCKET`, region `eu-west-1`, and `use_lockfile = true`. The shared key is `shared/terraform.tfstate`. The site key is selected with `-backend-config` as above.
+
+He then creates the GitHub Environments and the branch policies. The environment update sets no reviewers.
+
+```bash
+for pair in staging:develop production:main; do
+  env=${pair%%:*}
+  branch=${pair##*:}
+  gh api --method PUT "repos/JLaborda/web-portfolio/environments/${env}" --input - <<EOF
+{"wait_timer":0,"deployment_branch_policy":{"protected_branches":false,"custom_branch_policies":true}}
+EOF
+  gh api --method POST "repos/JLaborda/web-portfolio/environments/${env}/deployment-branch-policies" --input - <<EOF
+{"name":"${branch}","type":"branch"}
+EOF
+done
+```
+
+He copies Terraform outputs into environment variables. `SITE_URL` is `https://` plus the distribution domain, with no path and no trailing slash.
+
+```bash
+gh variable set AWS_ROLE_ARN --env staging --body "<staging deploy role arn>"
+gh variable set SITE_URL --env staging --body "https://<staging-id>.cloudfront.net"
+gh variable set BUCKET_NAME --env staging --body "web-portfolio-staging-${ACCOUNT}"
+gh variable set DISTRIBUTION_ID --env staging --body "<staging distribution id>"
+gh variable set AWS_ROLE_ARN --env production --body "<production deploy role arn>"
+gh variable set SITE_URL --env production --body "https://<production-id>.cloudfront.net"
+gh variable set BUCKET_NAME --env production --body "web-portfolio-production-${ACCOUNT}"
+gh variable set DISTRIBUTION_ID --env production --body "<production distribution id>"
+```
+
+## Verification
+
+Commands that read AWS use Jorge's SSO profile or the read-only plan role. They do not use static keys. `ACCOUNT` is the same 12-digit account as in Bootstrap.
+
+- **FR-001, FR-014, FR-015, FR-018**:
+
+  ```bash
+  yq -e '[.on.push.branches[] | select(. == "develop" or . == "main")] | unique | length == 2' .github/workflows/deploy.yml
+  if yq -e '.on | has("pull_request")' .github/workflows/deploy.yml >/dev/null; then exit 1; fi
+  test "$(grep -R -E '^[[:space:]]*HUGO_VERSION:' .github/workflows | wc -l | tr -d ' ')" = 1
+  grep -F 'hugo --gc --minify --panicOnWarning --baseURL' .github/workflows/deploy.yml
+  grep -F 'hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz' .github/workflows/deploy.yml
+  grep -F 'aws s3 sync' .github/workflows/deploy.yml
+  grep -F 'aws cloudfront create-invalidation' .github/workflows/deploy.yml
+  grep -F 'e1253824e5c10ff9df46874f81ed3ec929e19cfd' .github/workflows/deploy.yml
+  grep -F '3d3c42e5aac5ba805825da76410c181273ba90b1' .github/workflows/deploy.yml
+  if grep -F 'terraform apply' .github/workflows/deploy.yml .github/workflows/terraform.yml; then exit 1; fi
+  ```
+
+  Expected: `yq` prints `true` and exits 0. The `has("pull_request")` command does not take the `exit 1` branch. The version count is 1. Each `grep -F` exits 0. The `terraform apply` guard exits 0.
+
+- **FR-002, FR-003, FR-004**: After both distributions exist. Repeat with the production distribution id and its `SITE_URL`.
+
+  ```bash
+  aws s3api get-public-access-block --bucket "$BUCKET_NAME" \
+    | jq -e '.PublicAccessBlockConfiguration | [.BlockPublicAcls,.IgnorePublicAcls,.BlockPublicPolicy,.RestrictPublicBuckets] == [true,true,true,true]'
+  aws cloudfront get-distribution --id "$DISTRIBUTION_ID" | jq -e '
+    .Distribution
+    | (.DomainName | test("^[a-z0-9]+\\.cloudfront\\.net$"))
+    and .DistributionConfig.PriceClass == "PriceClass_100"
+    and .DistributionConfig.DefaultRootObject == "index.html"
+    and .DistributionConfig.DefaultCacheBehavior.ViewerProtocolPolicy == "redirect-to-https"
+    and (.DistributionConfig.Origins.Items[0].OriginAccessControlId | length > 0)
+    and ([.DistributionConfig.DefaultCacheBehavior.FunctionAssociations.Items[].EventType] | index("viewer-request") != null)
+  '
+  code=$(curl -sI -o /dev/null -w '%{http_code}' "http://${SITE_URL#https://}/")
+  test "$code" = 301
+  while IFS= read -r f; do
+    rel=${f#public/}
+    rel=${rel%index.html}
+    curl -fsS -o /dev/null "${SITE_URL}/${rel}"
+  done < <(find public -name index.html)
+  ```
+
+  Expected: both `jq -e` commands print `true` and exit 0. The HTTP status is 301. Every `curl` of a built directory URL exits 0. `public/` is the Hugo output of the deployed commit, built with `--baseURL "${SITE_URL}/"`.
+
+- **FR-005**:
+
+  ```bash
+  curl -fsS "${SITE_URL}/robots.txt" | tee /tmp/robots.txt | grep -F 'Disallow: /'
+  curl -fsSI "${SITE_URL}/" | grep -i '^x-robots-tag: noindex'
+  ```
+
+  Expected on staging: both commands exit 0. Expected on production: both commands exit non-zero, and `/tmp/robots.txt` from production contains `Allow: /`.
+
+- **FR-006, FR-008, FR-009**:
+
+  ```bash
+  terraform version | head -1 | grep -F 'v1.16.6'
+  grep -F 'version = "6.69.1"' infra/shared/*.tf infra/site/*.tf
+  grep -F 'use_lockfile = true' infra/shared/*.tf infra/site/*.tf
+  grep -F 'shared/terraform.tfstate' infra/shared/*.tf
+  terraform fmt -check -recursive
+  terraform -chdir=infra/shared init -backend=false -input=false
+  terraform -chdir=infra/shared validate
+  terraform -chdir=infra/site init -backend=false -input=false
+  terraform -chdir=infra/site validate
+  ```
+
+  Expected: every command exits 0. `terraform version` prints a line containing `v1.16.6`.
+
+- **FR-007, FR-010, FR-011**:
+
+  ```bash
+  aws sts get-caller-identity --query Account --output text
+  aws iam list-users --query 'length(Users)' --output text
+  aws iam get-role --role-name web-portfolio-plan \
+    | jq -e '.Role.AssumeRolePolicyDocument.Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:sub"] == "repo:JLaborda@15078416/web-portfolio@1427090788:pull_request"'
+  aws iam get-role --role-name web-portfolio-staging-deploy \
+    | jq -e '.Role.AssumeRolePolicyDocument.Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:sub"] == "repo:JLaborda@15078416/web-portfolio@1427090788:environment:staging" and .Role.AssumeRolePolicyDocument.Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:ref"] == "refs/heads/develop"'
+  aws iam get-role --role-name web-portfolio-production-deploy \
+    | jq -e '.Role.AssumeRolePolicyDocument.Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:sub"] == "repo:JLaborda@15078416/web-portfolio@1427090788:environment:production" and .Role.AssumeRolePolicyDocument.Statement[0].Condition.StringEquals["token.actions.githubusercontent.com:ref"] == "refs/heads/main"'
+  if git grep -n -I -e 'AWS_ACCESS_KEY_ID' -e 'AWS_SECRET_ACCESS_KEY' -- .github infra; then exit 1; fi
+  ```
+
+  Expected: `list-users` prints `0`. Each `jq -e` prints `true` and exits 0. The key-name guard exits 0.
+
+- **FR-012, FR-013**:
+
+  ```bash
+  aws budgets describe-budget --account-id "$ACCOUNT" --budget-name web-portfolio-monthly \
+    | jq -e '.Budget | (.BudgetLimit.Amount | tonumber) == 1 and .BudgetLimit.Unit == "USD" and .TimeUnit == "MONTHLY"'
+  NOTIF=$(aws budgets describe-notifications-for-budget --account-id "$ACCOUNT" --budget-name web-portfolio-monthly --query 'Notifications[0]' --output json)
+  printf '%s\n' "$NOTIF" | jq -e '.NotificationType == "ACTUAL" and .ComparisonOperator == "GREATER_THAN" and (.Threshold | tonumber == 100) and .ThresholdType == "PERCENTAGE"'
+  aws budgets describe-subscribers-for-notification --account-id "$ACCOUNT" --budget-name web-portfolio-monthly --notification "$NOTIF" \
+    | jq -e --arg email "$TF_VAR_budget_alert_email" '[.Subscribers[] | select(.SubscriptionType == "EMAIL" and .Address == $email)] | length == 1'
+  if git grep -n -I -E 'budget_alert_email[[:space:]]*=[[:space:]]*"[^"]+"' | grep -v 'replace-me@example.com'; then exit 1; fi
+  grep -F '.terraform/' .gitignore
+  grep -F '*.tfvars' .gitignore
+  grep -F '!*.tfvars.example' .gitignore
+  test -f infra/shared/terraform.tfvars.example
+  test ! -e infra/shared/terraform.tfvars
+  ```
+
+  Expected: each `jq -e` prints `true` and exits 0. The email guard exits 0. `terraform.tfvars` is not in the tree.
+
+- **FR-014**:
+
+  ```bash
+  gh api repos/JLaborda/web-portfolio/environments/staging/deployment-branch-policies --jq '[.branch_policies[].name] | sort == ["develop"]'
+  gh api repos/JLaborda/web-portfolio/environments/production/deployment-branch-policies --jq '[.branch_policies[].name] | sort == ["main"]'
+  gh api repos/JLaborda/web-portfolio/environments/staging --jq '(.deployment_branch_policy.custom_branch_policies == true) and (([.protection_rules[].type] | index("required_reviewers")) == null)'
+  gh api repos/JLaborda/web-portfolio/environments/production --jq '(.deployment_branch_policy.custom_branch_policies == true) and (([.protection_rules[].type] | index("required_reviewers")) == null)'
+  ```
+
+  Expected: each command prints `true` and exits 0.
+
+- **FR-016**: After a deploy, for the staging bucket and again for the production bucket.
+
+  ```bash
+  aws s3api head-object --bucket "$BUCKET_NAME" --key index.html --query CacheControl --output text
+  ```
+
+  Expected: the printed value is `public, max-age=0, must-revalidate`. An object whose key matches `\.[0-9a-f]{8,}\.` and is not html, xml, json, or `robots.txt` prints `public, max-age=31536000, immutable`. Any other object prints `public, max-age=3600`.
+
+- **FR-017**:
+
+  ```bash
+  yq -e '[.on.pull_request.branches[] | select(. == "develop" or . == "main")] | unique | length == 2' .github/workflows/terraform.yml
+  yq -e '[.on.pull_request.paths[] | select(. == "infra/**")] | length == 1' .github/workflows/terraform.yml
+  grep -F 'terraform fmt -check -recursive' .github/workflows/terraform.yml
+  grep -F 'terraform plan -lock=false -input=false' .github/workflows/terraform.yml
+  tflint --version | grep -F '0.64.0'
+  ```
+
+  Expected: both `yq` commands print `true` and exit 0. Both greps exit 0. `tflint --version` contains `0.64.0`.
+
+## Out of Scope
+
+- Custom domain, ACM, and Route 53. A later feature owns those. Any ACM certificate that feature adds is requested in `us-east-1`.
+- The `hugo`, `lychee`, and `gitleaks` jobs. Feature 001 owns them.
+- Analytics, WAF, more than one region, and a preview distribution per pull request.
+- IAM users, long-lived access keys, and committing an email address.
+- Applying Terraform from GitHub Actions.
+
+## Assumptions
+
+- Feature 001 has merged far enough that `HUGO_VERSION` exists in `.github/workflows/ci.yml` and the Hugo site builds with `hugo --gc --minify --panicOnWarning`. This feature reads that variable and does not declare another.
+- Jorge's AWS account is the one he already signs into with SSO. The account id is whatever `aws sts get-caller-identity` prints. Bucket names include that id because S3 names are global.
+- The repository is public, so GitHub Environment branch policies are available. Confirmed for `JLaborda/web-portfolio` on 2026-10-21.
+- `PriceClass_100` is the cheapest CloudFront price class that includes Europe, which is where `eu-west-1` visitors are served.
+- S3 lock files (`use_lockfile`) replace a DynamoDB lock table. Terraform 1.16.6 supports that argument. The plan role does not write lock files because it passes `-lock=false`.
+- One shared budget of 1 USD covers both environments. That is the constitution's monthly cap, not a per-environment cap.
+- The deploy role is the constitution's apply/deploy role. It publishes files and creates invalidations. It is not allowed to apply Terraform. The plan role is the constitution's read-only plan role.
