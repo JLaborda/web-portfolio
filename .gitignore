@@ -5,3 +5,10 @@
 public/
 resources/_gen/
 .hugo_build.lock
+
+# Terraform local files. .terraform.lock.hcl stays tracked.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
