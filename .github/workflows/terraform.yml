@@ -88,6 +88,8 @@ jobs:
           fi
           token=$(curl -fsSL -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
             "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" | jq -r '.value')
+          if [ -z "$token" ] || [ "$token" = "null" ]; then echo "::error::OIDC token request returned empty"; exit 1; fi
+          echo "::add-mask::$token"
           printf '%s' "$token" > "${RUNNER_TEMP}/aws-web-identity-token"
           export AWS_ROLE_ARN="$arn"
           export AWS_WEB_IDENTITY_TOKEN_FILE="${RUNNER_TEMP}/aws-web-identity-token"
