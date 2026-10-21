@@ -149,8 +149,8 @@ That command is also forbidden at open time. The author runs it only
 after `QA verdict: APPROVED` names the current head SHA and
 `gh pr view <n> --json labels` shows no `needs-human` label. Reviewer QA
 never runs `gh pr merge`. Jorge does not merge that intermediate pull
-request by hand. That squash merge is not his approval of the start or
-of the close.
+request by hand, unless that pull request carries `needs-human`. That
+squash merge is not his approval of the start or of the close.
 
 These v1.1.0 rules stay. At most one spec, plan, or constitution pull
 request is open. A pull request MUST NOT depend on an unmerged pull
@@ -478,7 +478,8 @@ NOT be implemented before a new spec PR. That PR follows principle I,
 including `checklists/requirements.md` and the path choice, replaces the
 status with `Status: Approved by Jorge — PR #N` for that spec pull
 request, and Jorge merges it. That line is not used on `plan.md` or
-`tasks.md` in a pull request opened after 1.2.0 merges.
+`tasks.md` in a pull request opened after 1.2.0 merges, unless that
+pull request carries `needs-human`.
 
 The last implementation PR of the feature is the one that gets
 `Converged`. It MUST add `specs/NNN-name/converge.md` with the full output
@@ -511,9 +512,9 @@ repeats the verdict. If the file is missing or the verdict is anything
 else, QA blocks the PR. v1.1.0 said "The QA review is recorded before
 Jorge's merge." That sentence is replaced for an intermediate pull
 request: the `QA verdict: APPROVED` review names the head that the
-author later enables for auto-merge, and auto-merge is not enabled at
-open. On the converge pull request, the review is still recorded before
-Jorge's merge.
+author later enables for auto-merge, unless that pull request carries
+`needs-human`, and auto-merge is not enabled at open. On the converge
+pull request, the review is still recorded before Jorge's merge.
 
 ### VI. Explainable in an interview, and cheap
 
@@ -646,7 +647,8 @@ under `docs/specs/`.
   If `develop` moves while the pull request is open, the branch MUST be
   rebased onto that new `develop` before the pull request merges. v1.1.0
   said "before Jorge merges." That sentence is replaced, because an
-  intermediate pull request merges by auto-merge. The next pull request
+  intermediate pull request merges by auto-merge, unless that pull
+  request carries `needs-human`. The next pull request
   is opened only after that merge.
 - On a branch `NNN-name-tXX` the session MUST export
   `SPECIFY_FEATURE_DIRECTORY=specs/NNN-name` before the scripts.
@@ -692,8 +694,8 @@ the last-amended date to the merge date before it is merged.
 Before posting `QA verdict: APPROVED` or a converge sign-off, Reviewer
 QA MUST check compliance with this constitution. v1.1.0 said "Before
 asking for a merge." That sentence is replaced: Reviewer QA does not
-ask Jorge to merge an intermediate pull request, and Reviewer QA does
-not run `gh pr merge`. A PR that contradicts a principle MUST NOT be
-merged.
+ask Jorge to merge an intermediate pull request, unless that pull
+request carries `needs-human`, and Reviewer QA does not run
+`gh pr merge`. A PR that contradicts a principle MUST NOT be merged.
 
 **Version**: 1.2.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-10-21
