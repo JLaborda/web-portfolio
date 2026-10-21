@@ -1,6 +1,6 @@
 # Tasks: AWS Deployment
 
-Status: Approved by Jorge — PR #16
+Status: Approved by Jorge — PR #22
 
 **Input**: Design documents from `/specs/002-aws-deployment/`
 

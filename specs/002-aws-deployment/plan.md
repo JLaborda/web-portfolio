@@ -2,7 +2,7 @@
 
 **Branch**: `002-aws-deployment` | **Date**: 2026-10-21 | **Spec**: [spec.md](./spec.md)
 
-Status: Approved by Jorge — PR #16
+Status: Approved by Jorge — PR #22
 
 **Input**: Feature specification from `/specs/002-aws-deployment/spec.md`
 
