@@ -12,9 +12,9 @@ Two new workflow files. Feature 001's `.github/workflows/ci.yml` is read and not
 | Environment | None |
 | Checkout | `actions/checkout` at `3d3c42e5aac5ba805825da76410c181273ba90b1`, `fetch-depth: 0`, `ref` `github.event.pull_request.head.sha` |
 | Paths step id | `paths`. Output `infra` is `true` or `false`. |
-| Conditional `if` | `steps.paths.outputs.infra == 'true'` on fmt, validate, tflint, and the plan script. The assume step's `if` is `steps.paths.outputs.infra == 'true' && vars.AWS_PLAN_ROLE_ARN != ''`. No `continue-on-error`. |
-| Assume | `aws-actions/configure-aws-credentials` at `e1253824e5c10ff9df46874f81ed3ec929e19cfd`, `role-to-assume` `${{ vars.AWS_PLAN_ROLE_ARN }}`, audience `sts.amazonaws.com`, region `eu-west-1`. |
-| Plan | `(cd "$d" && terraform plan -lock=false -input=false -no-color)` for shared, then the same command with `-var environment=staging` and `-var environment=production`. Env `TF_VAR_budget_alert_email` is the repository secret of that name. |
+| Conditional `if` | `steps.paths.outputs.infra == 'true'` on every step that runs Terraform, tflint, or the plan script. No second `if`. No `continue-on-error`. |
+| Assume | Inside the plan script, only when `AWS_PLAN_ROLE_ARN` is non-empty. The script requests the GitHub OIDC token with audience `sts.amazonaws.com` from `ACTIONS_ID_TOKEN_REQUEST_URL` and `ACTIONS_ID_TOKEN_REQUEST_TOKEN`, writes the JWT to a file, and exports `AWS_ROLE_ARN` and `AWS_WEB_IDENTITY_TOKEN_FILE`, or calls `aws sts assume-role-with-web-identity`. No `configure-aws-credentials` step. |
+| Plan | `(cd "$d" && terraform plan -lock=false -input=false -no-color)` for shared, then the same command with `-var environment=staging` and `-var environment=production`. |
 | Forbidden text | The file contains neither `terraform apply` nor `No changes. Your infrastructure` nor `Plan: N to add,`. |
 
 When `infra` is `false`, the Terraform steps are skipped and the job succeeds. The notice skip and the error exit are the spec's FR-017 branches.
@@ -31,6 +31,6 @@ When `infra` is `false`, the Terraform steps are skipped and the job succeeds. T
 | Hugo | `yq '.env.HUGO_VERSION' .github/workflows/ci.yml` into `$GITHUB_ENV`. No `HUGO_VERSION:` key in this file. |
 | Build | `hugo --gc --minify --panicOnWarning --baseURL "${SITE_URL}/"` |
 | Publish | `aws s3 sync` with `--delete` once, then cache copies without `--delete`, then `aws cloudfront create-invalidation --paths "/*"` |
-| Output | Job output `site_url` equals `SITE_URL` |
+| Output | Job output `site_url` equals `SITE_URL`. The log prints `echo "site_url=${SITE_URL}"` from the shell variable. The file does not contain `site_url=${{ vars.SITE_URL }}`. |
 
 A non-zero Hugo exit skips sync and invalidation.

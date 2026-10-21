@@ -12,50 +12,50 @@ Depth is standard. The audience is the pull-request reviewer. Focus is hosting a
 
 ## Requirement Completeness
 
-- [x] CHK001 Are both environments specified with the branch that deploys each, and is a pull request excluded from deploy? [Completeness, Spec §FR-001]
-- [x] CHK002 Are bucket publicity, origin access, price class, default root object, and HTTP-to-HTTPS specified for each distribution? [Completeness, Spec §FR-002]
-- [x] CHK003 Is the public hostname specified as the CloudFront default name, with custom domain, ACM, and Route 53 out of scope? [Completeness, Spec §FR-003]
-- [x] CHK004 Are the directory-URL rewrite cases specified, including URIs whose last segment contains a dot? [Completeness, Spec §FR-004]
-- [x] CHK005 Are staging and production crawler directives specified for both `robots.txt` and the response header? [Completeness, Spec §FR-005]
-- [x] CHK006 Are the three state keys, the lock setting, and the rule that staging does not read production state specified? [Completeness, Spec §FR-006, Spec §FR-008]
+- [ ] CHK001 Are both environments specified with the branch that deploys each, and is a pull request excluded from deploy? [Completeness, Spec §FR-001]
+- [ ] CHK002 Are bucket publicity, origin access, price class, default root object, and HTTP-to-HTTPS specified for each distribution? [Completeness, Spec §FR-002]
+- [ ] CHK003 Is the public hostname specified as the CloudFront default name, with custom domain, ACM, and Route 53 out of scope? [Completeness, Spec §FR-003]
+- [ ] CHK004 Are the directory-URL rewrite cases specified, including URIs whose last segment contains a dot? [Completeness, Spec §FR-004]
+- [ ] CHK005 Are staging and production crawler directives specified for both `robots.txt` and the response header? [Completeness, Spec §FR-005]
+- [ ] CHK006 Are the three state keys, the lock setting, and the rule that staging does not read production state specified? [Completeness, Spec §FR-006, Spec §FR-008]
 
 ## Requirement Clarity
 
-- [x] CHK007 Is the budget comparison specified so that spend equal to 1 USD does not send mail, and spend greater than 1 USD does? [Clarity, Spec §FR-012, Spec §SC-004]
-- [x] CHK008 Is the committed budget address limited to the example value, with the real address kept out of git? [Clarity, Spec §FR-012]
-- [x] CHK009 Is the plan skip specified as the base tree being absent and the plan-role variable being empty, rather than the variable being empty by itself? [Clarity, Spec §FR-017]
-- [x] CHK010 Is the plan command specified with `-no-color`, and is the log check specified to strip ANSI before counting? [Clarity, Spec §FR-017, Spec §FR-021]
-- [x] CHK011 Is Hugo's version specified as the single existing workflow key, with this feature forbidden from adding a second one? [Clarity, Spec §FR-015]
+- [ ] CHK007 Is the budget comparison specified so that spend equal to 1 USD does not send mail, and spend greater than 1 USD does? [Clarity, Spec §FR-012, Spec §SC-004]
+- [ ] CHK008 Is the committed budget address limited to the example value, with the real address kept out of git? [Clarity, Spec §FR-012]
+- [ ] CHK009 Is the plan skip specified as the base tree being absent and the plan-role variable being empty, rather than the variable being empty by itself? [Clarity, Spec §FR-017]
+- [ ] CHK010 Is the plan command specified with `-no-color`, and is the log check specified to strip ANSI before counting? [Clarity, Spec §FR-017, Spec §FR-021]
+- [ ] CHK011 Is Hugo's version specified as the single existing workflow key, with this feature forbidden from adding a second one? [Clarity, Spec §FR-015]
 
 ## Requirement Consistency
 
-- [x] CHK012 Do the plan role and the two deploy roles stay consistent between the requirement, the trust subjects, and the forbidden actions? [Consistency, Spec §FR-010, Spec §FR-011]
-- [x] CHK013 Does every statement that Actions applies Terraform stay absent, including the workflow files? [Consistency, Spec §FR-009]
-- [x] CHK014 Do the merge-order statements agree on which pull request bootstraps, and that the pull request into `main` does not bootstrap again? [Consistency, Spec §FR-019, Spec §FR-021]
-- [x] CHK015 Do the cache headers in the requirement agree on which sync is allowed to delete objects? [Consistency, Spec §FR-016]
+- [ ] CHK012 Do the plan role and the two deploy roles stay consistent between the requirement, the trust subjects, and the forbidden actions? [Consistency, Spec §FR-010, Spec §FR-011]
+- [ ] CHK013 Does every statement that Actions applies Terraform stay absent, including the workflow files? [Consistency, Spec §FR-009]
+- [ ] CHK014 Do the merge-order statements agree on which pull request bootstraps, and that the pull request into `main` does not bootstrap again? [Consistency, Spec §FR-019, Spec §FR-021]
+- [ ] CHK015 Do the cache headers in the requirement agree on which sync is allowed to delete objects? [Consistency, Spec §FR-016]
 
 ## Acceptance Criteria Quality
 
-- [x] CHK016 Can a reviewer judge the two hostnames, the crawler rules, the budget, and a removed page without choosing an unspecified threshold? [Measurability, Spec §SC-001, Spec §SC-002, Spec §SC-003, Spec §SC-004]
-- [x] CHK017 Is every functional requirement paired with a command or a manual step whose expected result is written down? [Measurability, Spec §SC-005]
+- [ ] CHK016 Can a reviewer judge the two hostnames, the crawler rules, the budget, and a removed page without choosing an unspecified threshold? [Measurability, Spec §SC-001, Spec §SC-002, Spec §SC-003, Spec §SC-004]
+- [ ] CHK017 Is every functional requirement paired with a command or a manual step whose expected result is written down? [Measurability, Spec §SC-005]
 
 ## Scenario Coverage
 
-- [x] CHK018 Are requirements present for a visitor on staging, a visitor on production, and a pull request that must not publish? [Coverage, Spec §User Story 1]
-- [x] CHK019 Are requirements present for a failed Hugo build leaving the previous site in place? [Coverage, Spec §Edge Cases]
-- [x] CHK020 Is a direct push rejected for every user, including the repository admin, once protection is on? [Coverage, Spec §Edge Cases, Spec §FR-020]
+- [ ] CHK018 Are requirements present for a visitor on staging, a visitor on production, and a pull request that must not publish? [Coverage, Spec §User Story 1]
+- [ ] CHK019 Are requirements present for a failed Hugo build leaving the previous site in place? [Coverage, Spec §Edge Cases]
+- [ ] CHK020 Is a direct push rejected for every user, including the repository admin, once protection is on? [Coverage, Spec §Edge Cases, Spec §FR-020]
 
 ## Edge Case Coverage
 
-- [x] CHK021 Is the first pull request that adds `infra/` distinguished from later pull requests that already have `infra/` on the base? [Edge Case, Spec §FR-017, Spec §FR-021]
-- [x] CHK022 Is an outputs-only plan specified as something to re-apply locally, with a bypass excluded? [Edge Case, Spec §FR-021]
-- [x] CHK023 Are the summary strings forbidden in the workflow file so an echoed script cannot satisfy the log count? [Edge Case, Spec §FR-017]
+- [ ] CHK021 Is the first pull request that adds `infra/` distinguished from later pull requests that already have `infra/` on the base? [Edge Case, Spec §FR-017, Spec §FR-021]
+- [ ] CHK022 Is an outputs-only plan specified as something to re-apply locally, with a bypass excluded? [Edge Case, Spec §FR-021]
+- [ ] CHK023 Are the summary strings forbidden in the workflow file so an echoed script cannot satisfy the log count? [Edge Case, Spec §FR-017]
 
 ## Security and Dependencies
 
-- [x] CHK024 Are long-lived keys and IAM users excluded, and is the OIDC subject prefix written as a concrete value? [Security, Spec §FR-010]
-- [x] CHK025 Is the plan role barred from the write actions that would change objects, distributions, IAM, or the budget? [Security, Spec §FR-011]
-- [x] CHK026 Is the dependency on feature 001's single `HUGO_VERSION` key stated, including that this feature does not redefine the hugo, lychee, or gitleaks jobs? [Dependency, Spec §FR-015, Spec §FR-018, Spec §Assumptions]
+- [ ] CHK024 Are long-lived keys and IAM users excluded, and is the OIDC subject prefix written as a concrete value? [Security, Spec §FR-010]
+- [ ] CHK025 Is the plan role barred from the write actions that would change objects, distributions, IAM, or the budget? [Security, Spec §FR-011]
+- [ ] CHK026 Is the dependency on feature 001's single `HUGO_VERSION` key stated, including that this feature does not redefine the hugo, lychee, or gitleaks jobs? [Dependency, Spec §FR-015, Spec §FR-018, Spec §Assumptions]
 
 ## Notes
 

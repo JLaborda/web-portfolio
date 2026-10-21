@@ -23,7 +23,7 @@ Jorge approved both on 2026-10-21, in the spec that pull request #11 merged:
 
 **Language/Version**: Terraform 1.16.6. AWS provider `hashicorp/aws` 6.69.1. tflint 0.64.0 with AWS ruleset 0.49.0. Hugo extended is the single `HUGO_VERSION` already in `.github/workflows/ci.yml` (0.145.0). This feature does not add a second `HUGO_VERSION:` key.
 
-**Primary Dependencies**: `actions/checkout` `3d3c42e5aac5ba805825da76410c181273ba90b1` (v7.0.1). `aws-actions/configure-aws-credentials` `e1253824e5c10ff9df46874f81ed3ec929e19cfd` (v6.3.0) on the plan job and the deploy job, audience `sts.amazonaws.com`. mikefarah `yq` 4.54.1 in the deploy job, used only to read `.env.HUGO_VERSION` from `ci.yml`.
+**Primary Dependencies**: `actions/checkout` `3d3c42e5aac5ba805825da76410c181273ba90b1` (v7.0.1). `aws-actions/configure-aws-credentials` `e1253824e5c10ff9df46874f81ed3ec929e19cfd` (v6.3.0) on the deploy job only, audience `sts.amazonaws.com`. The plan job does not use that action. It assumes `web-portfolio-plan` inside the plan script. mikefarah `yq` 4.54.1 in the deploy job, used only to read `.env.HUGO_VERSION` from `ci.yml`.
 
 **Storage**: Remote Terraform state in one S3 bucket, three keys, `use_lockfile = true`. Site files in two private buckets. No DynamoDB table.
 
@@ -45,7 +45,7 @@ Jorge approved both on 2026-10-21, in the spec that pull request #11 merged:
 
 | Principle | Gate | Result |
 |-----------|------|--------|
-| I. Spec-driven, PO approval | `spec.md` is on `develop` as `Status: Approved by Jorge — PR #11` (merge `5ceda20`). This pull request is the plan step. It does not edit `spec.md` or `checklists/requirements.md`. `checklists/review.md` is marked in the `qa: checklist` commit that links the QA review. | Pass |
+| I. Spec-driven, PO approval | `spec.md` is on `develop` as `Status: Approved by Jorge — PR #11` (merge `5ceda20`). This pull request is the plan step. Its diff against `develop` does not change `spec.md` or `checklists/requirements.md`. `checklists/review.md` is marked in the last commit, `qa: checklist`, which links review 5596913428. | Pass |
 | II. Fixed stack | Hugo stays the feature 001 pin. This plan does not edit `themes/PaperMod`, `layouts/`, or `assets/`. | Pass |
 | III. AWS hosting | Private buckets, Block Public Access, CloudFront OAC, Terraform remote state, GitHub OIDC, no long-lived keys. The plan role is `web-portfolio-plan` (`pull_request` only). Each environment has its own deploy role, restricted by its GitHub Environment and branch ref. Those two deploy roles are the constitution's apply/deploy side, split so staging cannot write production. No ACM certificate is created. Region `eu-west-1` and no custom DNS are recorded above with Jorge's approval. | Pass |
 | IV. Verifiable CI | `terraform.yml` runs on every pull request to `develop` and `main`, with no workflow-level `paths:` filter. On a Terraform change it runs fmt, validate, tflint, and plan with `-no-color`. `develop` and `main` gain required check `terraform` before the first `infra/` pull request merges, beside `hugo`, `lychee`, and `gitleaks`. `enforce_admins` is true. | Pass |
@@ -71,7 +71,7 @@ specs/002-aws-deployment/
 │   └── workflows.md
 ├── checklists/
 │   ├── requirements.md      # already on develop; this pull request does not edit it
-│   └── review.md            # /speckit-checklist; items stay unchecked
+│   └── review.md            # /speckit-checklist; marked by the qa: checklist commit
 ├── tasks.md
 └── converge.md              # written by t04, not by this plan
 ```
@@ -130,7 +130,16 @@ This is a matrix of three rows inside one job. It is not a GitHub Actions `strat
 
 Three summaries still satisfy FR-021, which requires a count of at least 2. `-no-color` is on every plan. FR-021 still strips ANSI with `sed -E 's/\x1b\[[0-9;]*m//g'` before the grep.
 
-Fmt, validate, tflint, and the plan script use `if: steps.paths.outputs.infra == 'true'`. The assume step is `aws-actions/configure-aws-credentials` at `e1253824e5c10ff9df46874f81ed3ec929e19cfd` with `role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}`, `audience: sts.amazonaws.com`, and `aws-region: eu-west-1`. Its `if` is `steps.paths.outputs.infra == 'true' && vars.AWS_PLAN_ROLE_ARN != ''`. An empty role would make that action fail, so the empty-variable skip does not run it. The plan script still prints the notice or the error. The job sets no GitHub Environment, so the OIDC subject stays `:pull_request`. The plan step exports `TF_VAR_budget_alert_email` from the repository secret of that name. The secret is the real address. A dummy value would plan a subscriber change, so it is not used.
+Fmt, validate, tflint, and the plan script use `if: steps.paths.outputs.infra == 'true'`. There is no second `if` and no `aws-actions/configure-aws-credentials` step in this job. The plan script itself assumes `web-portfolio-plan`, and only in the branch where `AWS_PLAN_ROLE_ARN` is non-empty, after the skip and fail checks. It requests the GitHub OIDC token with audience `sts.amazonaws.com` from `ACTIONS_ID_TOKEN_REQUEST_URL` and `ACTIONS_ID_TOKEN_REQUEST_TOKEN`, writes the JWT (`value`) to a file, and exports `AWS_ROLE_ARN` and `AWS_WEB_IDENTITY_TOKEN_FILE`. Calling `aws sts assume-role-with-web-identity` in that same branch is equivalent. The notice and the error stay in that script. It prints `::notice::AWS_PLAN_ROLE_ARN is unset; terraform plan skipped until bootstrap` and exits 0 only when the base has no `infra/` tree and the variable is empty. It prints `::error::AWS_PLAN_ROLE_ARN is unset and infra/ already exists on the base` and exits 1 when the base has `infra/` and the variable is empty. The job sets no GitHub Environment, so the OIDC subject stays `:pull_request`. The plan step exports `TF_VAR_budget_alert_email` from the repository secret of that name. The secret is the real address. A dummy value would plan a subscriber change, so it is not used.
+
+```bash
+# Non-empty branch only, after the notice and error checks.
+token=$(curl -fsSL -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+  "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" | jq -r '.value')
+printf '%s' "$token" > "${RUNNER_TEMP}/aws-web-identity-token"
+export AWS_ROLE_ARN="$arn"
+export AWS_WEB_IDENTITY_TOKEN_FILE="${RUNNER_TEMP}/aws-web-identity-token"
+```
 
 ### Deploy reads Hugo
 
@@ -156,7 +165,7 @@ permissions:
 
 `t01` merges `.github/workflows/terraform.yml` and the `.gitignore` lines. It does not add `infra/`. The job reports success because the paths filter sets `infra=false`. After that job has completed at least once on `develop`, and before `t02` merges, Jorge runs the spec's `gh api -X PUT` protection command.
 
-`t02` is the pull request that first adds `infra/`. Jorge runs Bootstrap from that head, sets `AWS_PLAN_ROLE_ARN` last, re-runs `terraform`, and merges only when FR-021 passes. He does not merge a skipped plan and does not bypass. The later pull request into `main` is not a second bootstrap.
+`t02` is the pull request that first adds `infra/`. Jorge runs Bootstrap from that head, sets `AWS_PLAN_ROLE_ARN` last, sets the repository secret `TF_VAR_budget_alert_email` to the real address before the re-run, re-runs `terraform`, and merges only when FR-021 passes. He does not merge a skipped plan and does not bypass. The later pull request into `main` is not a second bootstrap.
 
 ### IAM simulation
 
