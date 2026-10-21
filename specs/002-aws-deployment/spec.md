@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-21
 
-Status: Approved by Jorge — PR #21
+Status: Approved by Jorge — PR #23
 
 Workflow: this feature will be the first run under the start/close approval rule (Jorge approves and merges the spec and the converge; Reviewer QA validates intermediate PRs, which merge automatically on QA approval). The rule takes effect only when constitution amendment v1.2.0 is merged; until then constitution v1.1.0 applies unchanged.
 
