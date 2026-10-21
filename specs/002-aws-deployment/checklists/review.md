@@ -64,3 +64,4 @@ Depth is standard. The audience is the pull-request reviewer. Focus is hosting a
 - `/speckit-implement` reads checklist checkbox state as a gate and must not modify markers
 - `checklists/requirements.md` has a separate built-in lifecycle maintained by `/speckit-specify` and `/speckit-clarify`
 - Items are numbered sequentially for easy reference
+- CHK001–CHK026 were marked for the plan merged in pull request #16. Those marks are a record of that earlier review. They are not the review of the current plan and tasks alignment, and this file does not present pull request #16's review as the current review
