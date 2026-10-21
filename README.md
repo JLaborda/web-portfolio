@@ -1,5 +1,20 @@
 # web-portfolio
-Web that shows my portfolio
+
+The site is a portfolio and blog for ML Engineering and MLOps recruiters and hiring managers in fintech.
+
+## Local preview
+
+The site is built with Hugo extended 0.145.0. PaperMod is a git submodule, so clone the repository with its submodules:
+
+```bash
+git clone --recurse-submodules https://github.com/JLaborda/web-portfolio.git
+```
+
+Preview the site, including drafts:
+
+```bash
+hugo server -D
+```
 
 ## Spec Kit workflow
 
