@@ -13,3 +13,33 @@ params:
   author: Jorge D. Laborda Sicilia
   disableThemeToggle: false
   ShowBreadCrumbs: true
+  ShowReadingTime: true
+  ShowToc: true
+  UseHugoToc: true
+  profileMode:
+    enabled: true
+    title: Jorge D. Laborda Sicilia
+    subtitle: Placeholder headline
+    buttons:
+      - name: Search
+        url: /search/
+  socialIcons:
+    - name: github
+      url: https://github.com/JLaborda
+    - name: linkedin
+      url: https://www.linkedin.com/in/jorge-daniel-laborda-sicilia
+
+menu:
+  main:
+    - name: Projects
+      url: /projects/
+      weight: 1
+    - name: Now
+      url: /now/
+      weight: 2
+    - name: About
+      url: /about/
+      weight: 3
+    - name: Posts
+      url: /posts/
+      weight: 4

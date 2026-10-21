@@ -81,10 +81,10 @@ Expected: the diff does not add Terraform, an AWS template, an analytics snippet
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Set `params.profileMode` in `hugo.yaml` to title `Jorge D. Laborda Sicilia`, subtitle `Placeholder headline`, and one button named Search with url `/search/`
-- [ ] T010 [US1] Set `params.socialIcons` in `hugo.yaml` to GitHub `https://github.com/JLaborda` and LinkedIn `https://www.linkedin.com/in/jorge-daniel-laborda-sicilia` only
-- [ ] T011 [US1] Set `menu.main` in `hugo.yaml` to exactly Projects `/projects/`, Now `/now/`, About `/about/`, and Posts `/posts/`, in that order
-- [ ] T012 [P] [US1] Create `content/projects/_index.md` and `content/projects/smartwealthai.md` with the word `placeholder` and the link `https://github.com/JLaborda/SmartWealthAI`
+- [X] T009 [US1] Set `params.profileMode` in `hugo.yaml` to title `Jorge D. Laborda Sicilia`, subtitle `Placeholder headline`, and one button named Search with url `/search/`
+- [X] T010 [US1] Set `params.socialIcons` in `hugo.yaml` to GitHub `https://github.com/JLaborda` and LinkedIn `https://www.linkedin.com/in/jorge-daniel-laborda-sicilia` only
+- [X] T011 [US1] Set `menu.main` in `hugo.yaml` to exactly Projects `/projects/`, Now `/now/`, About `/about/`, and Posts `/posts/`, in that order
+- [X] T012 [P] [US1] Create `content/projects/_index.md` and `content/projects/smartwealthai.md` with the word `placeholder` and the link `https://github.com/JLaborda/SmartWealthAI`
 
 **Checkpoint**: User Story 1's home, menu, and project entry match [contracts/public-pages.md](./contracts/public-pages.md). Now and About may still be empty routes until Phase 4.
 
@@ -100,8 +100,8 @@ Expected: the diff does not add Terraform, an AWS template, an analytics snippet
 
 ### Implementation for User Story 2
 
-- [ ] T013 [P] [US2] Create `content/now.md` in English containing the word `placeholder` and placeholder text for what Jorge is learning and doing now
-- [ ] T014 [P] [US2] Create `content/about.md` in English containing the word `placeholder`
+- [X] T013 [P] [US2] Create `content/now.md` in English containing the word `placeholder` and placeholder text for what Jorge is learning and doing now
+- [X] T014 [P] [US2] Create `content/about.md` in English containing the word `placeholder`
 
 **Checkpoint**: User Stories 1 and 2 both render from one published build.
 
@@ -117,9 +117,9 @@ Expected: the diff does not add Terraform, an AWS template, an analytics snippet
 
 ### Implementation for User Story 3
 
-- [ ] T015 [P] [US3] Create `content/search.md` with `layout: search` so the published build writes `public/search/index.html` and `public/index.json`
-- [ ] T016 [P] [US3] Create `content/posts/_index.md` and `content/posts/welcome.md` with `draft: true`, title `Welcome`, slug `welcome`, date `2026-10-20`, `ShowToc: true`, and exactly two level-2 headings, `First section` and `Second section`, in under 200 words
-- [ ] T017 [US3] Set `ShowReadingTime: true`, `ShowToc: true`, and `UseHugoToc: true` in `hugo.yaml` so the draft preview shows a table of contents and the text `1 min`
+- [X] T015 [P] [US3] Create `content/search.md` with `layout: search` so the published build writes `public/search/index.html` and `public/index.json`
+- [X] T016 [P] [US3] Create `content/posts/_index.md` and `content/posts/welcome.md` with `draft: true`, title `Welcome`, slug `welcome`, date `2026-10-20`, `ShowToc: true`, and exactly two level-2 headings, `First section` and `Second section`, in under 200 words
+- [X] T017 [US3] Set `ShowReadingTime: true`, `ShowToc: true`, and `UseHugoToc: true` in `hugo.yaml` so the draft preview shows a table of contents and the text `1 min`
 
 **Checkpoint**: The FR-008 through FR-012 verification commands pass, including a draft destination that does not create `public/posts/welcome/index.html`.
 
