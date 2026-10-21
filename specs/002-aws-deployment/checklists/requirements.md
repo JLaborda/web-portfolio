@@ -6,7 +6,7 @@
 
 ## Content Quality
 
-- [ ] No implementation details (languages, frameworks, APIs). Waiver: constitution III, IV, and VI require Terraform, private S3, CloudFront with Origin Access Control, GitHub OIDC, a 1 USD budget, and the Terraform CI gates as required status checks to be written in this specification. FR-006 through FR-017 and FR-020 name those checks.
+- [ ] No implementation details (languages, frameworks, APIs). Waiver: constitution III, IV, and VI require Terraform, private S3, CloudFront with Origin Access Control, GitHub OIDC, a 1 USD budget, and the Terraform CI gates as required status checks to be written in this specification. FR-006 through FR-021 name those checks.
 - [x] Focused on user value and business needs
 - [ ] Written for non-technical stakeholders. Waiver: the User Stories are written for a visitor opening the site. The Verification and Bootstrap sections are the reviewer's check required by the constitution, and they name the commands.
 - [x] All mandatory sections completed
