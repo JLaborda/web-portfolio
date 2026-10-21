@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-20
 
-Status: Approved by Jorge — PR #6
+Status: Approved by Jorge — PR #19
 
 **Input**: User description: "Minimal Hugo site with the PaperMod theme. Portfolio and blog for ML Engineering and MLOps recruiters in fintech. Sections: Projects (SmartWealthAI placeholder), Now, About, and Posts (welcome post as a draft). Menu with those four links. PaperMod search, RSS, and table of contents enabled. Site language English. Social links: GitHub https://github.com/JLaborda and LinkedIn https://www.linkedin.com/in/jorge-daniel-laborda-sicilia. No email in this feature. CI on pull requests to develop: hugo build with --baseURL /, lychee on public/ with --root-dir, gitleaks with a synthetic secret that is not AKIAIOSFODNN7EXAMPLE. Pinned Hugo extended and PaperMod as a git submodule on a tag. Out of scope: AWS deployment, Terraform, domain, DNS, email, analytics, and real project content."
 
@@ -405,7 +405,7 @@ The draft build writes to `/tmp/public-drafts` and does not modify `public/`.
 - Menu labels inside `ul#menu` are Projects, Now, About, and Posts. Search is the home button, not a fifth menu label. The feed is head autodiscovery only.
 - Light/dark switching and reading time stay in this feature because they were part of the source draft and no decision removed them.
 - The exact Hugo extended release and the exact PaperMod tag are chosen in the plan. This specification requires only that each is a single pinned release, not a floating branch. PaperMod v8 reading-time text for English is `1 min` or `N min`, and the table-of-contents wrapper is `<div class="toc">`.
-- The status line is `Status: Approved by Jorge — PR #6`. A later change to the scope of this specification still requires its own spec pull request. That pull request replaces the status line with `Status: Approved by Jorge — PR #N` for that pull request before the new scope is implemented.
+- The status line is `Status: Approved by Jorge — PR #19`. A later change to the scope of this specification still requires its own spec pull request. That pull request replaces the status line with `Status: Approved by Jorge — PR #N` for that pull request before the new scope is implemented.
 - No product question is left open. Language, social links, the absence of email, the author name, the placeholder headline, and the welcome post title and slug are fixed above.
 
 ## Clarifications
