@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-20
 
-Status: Approved by Jorge — PR #6
+Status: Approved by Jorge — PR #19
 
 **Input**: User description: "Minimal Hugo site with the PaperMod theme. Portfolio and blog for ML Engineering and MLOps recruiters in fintech. Sections: Projects (SmartWealthAI placeholder), Now, About, and Posts (welcome post as a draft). Menu with those four links. PaperMod search, RSS, and table of contents enabled. Site language English. Social links: GitHub https://github.com/JLaborda and LinkedIn https://www.linkedin.com/in/jorge-daniel-laborda-sicilia. No email in this feature. CI on pull requests to develop: hugo build with --baseURL /, lychee on public/ with --root-dir, gitleaks with a synthetic secret that is not AKIAIOSFODNN7EXAMPLE. Pinned Hugo extended and PaperMod as a git submodule on a tag. Out of scope: AWS deployment, Terraform, domain, DNS, email, analytics, and real project content."
 
@@ -345,7 +345,7 @@ The draft build writes to `/tmp/public-drafts` and does not modify `public/`.
   test "$lychee_status" -ne 0
   ```
 
-  Expected: `lychee_status` is not 0. External proof, on a branch that is not merged: add `[x](https://example.invalid/spec-001-missing)` to `content/about.md`. Expected: the job conclusion is `success`, the step log contains `https://example.invalid/spec-001-missing`, and the log contains the line `::warning::https://example.invalid/spec-001-missing`.
+  Expected: `lychee_status` is not 0. External proof, on a branch that is not merged: add `[x](https://httpbin.org/status/404)` to `content/about.md`. Expected: the job conclusion is `success`, the step log contains `https://httpbin.org/status/404`, and the log contains the line `::warning::https://httpbin.org/status/404`.
 - **FR-018**: The gitleaks job checks out with `fetch-depth: 0` and runs `gitleaks detect --redact --log-opts="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"`. That range is the commits on the pull request and not on the base, both for a pull request into `develop` and for a release pull request into `main`. `fetch-depth: 0` makes both SHAs available. The local failure proof, with no push, still uses `origin/develop..HEAD` on a throwaway branch:
 
   ```bash
@@ -378,7 +378,7 @@ The draft build writes to `/tmp/public-drafts` and does not modify `public/`.
   ```
 
   Expected: the three greps exit 0. `git status --short` does not list `public/`.
-- **FR-020**: `git diff --stat origin/develop...HEAD` does not list Terraform files, an AWS template, an analytics snippet, a contact form, a comments partial, a second language, or an email address. Expected: each spec pull request lists only `specs/001-minimal-hugo-site/spec.md`. The implementation pull requests for this feature are checked the same way against those forbidden additions.
+- **FR-020**: `git diff --stat origin/develop...HEAD` does not list Terraform files, an AWS template, an analytics snippet, a contact form, a comments partial, a second language, or an email address. CI does not run that check. `.github/workflows/ci.yml` runs the jobs `hugo`, `lychee`, and `gitleaks`. `specs/001-minimal-hugo-site/converge.md` records the same absence on the feature 001 tree, and it records that `specs/002-aws-deployment/` is feature 002, not an implementation of this feature. A pull request may list files other than `specs/001-minimal-hugo-site/spec.md`. The implementation pull requests and the converge pull request are checked for those forbidden additions.
 - **FR-021**: After the workflow is on `develop`, and after Jorge has saved branch protection:
 
   ```bash
@@ -405,7 +405,7 @@ The draft build writes to `/tmp/public-drafts` and does not modify `public/`.
 - Menu labels inside `ul#menu` are Projects, Now, About, and Posts. Search is the home button, not a fifth menu label. The feed is head autodiscovery only.
 - Light/dark switching and reading time stay in this feature because they were part of the source draft and no decision removed them.
 - The exact Hugo extended release and the exact PaperMod tag are chosen in the plan. This specification requires only that each is a single pinned release, not a floating branch. PaperMod v8 reading-time text for English is `1 min` or `N min`, and the table-of-contents wrapper is `<div class="toc">`.
-- The status line is `Status: Approved by Jorge — PR #6`. A later change to the scope of this specification still requires its own spec pull request. That pull request replaces the status line with `Status: Approved by Jorge — PR #N` for that pull request before the new scope is implemented.
+- The status line is `Status: Approved by Jorge — PR #19`. A later change to the scope of this specification still requires its own spec pull request. That pull request replaces the status line with `Status: Approved by Jorge — PR #N` for that pull request before the new scope is implemented.
 - No product question is left open. Language, social links, the absence of email, the author name, the placeholder headline, and the welcome post title and slug are fixed above.
 
 ## Clarifications
@@ -413,3 +413,8 @@ The draft build writes to `/tmp/public-drafts` and does not modify `public/`.
 ### Session 2026-10-20
 
 - No critical ambiguities found; no questions asked.
+
+### Session 2026-10-21
+
+- Q: Which URL does the external-link proof add so lychee emits `::warning::`? → A: `https://httpbin.org/status/404`. Jorge decided this on 2026-10-21 (https://github.com/JLaborda/web-portfolio/pull/12#issuecomment-6310516548). Lychee 0.24.2 excludes the `.invalid` TLD, so `https://example.invalid/spec-001-missing` never produces that warning.
+- Q: What does the FR-020 verification require a pull request to contain? → A: The diff must add no Terraform file, AWS template, analytics snippet, contact form, comments partial, second language, or email address. It does not require the pull request to list only `spec.md`. CI runs `hugo`, `lychee`, and `gitleaks`. `converge.md` records that absence on the feature 001 tree and treats `specs/002-aws-deployment/` as feature 002.
