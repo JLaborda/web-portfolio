@@ -23,7 +23,7 @@ Jorge approved both on 2026-10-21, in the spec that pull request #11 merged:
 
 **Language/Version**: Terraform 1.16.6. AWS provider `hashicorp/aws` 6.69.1. tflint 0.64.0 with AWS ruleset 0.49.0. Hugo extended is the single `HUGO_VERSION` already in `.github/workflows/ci.yml` (0.145.0). This feature does not add a second `HUGO_VERSION:` key.
 
-**Primary Dependencies**: `actions/checkout` `3d3c42e5aac5ba805825da76410c181273ba90b1` (v7.0.1). `aws-actions/configure-aws-credentials` `e1253824e5c10ff9df46874f81ed3ec929e19cfd` (v6.3.0) on the deploy job only. mikefarah `yq` 4.54.1 in the deploy job, used only to read `.env.HUGO_VERSION` from `ci.yml`.
+**Primary Dependencies**: `actions/checkout` `3d3c42e5aac5ba805825da76410c181273ba90b1` (v7.0.1). `aws-actions/configure-aws-credentials` `e1253824e5c10ff9df46874f81ed3ec929e19cfd` (v6.3.0) on the plan job and the deploy job, audience `sts.amazonaws.com`. mikefarah `yq` 4.54.1 in the deploy job, used only to read `.env.HUGO_VERSION` from `ci.yml`.
 
 **Storage**: Remote Terraform state in one S3 bucket, three keys, `use_lockfile = true`. Site files in two private buckets. No DynamoDB table.
 
@@ -45,7 +45,7 @@ Jorge approved both on 2026-10-21, in the spec that pull request #11 merged:
 
 | Principle | Gate | Result |
 |-----------|------|--------|
-| I. Spec-driven, PO approval | `spec.md` is on `develop` as `Status: Approved by Jorge — PR #11` (merge `5ceda20`). This pull request is the plan step. It does not edit `spec.md` or `checklists/requirements.md`. Custom checklist items stay unchecked for QA. | Pass |
+| I. Spec-driven, PO approval | `spec.md` is on `develop` as `Status: Approved by Jorge — PR #11` (merge `5ceda20`). This pull request is the plan step. It does not edit `spec.md` or `checklists/requirements.md`. `checklists/review.md` is marked in the `qa: checklist` commit that links the QA review. | Pass |
 | II. Fixed stack | Hugo stays the feature 001 pin. This plan does not edit `themes/PaperMod`, `layouts/`, or `assets/`. | Pass |
 | III. AWS hosting | Private buckets, Block Public Access, CloudFront OAC, Terraform remote state, GitHub OIDC, no long-lived keys. The plan role is `web-portfolio-plan` (`pull_request` only). Each environment has its own deploy role, restricted by its GitHub Environment and branch ref. Those two deploy roles are the constitution's apply/deploy side, split so staging cannot write production. No ACM certificate is created. Region `eu-west-1` and no custom DNS are recorded above with Jorge's approval. | Pass |
 | IV. Verifiable CI | `terraform.yml` runs on every pull request to `develop` and `main`, with no workflow-level `paths:` filter. On a Terraform change it runs fmt, validate, tflint, and plan with `-no-color`. `develop` and `main` gain required check `terraform` before the first `infra/` pull request merges, beside `hugo`, `lychee`, and `gitleaks`. `enforce_admins` is true. | Pass |
@@ -130,7 +130,7 @@ This is a matrix of three rows inside one job. It is not a GitHub Actions `strat
 
 Three summaries still satisfy FR-021, which requires a count of at least 2. `-no-color` is on every plan. FR-021 still strips ANSI with `sed -E 's/\x1b\[[0-9;]*m//g'` before the grep.
 
-The plan step's only `if` is `steps.paths.outputs.infra == 'true'`. The script assumes `web-portfolio-plan` itself when the variable is set. There is no second `if` on `AWS_PLAN_ROLE_ARN`, because the spec's `yq` check requires every conditional step to use that one expression. The job sets no GitHub Environment, so the OIDC subject stays `:pull_request`.
+Fmt, validate, tflint, and the plan script use `if: steps.paths.outputs.infra == 'true'`. The assume step is `aws-actions/configure-aws-credentials` at `e1253824e5c10ff9df46874f81ed3ec929e19cfd` with `role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}`, `audience: sts.amazonaws.com`, and `aws-region: eu-west-1`. Its `if` is `steps.paths.outputs.infra == 'true' && vars.AWS_PLAN_ROLE_ARN != ''`. An empty role would make that action fail, so the empty-variable skip does not run it. The plan script still prints the notice or the error. The job sets no GitHub Environment, so the OIDC subject stays `:pull_request`. The plan step exports `TF_VAR_budget_alert_email` from the repository secret of that name. The secret is the real address. A dummy value would plan a subscriber change, so it is not used.
 
 ### Deploy reads Hugo
 
