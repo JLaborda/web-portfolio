@@ -163,7 +163,7 @@ sim deny  "$PRODUCTION_ARN" iam:PutRolePolicy             "arn:aws:iam::${ACCOUN
 
 **Pull request**: `002-aws-deployment-t04` (the last implementation pull request)
 
-- [X] T016 Run the FR-020 protection commands in `spec.md` and write `specs/002-aws-deployment/converge.md` with that output for `develop` and `main`, the date, the full SHA of the commit it ran on, and the verdict `Converged`. Paste the verdict in the pull request description
+- [ ] T016 Run the FR-020 protection commands in `spec.md` and write `specs/002-aws-deployment/converge.md` with that output for `develop` and `main`, the date, the full SHA of the commit it ran on, and the verdict `Converged`. Paste the verdict in the pull request description
 
 **Checkpoint**: QA can block the pull request if `converge.md` is missing or the verdict is not `Converged`.
 
@@ -222,5 +222,5 @@ sim deny  "$PRODUCTION_ARN" iam:PutRolePolicy             "arn:aws:iam::${ACCOUN
 
 ## Phase 7: Convergence
 
-- [X] T017 Paste the repository-admin FR-020 stdout and exit code for each `develop` and `main` contexts call and each `.enforce_admins.enabled` call into `specs/002-aws-deployment/converge.md`, replacing the PENDING placeholders per FR-020 (partial)
-- [ ] T018 Run the SC-002 remove-page cycle on staging through two merges into `develop` (add `content/posts/spec-002-remove.md`, deploy, then delete it and deploy) and record the `head-object` and `curl` results in `specs/002-aws-deployment/converge.md` per SC-002, US3/AC2 (missing)
+- [ ] T017 In a later pull request `002-aws-deployment-t06`, write `specs/002-aws-deployment/converge.md`. FR-020 reuses Jorge's admin reading from 2026-10-22 at 13:24 Europe/Madrid (11:24 UTC), the same for `develop` and for `main`: `{"checks": ["hugo","lychee","gitleaks","terraform"], "enforce_admins": true}`, from `gh api repos/JLaborda/web-portfolio/branches/$b/protection --jq '{checks: .required_status_checks.contexts, enforce_admins: .enforce_admins.enabled}'`. US3/AC2, US3/AC3, and SC-002 use the T018 evidence plus the `site_url=` lines from staging deploy run `39765229871` (`site_url=https://d27iuevzdct8et.cloudfront.net`) and production deploy run `39768850371` (`site_url=https://d3kitcqjidoveq.cloudfront.net`)
+- [ ] T018 Run the page-removal cycle on staging. One pull request adds `content/posts/spec-002-remove.md`, merges to `develop`, deploys staging, and records curl HTTP 200 for that page. A second pull request deletes `content/posts/spec-002-remove.md`, merges to `develop`, deploys staging, and verifies HTTP 404 with curl and with `aws s3api head-object`. Record both deploy run ids and the `site_url=` log line from each run
