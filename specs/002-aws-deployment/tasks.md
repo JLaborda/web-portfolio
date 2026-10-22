@@ -219,3 +219,8 @@ sim deny  "$PRODUCTION_ARN" iam:PutRolePolicy             "arn:aws:iam::${ACCOUN
 - Mark an id `[X]` only in the implementation pull request that closes it.
 - Do not edit `spec.md` or `plan.md` in an implementation pull request.
 - An outputs-only plan is re-applied locally. It is not a bypass.
+
+## Phase 7: Convergence
+
+- [ ] T017 Paste the repository-admin FR-020 stdout and exit code for each `develop` and `main` contexts call and each `.enforce_admins.enabled` call into `specs/002-aws-deployment/converge.md`, replacing the PENDING placeholders per FR-020 (partial)
+- [ ] T018 Run the SC-002 remove-page cycle on staging through two merges into `develop` (add `content/posts/spec-002-remove.md`, deploy, then delete it and deploy) and record the `head-object` and `curl` results in `specs/002-aws-deployment/converge.md` per SC-002, US3/AC2 (missing)
