@@ -1,0 +1,104 @@
+# Pull-request check for Terraform. One job, named terraform.
+# No workflow paths filter. The paths step skips Terraform when the diff has no infra/ path.
+# Infrastructure is applied on a workstation. This workflow never applies it.
+
+name: terraform
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Detect infra changes
+        id: paths
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "${{ github.event.pull_request.base.sha }}"
+          diff_out=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")
+          if printf '%s\n' "$diff_out" | grep -q '^infra/'; then
+            echo "infra=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "infra=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Terraform
+        if: steps.paths.outputs.infra == 'true'
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/terraform.zip \
+            "https://releases.hashicorp.com/terraform/1.16.6/terraform_1.16.6_linux_amd64.zip"
+          unzip -o /tmp/terraform.zip -d /tmp
+          sudo install -m 755 /tmp/terraform /usr/local/bin/terraform
+          terraform version | grep -F '1.16.6'
+
+      - name: Check formatting
+        if: steps.paths.outputs.infra == 'true'
+        run: terraform fmt -check -recursive
+
+      - name: Validate
+        if: steps.paths.outputs.infra == 'true'
+        run: |
+          set -euo pipefail
+          terraform -chdir=infra/shared init -backend=false -input=false
+          terraform -chdir=infra/shared validate
+          terraform -chdir=infra/site init -backend=false -input=false
+          terraform -chdir=infra/site validate
+
+      - name: Install and run tflint
+        if: steps.paths.outputs.infra == 'true'
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/tflint.zip \
+            "https://github.com/terraform-linters/tflint/releases/download/v0.64.0/tflint_linux_amd64.zip"
+          unzip -o /tmp/tflint.zip -d /tmp
+          sudo install -m 755 /tmp/tflint /usr/local/bin/tflint
+          tflint --version | grep -F '0.64.0'
+          (cd infra/shared && tflint --init && tflint)
+          (cd infra/site && tflint --init && tflint)
+
+      - name: Plan
+        if: steps.paths.outputs.infra == 'true'
+        env:
+          TF_VAR_budget_alert_email: ${{ secrets.TF_VAR_budget_alert_email }}
+        run: |
+          set -euo pipefail
+          arn=$(printf '%s' "${{ vars.AWS_PLAN_ROLE_ARN }}" | tr -d '[:space:]')
+          base_tree=$(git ls-tree -d "${{ github.event.pull_request.base.sha }}" infra)
+          if [ -z "$arn" ] && [ -z "$base_tree" ]; then
+            printf '%s\n' "::notice::AWS_PLAN_ROLE_ARN is unset; terraform plan skipped until bootstrap"
+            exit 0
+          fi
+          if [ -z "$arn" ]; then
+            printf '%s\n' "::error::AWS_PLAN_ROLE_ARN is unset and infra/ already exists on the base"
+            exit 1
+          fi
+          token=$(curl -fsSL -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" | jq -r '.value')
+          if [ -z "$token" ] || [ "$token" = "null" ]; then echo "::error::OIDC token request returned empty"; exit 1; fi
+          echo "::add-mask::$token"
+          printf '%s' "$token" > "${RUNNER_TEMP}/aws-web-identity-token"
+          export AWS_ROLE_ARN="$arn"
+          export AWS_WEB_IDENTITY_TOKEN_FILE="${RUNNER_TEMP}/aws-web-identity-token"
+          account=$(printf '%s' "$arn" | cut -d: -f5)
+          d=infra/shared
+          terraform -chdir="$d" init -input=false -lock=false -reconfigure -backend-config="bucket=web-portfolio-tfstate-${account}" -backend-config="key=shared/terraform.tfstate"
+          (cd "$d" && terraform plan -lock=false -input=false -no-color)
+          d=infra/site
+          terraform -chdir="$d" init -input=false -lock=false -reconfigure -backend-config="bucket=web-portfolio-tfstate-${account}" -backend-config="key=staging/terraform.tfstate"
+          (cd "$d" && terraform plan -lock=false -input=false -no-color -var environment=staging)
+          terraform -chdir="$d" init -input=false -lock=false -reconfigure -backend-config="bucket=web-portfolio-tfstate-${account}" -backend-config="key=production/terraform.tfstate"
+          (cd "$d" && terraform plan -lock=false -input=false -no-color -var environment=production)
