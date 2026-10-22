@@ -1,0 +1,106 @@
+# Publish the Hugo site.
+# A push to develop deploys staging. A push to main deploys production.
+
+name: deploy
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    outputs:
+      site_url: ${{ steps.site.outputs.site_url }}
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
+      BUCKET_NAME: ${{ vars.BUCKET_NAME }}
+      DISTRIBUTION_ID: ${{ vars.DISTRIBUTION_ID }}
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Require deploy variables
+        run: |
+          for name in SITE_URL BUCKET_NAME DISTRIBUTION_ID AWS_ROLE_ARN; do eval "value=\${$name}"; if [ -z "$value" ]; then printf '::error::%s is empty\n' "$name"; exit 1; fi; done
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: eu-west-1
+          audience: sts.amazonaws.com
+
+      - name: Read Hugo version
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/yq \
+            "https://github.com/mikefarah/yq/releases/download/v4.54.1/yq_linux_amd64"
+          sudo install -m 755 /tmp/yq /usr/local/bin/yq
+          yq --version | grep -F '4.54.1'
+          hugo_version=$(yq '.env.HUGO_VERSION' .github/workflows/ci.yml)
+          test -n "$hugo_version"
+          echo "HUGO_VERSION=${hugo_version}" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/hugo.tar.gz \
+            "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"
+          tar -xzf /tmp/hugo.tar.gz -C /tmp hugo
+          sudo install -m 755 /tmp/hugo /usr/local/bin/hugo
+          hugo version | grep -F "${HUGO_VERSION}"
+          hugo --gc --minify --panicOnWarning --baseURL "${SITE_URL}/"
+
+      - name: Write robots.txt
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            printf '%s\n' 'User-agent: *' 'Allow: /' > public/robots.txt
+          else
+            printf '%s\n' 'User-agent: *' 'Disallow: /' > public/robots.txt
+          fi
+
+      - name: Sync site
+        run: |
+          set -euo pipefail
+          aws s3 sync public/ "s3://${BUCKET_NAME}/" --delete --cache-control "public, max-age=3600"
+
+      - name: Set cache headers
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            key=${file#public/}
+            base=${key##*/}
+            case "$base" in
+              *.html|*.xml|*.json|robots.txt) continue ;;
+            esac
+            if printf '%s\n' "$key" | grep -E -q '\.[0-9a-f]{8,}\.'; then
+              aws s3 cp "$file" "s3://${BUCKET_NAME}/${key}" \
+                --cache-control "public, max-age=31536000, immutable" \
+                --metadata-directive REPLACE
+            fi
+          done < <(find public -type f -print0)
+          while IFS= read -r -d '' file; do
+            key=${file#public/}
+            aws s3 cp "$file" "s3://${BUCKET_NAME}/${key}" \
+              --cache-control "public, max-age=0, must-revalidate" \
+              --metadata-directive REPLACE
+          done < <(find public -type f \( -name '*.html' -o -name '*.xml' -o -name '*.json' -o -name 'robots.txt' \) -print0)
+
+      - name: Invalidate and record site URL
+        id: site
+        run: |
+          set -euo pipefail
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
+          echo "site_url=${SITE_URL}" >> "$GITHUB_OUTPUT"
+          echo "site_url=${SITE_URL}"
