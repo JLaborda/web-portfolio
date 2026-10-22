@@ -163,7 +163,7 @@ sim deny  "$PRODUCTION_ARN" iam:PutRolePolicy             "arn:aws:iam::${ACCOUN
 
 **Pull request**: `002-aws-deployment-t04` (the last implementation pull request)
 
-- [ ] T016 Run the FR-020 protection commands in `spec.md` and write `specs/002-aws-deployment/converge.md` with that output for `develop` and `main`, the date, the full SHA of the commit it ran on, and the verdict `Converged`. Paste the verdict in the pull request description
+- [X] T016 Run the FR-020 protection commands in `spec.md` and write `specs/002-aws-deployment/converge.md` with that output for `develop` and `main`, the date, the full SHA of the commit it ran on, and the verdict `Converged`. Paste the verdict in the pull request description
 
 **Checkpoint**: QA can block the pull request if `converge.md` is missing or the verdict is not `Converged`.
 
