@@ -225,3 +225,36 @@ sim deny  "$PRODUCTION_ARN" iam:PutRolePolicy             "arn:aws:iam::${ACCOUN
 
 - [X] T017 In a later pull request `002-aws-deployment-t06`, write `specs/002-aws-deployment/converge.md`. FR-020 reuses Jorge's admin reading from 2026-10-22 at 13:24 Europe/Madrid (11:24 UTC), the same for `develop` and for `main`: `{"checks": ["hugo","lychee","gitleaks","terraform"], "enforce_admins": true}`, from `gh api repos/JLaborda/web-portfolio/branches/$b/protection --jq '{checks: .required_status_checks.contexts, enforce_admins: .enforce_admins.enabled}'`. US3/AC2, US3/AC3, and SC-002 use the T018 evidence plus the `site_url=` lines from staging deploy run `39765229871` (`site_url=https://d27iuevzdct8et.cloudfront.net`) and production deploy run `39768850371` (`site_url=https://d3kitcqjidoveq.cloudfront.net`)
 - [X] T018 Run the page-removal cycle on staging. One pull request adds `content/posts/spec-002-remove.md`, merges to `develop`, deploys staging, and records curl HTTP 200 for that page next to `aws s3api head-object --bucket "$BUCKET_NAME" --key posts/spec-002-remove/index.html` exit 0, and record that `posts/spec-002-remove/index.html` exists. A second pull request deletes `content/posts/spec-002-remove.md`, merges to `develop`, and deploys staging. Jorge runs `head-object` locally with his own credentials, as in T010. This task does not change `.github/workflows/deploy.yml`. Then `if aws s3api head-object --bucket "$BUCKET_NAME" --key posts/spec-002-remove/index.html; then exit 1; fi` and `if curl -fsS "${SITE_URL}/posts/spec-002-remove/" | grep -F 'spec-002-remove'; then exit 1; fi`. Expected: `head-object` fails, so the key is gone, and `curl` does not return the old page. The run ids and `site_url=` lines are recorded in each t05 pull request body. The staging deploy log line `delete: s3://.../spec-002-remove...` from `aws s3 sync --delete` is recorded in the deletion t05 pull request body, with the bucket name and any account id redacted
+
+## Phase 8: Convergence (FOLLOWUP-002)
+
+**Purpose**: Implement FR-022. This tasks pull request does not edit `.github/workflows/deploy.yml`, `infra/site/cdn.tf`, `spec.md`, or `converge.md`.
+
+**Pull request**: `002-aws-deployment-t07` changes IAM, so it carries `needs-human` and auto-merge is not enabled. Jorge applies before that `deploy.yml` edit is exercised, then merges. The converge update that records T020 is a later pull request, and Jorge merges that one too.
+
+- [X] T019 Implement FR-022 per FR-022 (missing). In `.github/workflows/deploy.yml`, set concurrency `group: deploy-${{ github.ref }}` and `cancel-in-progress: false`. Two runs for the same ref do not publish at the same time, and a later push does not cancel the run that is already publishing. Runs for different refs may still overlap. In the invalidation step, store `Invalidation.Id` from `aws cloudfront create-invalidation` and run `aws cloudfront wait invalidation-completed` for that id before writing or printing `site_url=${SITE_URL}`. The job does not report success until that wait exits 0. The waiter polls `GetInvalidation` every 20 seconds for at most 30 attempts (about 10 minutes) and then exits 255. That timeout fails the deploy run, and that failure is accepted. In `infra/site/cdn.tf`, add `cloudfront:GetInvalidation` beside `cloudfront:CreateInvalidation` in the existing `aws_iam_policy_document.invalidate` statement, on `aws_cloudfront_distribution.site.arn` only. Do not set that resource to `*`. Do not grant the action from `infra/shared`. The policy `name` on `aws_iam_role_policy.invalidate` stays `cloudfront-create-invalidation`. Do not rename it: a new name replaces the resource (`1 to add, 0 to change, 1 to destroy`) and the `0 to add, 1 to change, 0 to destroy` check fails. This pull request carries `needs-human`. Jorge runs this loop before the `deploy.yml` edit is exercised, applies, then merges. `STATE_BUCKET` is `web-portfolio-tfstate-${ACCOUNT}`. The account id is not committed. Expected before the apply: `terraform plan -detailed-exitcode` exits 2 for each environment, each plan is `0 to add, 1 to change, 0 to destroy`, and the only change is `aws_iam_role_policy.invalidate` adding `cloudfront:GetInvalidation` on that distribution ARN. After the apply, the same plan exits 0 and prints `No changes. Your infrastructure matches the configuration.`
+
+```bash
+grep -F 'group: deploy-${{ github.ref }}' .github/workflows/deploy.yml
+grep -F 'cancel-in-progress: false' .github/workflows/deploy.yml
+grep -F 'Invalidation.Id' .github/workflows/deploy.yml
+grep -F 'aws cloudfront wait invalidation-completed' .github/workflows/deploy.yml
+awk '
+  /aws cloudfront wait invalidation-completed/ { waited = 1 }
+  index($0, "site_url=${SITE_URL}") && !waited { exit 1 }
+  END { if (!waited) exit 1 }
+' .github/workflows/deploy.yml
+for environment in staging production; do
+  terraform -chdir=infra/site init -input=false -reconfigure \
+    -backend-config="bucket=${STATE_BUCKET}" -backend-config="key=${environment}/terraform.tfstate"
+  rc=0
+  terraform -chdir=infra/site plan -detailed-exitcode -lock=false -input=false -no-color \
+    -var "environment=${environment}" > "/tmp/site-plan-${environment}.txt" || rc=$?
+  test "$rc" -eq 2
+  grep -F 'cloudfront:GetInvalidation' "/tmp/site-plan-${environment}.txt"
+  grep -F 'aws_iam_role_policy.invalidate' "/tmp/site-plan-${environment}.txt"
+  grep -F '0 to add, 1 to change, 0 to destroy' "/tmp/site-plan-${environment}.txt"
+done
+```
+
+- [ ] T020 Verify the first deploy after T019 per FR-022 (missing). Staging deploys when `002-aws-deployment-t07` merges to `develop`. Production deploys after Jorge merges that release to `main`. On each run, `aws cloudfront wait invalidation-completed` exits 0, and that wait finishes before any `site_url=` line. Record the run id and that order in a later converge update. This task does not edit `specs/002-aws-deployment/converge.md` in the tasks pull request or in the T019 pull request. A wait that exits 255 fails that deploy run, and that failure is accepted
