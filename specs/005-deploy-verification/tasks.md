@@ -45,7 +45,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 
 ## Phase 4: Convergence
 
-- [ ] T005 After Jorge releases `develop` to `main` (the release range adds and removes the probe, so it nets out), run `/speckit-converge` and write `specs/005-deploy-verification/converge.md` with: the staging run URLs from T001, T003, T004 and their pull request comments; the production verify run URL for the release merge, showing no `x-robots-tag` and every key in the `$BEFORE..$GITHUB_SHA` range; the first `workflow_dispatch` run URL of `branch-protection.yml` on `main` with both branches matching (this is the proof that `BRANCH_PROTECTION_READ_TOKEN` exists); the date, the SHA it ran on, and the verdict `Converged`; `Status: Approved by Jorge — PR #N`. No account id, bucket name, distribution id, hostname, or email in the file. Jorge merges this pull request
+- [X] T005 After Jorge releases `develop` to `main` (the release range adds and removes the probe, so it nets out), run `/speckit-converge` and write `specs/005-deploy-verification/converge.md` with: the staging run URLs from T001, T003, T004 and their pull request comments; the production verify run URL for the release merge, showing no `x-robots-tag` and every key in the `$BEFORE..$GITHUB_SHA` range; the first `workflow_dispatch` run URL of `branch-protection.yml` on `main` with both branches matching (this is the proof that `BRANCH_PROTECTION_READ_TOKEN` exists); the date, the SHA it ran on, and the verdict `Converged`; `Status: Approved by Jorge — PR #N`. No account id, bucket name, distribution id, hostname, or email in the file. Jorge merges this pull request
 
 ## Dependencies
 
@@ -59,3 +59,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 - Mark an id `[X]` only in the pull request that closes it. A pull request may add or update its own task line here (constitution 2.0.0, principle V).
 - Do not edit `spec.md` or `plan.md` in an implementation pull request.
 - If Jorge prefers fewer pull requests, T003 and T004 can be dropped and SC-002 accepted on the oracle dry run in T001 instead. That is a scope change and needs a `docs:` pull request first.
+
+## Phase 5: Convergence
+
+- [X] T007 After Jorge starts `workflow_dispatch` for `.github/workflows/branch-protection.yml` on `main`, record that run URL and the matching summary for `develop` and `main` in `specs/005-deploy-verification/converge.md`, set the verdict to `Converged`, and mark T005 `[X]` per SC-004 / US3 / T005 (missing). This agent cannot create the dispatch (HTTP 403 Resource not accessible by integration). Do not invent a run URL. Do not edit `spec.md` or `plan.md`.
