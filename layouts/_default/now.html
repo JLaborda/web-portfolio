@@ -1,0 +1,106 @@
+{{- define "main" -}}
+{{- /* FR-004 / AC3: fail the build when a required Now field is missing. */ -}}
+{{- $path := .File.Path -}}
+
+{{- $currentGoal := trim (string (.Param "current_goal" | default "")) " \t\n\r" -}}
+{{- if eq $currentGoal "" -}}
+  {{- errorf "Current goal is missing or empty in %s" $path -}}
+{{- end -}}
+
+{{- $building := .Param "building" -}}
+{{- if not $building -}}
+  {{- errorf "Building is missing or empty in %s" $path -}}
+{{- else if eq (len $building) 0 -}}
+  {{- errorf "Building is missing or empty in %s" $path -}}
+{{- end -}}
+
+{{- $learning := .Param "learning" -}}
+{{- if not $learning -}}
+  {{- errorf "Learning is missing or empty in %s" $path -}}
+{{- else if eq (len $learning) 0 -}}
+  {{- errorf "Learning is missing or empty in %s" $path -}}
+{{- end -}}
+
+{{- $reading := trim (string (.Param "reading" | default "")) " \t\n\r" -}}
+{{- if eq $reading "" -}}
+  {{- errorf "Reading is missing or empty in %s" $path -}}
+{{- end -}}
+
+{{- $lastUpdated := trim (string (.Param "last_updated" | default "")) " \t\n\r" -}}
+{{- if eq $lastUpdated "" -}}
+  {{- errorf "Last updated is missing or empty in %s" $path -}}
+{{- else if ne (len (findRE `^[0-9]{4}-[0-9]{2}-[0-9]{2}$` $lastUpdated)) 1 -}}
+  {{- errorf "Last updated must be YYYY-MM-DD in %s" $path -}}
+{{- else -}}
+  {{- with try (time.AsTime $lastUpdated) -}}
+    {{- if .Err -}}
+      {{- errorf "Last updated must be a valid YYYY-MM-DD calendar date in %s" $path -}}
+    {{- else if ne (.Value.Format "2006-01-02") $lastUpdated -}}
+      {{- errorf "Last updated must be a valid YYYY-MM-DD calendar date in %s" $path -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $currentChallenge := trim (string (.Param "current_challenge" | default "")) " \t\n\r" -}}
+
+<article class="post-single">
+  <header class="post-header">
+    {{ partial "breadcrumbs.html" . }}
+    <h1 class="post-title">{{ .Title }}</h1>
+  </header>
+
+  <div class="post-content now-page">
+    <section class="now-field">
+      <h2>Current goal</h2>
+      <p>{{ $currentGoal }}</p>
+    </section>
+
+    <section class="now-field">
+      <h2>Building</h2>
+      <ul>
+        {{- range $item := $building }}
+        <li>
+          {{- with $item.url }}
+          <a href="{{ . }}">{{ $item.text }}</a>
+          {{- else }}
+          {{ $item.text }}
+          {{- end }}
+        </li>
+        {{- end }}
+      </ul>
+    </section>
+
+    <section class="now-field">
+      <h2>Learning</h2>
+      <ul>
+        {{- range $item := $learning }}
+        <li>
+          {{- with $item.url }}
+          <a href="{{ . }}">{{ $item.text }}</a>
+          {{- else }}
+          {{ $item.text }}
+          {{- end }}
+        </li>
+        {{- end }}
+      </ul>
+    </section>
+
+    <section class="now-field">
+      <h2>Reading</h2>
+      <p>{{ $reading }}</p>
+    </section>
+
+    {{- with $currentChallenge }}
+    <section class="now-field">
+      <h2>Current challenge</h2>
+      <p>{{ . }}</p>
+    </section>
+    {{- end }}
+
+    <section class="now-field">
+      <h2>Last updated</h2>
+      <p><time class="now-last-updated" datetime="{{ $lastUpdated }}" data-last-updated="{{ $lastUpdated }}">{{ $lastUpdated }}</time></p>
+    </section>
+  </div>
+</article>
+{{- end -}}
