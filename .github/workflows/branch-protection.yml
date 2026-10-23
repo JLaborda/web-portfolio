@@ -1,0 +1,66 @@
+# Read-only weekly check that develop and main still require the four CI
+# gates and enforce them for administrators. Does not change protection.
+
+name: branch-protection
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  branch-protection:
+    runs-on: ubuntu-latest
+    env:
+      TOKEN: ${{ secrets.BRANCH_PROTECTION_READ_TOKEN }}
+    steps:
+      - name: Read branch protection
+        run: |
+          set -euo pipefail
+
+          if [ -z "${TOKEN}" ]; then
+            printf '::error::BRANCH_PROTECTION_READ_TOKEN is unset\n'
+            exit 1
+          fi
+
+          failed=0
+          expected='["gitleaks","hugo","lychee","terraform"]'
+          summary="${GITHUB_STEP_SUMMARY}"
+          {
+            printf '## Branch protection\n\n'
+            printf '| branch | HTTP status | contexts | enforce_admins | result |\n'
+            printf '| --- | --- | --- | --- | --- |\n'
+          } >> "$summary"
+
+          for branch in develop main; do
+            body=$(mktemp)
+            status=$(curl -sS -o "$body" -w '%{http_code}' \
+              -H "Authorization: Bearer ${TOKEN}" \
+              -H 'Accept: application/vnd.github+json' \
+              "https://api.github.com/repos/JLaborda/web-portfolio/branches/${branch}/protection")
+
+            if [ "$status" != "200" ]; then
+              printf '| %s | %s | (unavailable) | (unavailable) | fail |\n' \
+                "$branch" "$status" >> "$summary"
+              failed=1
+              rm -f "$body"
+              continue
+            fi
+
+            contexts=$(jq -c '.required_status_checks.contexts | sort' "$body")
+            enforce=$(jq -r '.enforce_admins.enabled' "$body")
+            if [ "$contexts" = "$expected" ] && [ "$enforce" = "true" ]; then
+              result=pass
+            else
+              result=fail
+              failed=1
+            fi
+            printf '| %s | %s | %s | %s | %s |\n' \
+              "$branch" "$status" "$contexts" "$enforce" "$result" >> "$summary"
+            rm -f "$body"
+          done
+
+          exit "$failed"
