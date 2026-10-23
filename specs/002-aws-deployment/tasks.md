@@ -64,6 +64,7 @@ Four pull requests, merged one at a time into `develop`. Each pull request lists
 - [X] T010 After T009, run the bash script in `specs/002-aws-deployment/tasks.md` (the block under this task) from a machine with permission to call `iam:SimulatePrincipalPolicy`. Paste the decisions in the `t02` pull request description. One action and one resource ARN per call. `allowed` on a `deny` row fails the task. `implicitDeny` or `explicitDeny` on an `allow` row fails the task
 
 ```bash
+set -euo pipefail
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
 PLAN_ARN=$(aws iam get-role --role-name web-portfolio-plan --query Role.Arn --output text)
 STAGING_ARN=$(aws iam get-role --role-name web-portfolio-staging-deploy --query Role.Arn --output text)

@@ -119,7 +119,7 @@ Positive verification from `spec.md` was run on `5ceda202939d15f9892d16b45179ce4
 - FR-019: `.gitignore` contains `public/`, `resources/_gen/`, and `.hugo_build.lock`. `git status --short` does not list `public/`.
 - FR-020: this feature's tree has no Terraform, AWS template, analytics snippet, contact form, project comments partial, second language, or email address. `specs/002-aws-deployment/` is feature 002's approved specification. It is outside feature 001's source tree and is not an implementation of feature 001.
 - FR-021: recorded above.
-- The FR-016, FR-017, and FR-018 negative proofs stay the ones already run for T022 on the merged pull request #12. Those throwaway branches were deleted and were not recreated here.
+- The FR-016, FR-017, and FR-018 negative proofs for T022 did not run on merged pull request #12. #12 added the CI workflow and was merged. The Actions proofs are throwaway pull requests that were closed and not merged: #13 shows `hugo` red on the warnf shortcode and then `lychee` red on `[x](/does-not-exist/)`, and #15 shows `lychee` green with `::warning::https://httpbin.org/status/404`. The local proofs on `spec-001-warnf`, `spec-001-lychee`, and `spec-001-gitleaks` were not pushed. Those throwaway branches were deleted and were not recreated here.
 
 ## Convergence Findings
 
@@ -143,7 +143,7 @@ No actionable findings.
 
 ## Known deviation (not an actionable finding)
 
-`spec.md` FR-017 and `tasks.md` T022 still name the external-link probe `https://example.invalid/spec-001-missing`. Lychee 0.24.2 excludes the `.invalid` TLD, so that URL never produces `::warning::`. Jorge approved `https://httpbin.org/status/404` for the T022 proof on 2026-10-21: https://github.com/JLaborda/web-portfolio/pull/12#issuecomment-6310516548. The throwaway run is recorded on pull request #12. The spec text is a later spec pull request. This run does not edit `spec.md` or `plan.md`, and it does not append a task. A task to change that sentence would change the approved spec. A task to put `example.invalid` back into the proof would not produce the warning FR-017 requires.
+`spec.md` FR-017 and `tasks.md` T022 still name the external-link probe `https://example.invalid/spec-001-missing`. Lychee 0.24.2 excludes the `.invalid` TLD, so that URL never produces `::warning::`. Jorge approved `https://httpbin.org/status/404` for the T022 proof on 2026-10-21: https://github.com/JLaborda/web-portfolio/pull/12#issuecomment-6310516548. The throwaway Actions proofs are pull requests #13 and #15, both closed without merging. Pull request #12 is the merged CI implementation, not the throwaway. The spec text is a later spec pull request. This run does not edit `spec.md` or `plan.md`, and it does not append a task. A task to change that sentence would change the approved spec. A task to put `example.invalid` back into the proof would not produce the warning FR-017 requires.
 
 ## Next actions
 

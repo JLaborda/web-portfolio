@@ -27,7 +27,7 @@
 - [x] All functional requirements have clear acceptance criteria
 - [x] User scenarios cover primary flows
 - [x] Feature meets measurable outcomes defined in Success Criteria
-- [ ] No implementation details leak into specification. Waiver: same reason as the first item. The Clarifications section records Jorge's decisions and does not add a requirement beyond them.
+- [ ] No implementation details leak into specification. Waiver: same reason as the first item. The Clarifications section records Jorge's decisions. FR-022 adds `cloudfront:GetInvalidation` on the deploy role's own distribution ARN. That is an IAM requirement, not only a restatement of an earlier decision.
 
 ## Notes
 

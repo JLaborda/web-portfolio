@@ -6,7 +6,7 @@
 
 Status: Approved by Jorge — PR #19
 
-**Input**: User description: "Minimal Hugo site with the PaperMod theme. Portfolio and blog for ML Engineering and MLOps recruiters in fintech. Sections: Projects (SmartWealthAI placeholder), Now, About, and Posts (welcome post as a draft). Menu with those four links. PaperMod search, RSS, and table of contents enabled. Site language English. Social links: GitHub https://github.com/JLaborda and LinkedIn https://www.linkedin.com/in/jorge-daniel-laborda-sicilia. No email in this feature. CI on pull requests to develop: hugo build with --baseURL /, lychee on public/ with --root-dir, gitleaks with a synthetic secret that is not AKIAIOSFODNN7EXAMPLE. Pinned Hugo extended and PaperMod as a git submodule on a tag. Out of scope: AWS deployment, Terraform, domain, DNS, email, analytics, and real project content."
+**Input**: User description: "Minimal Hugo site with the PaperMod theme. Portfolio and blog for ML Engineering and MLOps recruiters in fintech. Sections: Projects (SmartWealthAI placeholder), Now, About, and Posts (welcome post as a draft). Menu with those four links. PaperMod search, RSS, and table of contents enabled. Site language English. Social links: GitHub https://github.com/JLaborda and LinkedIn https://www.linkedin.com/in/jorge-daniel-laborda-sicilia. No email in this feature. CI on pull requests to develop and to main: hugo build with --baseURL /, lychee on public/ with --root-dir, gitleaks with a synthetic secret that is not AKIAIOSFODNN7EXAMPLE. Pinned Hugo extended and PaperMod as a git submodule on a tag. Out of scope: AWS deployment, Terraform, domain, DNS, email, analytics, and real project content."
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -73,7 +73,7 @@ A recruiter opens search from a button on the home page, not from the menu. The 
 ### Functional Requirements
 
 - **FR-001**: The site MUST be a portfolio and blog whose audience is ML Engineering and MLOps recruiters and hiring managers in fintech.
-- **FR-002**: The site language MUST be English on every published page, including navigation labels. The `html` element in `public/index.html` MUST have its `lang` attribute equal to `en`.
+- **FR-002**: The site language MUST be English on every published page, including navigation labels. Every published HTML file MUST contain an `html` element whose `lang` attribute is exactly `en`. The check accepts the quoted form `lang="en"` and the minified form `lang=en`. The character after that value MUST be an attribute boundary (whitespace, `>`, or `/`), so a longer value such as `en-US` does not pass.
 - **FR-003**: The home page MUST show the exact name `Jorge D. Laborda Sicilia`, the exact headline `Placeholder headline`, and only these social links: GitHub at https://github.com/JLaborda and LinkedIn at https://www.linkedin.com/in/jorge-daniel-laborda-sicilia. It MUST NOT show an email address. The headline is placeholder copy, not final wording.
 - **FR-004**: The main menu (`ul#menu`) MUST contain exactly four links, labeled Projects, Now, About, and Posts, with destinations `/projects/`, `/now/`, `/about/`, and `/posts/`. It MUST NOT contain a Search label or a link to `/search/`.
 - **FR-005**: Projects MUST list one entry, SmartWealthAI. That entry MUST be clearly marked as a placeholder and MUST link to https://github.com/JLaborda/SmartWealthAI. It is published at `/projects/smartwealthai/`.
@@ -123,11 +123,24 @@ hugo --gc --minify --panicOnWarning --baseURL /
 
 Expected: exit code 0, and `test -f public/index.html` succeeds.
 
-Attribute checks use one extended-regular-expression form throughout. It matches the quoted attributes named in the requirements (`lang="en"`) and the unquoted attributes Hugo writes with `--minify` (`lang=en`). There is no second, unminified build. Element extracts use the element's own tags, not a line range, because `--minify` can place the head and the body on the same line.
+Attribute checks use one extended-regular-expression form throughout. It matches the quoted attributes named in the requirements (`lang="en"`) and the unquoted attributes Hugo writes with `--minify` (`lang=en`). The `lang` check requires an attribute boundary after that exact value. There is no second, unminified build. Element extracts use the element's own tags, not a line range, because `--minify` can place the head and the body on the same line.
 
 The draft build writes to `/tmp/public-drafts` and does not modify `public/`.
 
-- **FR-002**: `grep -E '<html[^>]* lang="?en"?' public/index.html`. Expected: exit 0.
+- **FR-002**:
+
+  ```bash
+  status=0
+  found=0
+  while IFS= read -r -d '' file; do
+    found=1
+    grep -E '<html[^>]*[[:space:]]lang="?en"?[[:space:]>/]' "$file" || status=1
+  done < <(find public -name '*.html' -print0)
+  test "$found" -eq 1
+  test "$status" -eq 0
+  ```
+
+  Expected: every published HTML file prints a matching `html` start tag, `found` is 1, and `status` is 0. A file whose `lang` is `en-US`, `en-GB`, or `english` sets `status` to 1. A build with no HTML file sets `found` to 0.
 - **FR-003**:
 
   ```bash
