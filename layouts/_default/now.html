@@ -99,7 +99,10 @@
 
     <section class="now-field">
       <h2>Last updated</h2>
-      <p><time class="now-last-updated" datetime="{{ $lastUpdated }}" data-last-updated="{{ $lastUpdated }}">{{ $lastUpdated }}</time></p>
+      <p>
+        <time class="now-last-updated" datetime="{{ $lastUpdated }}" data-last-updated="{{ $lastUpdated }}">{{ $lastUpdated }}</time>
+        <span class="now-staleness" hidden aria-hidden="true"></span>
+      </p>
     </section>
   </div>
 </article>
