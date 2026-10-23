@@ -4,6 +4,8 @@ Feature: `specs/002-aws-deployment`
 
 Command: `/speckit-converge`
 
+Status: Approved by Jorge — PR #34
+
 Assessed commit: `5e20f1ddc5f99c899127f22cf6c99b1acaae5ff9`
 
 Date: 2026-10-23
