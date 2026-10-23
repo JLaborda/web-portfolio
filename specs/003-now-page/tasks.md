@@ -29,7 +29,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 
 ## Phase 1: User Stories 1 and 3 — layout and required fields (P1, P3)
 
-- [ ] T001 [US1][US3] Add the Now layout under `layouts/` (for example `layouts/_default/now.html`) so a page with `layout: now` renders headings `Current goal`, `Building`, `Learning`, `Reading`, `Last updated`, and optionally `Current challenge`. Fail the build with `errorf` when `current_goal`, `building`, `learning`, `reading`, or `last_updated` is missing or empty, and when `last_updated` is not `YYYY-MM-DD`; the error text must include the human field name. Do not render a Current challenge heading when `current_challenge` is absent or blank. Do not edit `themes/PaperMod`, `infra/`, or workflows. The pull request body pastes AC3 fixture runs (each required field removed → non-zero exit and field name; challenge omitted → exit 0).
+- [X] T001 [US1][US3] Add the Now layout under `layouts/` (for example `layouts/_default/now.html`) so a page with `layout: now` renders headings `Current goal`, `Building`, `Learning`, `Reading`, `Last updated`, and optionally `Current challenge`. Fail the build with `errorf` when `current_goal`, `building`, `learning`, `reading`, or `last_updated` is missing or empty, and when `last_updated` is not `YYYY-MM-DD`; the error text must include the human field name. Do not render a Current challenge heading when `current_challenge` is absent or blank. Do not edit `themes/PaperMod`, `infra/`, or workflows. The pull request body pastes AC3 fixture runs (each required field removed → non-zero exit and field name; challenge omitted → exit 0).
 
 ## Phase 2: User Story 1 — structured content (P1)
 
