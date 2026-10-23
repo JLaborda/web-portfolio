@@ -36,7 +36,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 
 ## Phase 2: User Story 3 — branch protection is read on a schedule (P3)
 
-- [ ] T002 [US3] Add `.github/workflows/branch-protection.yml` as designed in [plan.md](./plan.md): `schedule` `0 9 * * 1` and `workflow_dispatch` only, `permissions: contents: read`, job `branch-protection`, `GET` only with `secrets.BRANCH_PROTECTION_READ_TOKEN`, unset-secret error, no `github.token`, sorted contexts and `enforce_admins` compared for `develop` and `main`, HTTP status in the summary, exit 1 on mismatch or non-200. Do not add it to required checks. The pull request body pastes the FR-005 and FR-008 implementation blocks with exit statuses and states that the first live run happens after the release to `main` (T005)
+- [X] T002 [US3] Add `.github/workflows/branch-protection.yml` as designed in [plan.md](./plan.md): `schedule` `0 9 * * 1` and `workflow_dispatch` only, `permissions: contents: read`, job `branch-protection`, `GET` only with `secrets.BRANCH_PROTECTION_READ_TOKEN`, unset-secret error, no `github.token`, sorted contexts and `enforce_admins` compared for `develop` and `main`, HTTP status in the summary, exit 1 on mismatch or non-200. Do not add it to required checks. The pull request body pastes the FR-005 and FR-008 implementation blocks with exit statuses and states that the first live run happens after the release to `main` (T005)
 
 ## Phase 3: Live evidence on staging
 
