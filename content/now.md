@@ -7,6 +7,7 @@ building:
     url: https://github.com/JLaborda/web-portfolio
 learning:
   - text: Temporary learning item
+    url: https://gohugo.io/documentation/
 reading: Temporary reading item for the Now layout fixture.
 last_updated: "2026-10-23"
 ---
