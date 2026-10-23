@@ -383,14 +383,14 @@ Commands marked "now" run on this spec pull request, from the repository root, o
 
   Expected: `deploy.yml` is not in the diff. The script prints `dependency-ok` and exits 0. FR-022 is described as merged. The wait is still required before `verify` runs.
 
-- **FR-008** (now): this pull request adds no workflow file.
+- **FR-008** (now): this pull request adds no workflow file. Under constitution 2.0.0 it is the feature's single `docs:` pull request, so the only path under `docs` is the ADR.
 
   ```bash
   if git diff --name-only origin/develop...HEAD -- .github | grep -q .; then exit 1; fi
-  if git diff --name-only origin/develop...HEAD -- docs | grep -q .; then exit 1; fi
+  test "$(git diff --name-only origin/develop...HEAD -- docs)" = "docs/adr/001-post-deploy-verification.md"
   ```
 
-  Expected: no path under `.github` or `docs` is in the diff, so both guards exit 0. The diff against `develop` is `specs/005-deploy-verification/spec.md` and `specs/005-deploy-verification/checklists/requirements.md`.
+  Expected: no path under `.github` is in the diff, and the only path under `docs` is `docs/adr/001-post-deploy-verification.md`, so both commands exit 0. The diff against `develop` is `specs/005-deploy-verification/spec.md`, `checklists/requirements.md`, `plan.md`, `tasks.md`, and that ADR.
 
   **FR-008** (implementation):
 
