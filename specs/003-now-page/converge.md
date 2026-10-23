@@ -35,17 +35,17 @@ Latest successful `deploy.yml` run on `develop` that includes T003 (`665ebf64cd3
 | Link | https://github.com/JLaborda/web-portfolio/actions/runs/39981327815 |
 | Head SHA | `665ebf64cd3dc985d3f663fd8d909f10b02fc8cd` |
 | Conclusion | `success` |
-| `site_url=` | `https://d27iuevzdct8et.cloudfront.net` |
+| `site_url=` | `https://<redacted>` |
 
 ```bash
-curl -sS -o /dev/null -w '%{http_code}' https://d27iuevzdct8et.cloudfront.net/now/
+curl -sS -o /dev/null -w '%{http_code}' https://<redacted>/now/
 ```
 
 Printed `200`. Response headers include `x-robots-tag: noindex` (staging). The HTML includes Current goal, Building, Learning, Reading, Last updated (`data-last-updated=2026-10-23`), the `now-staleness` mark (hidden until JS), the first-party `/js/now-staleness.min.*.js` script, and the main-menu Now link. Current challenge is absent.
 
 Freshness on that HTML (JSDOM + `assets/js/now-staleness.js`, local calendar today matching `2026-10-23`): class `now-staleness--fresh` (under 30 days). Without JS, the ISO date remains and the mark stays `hidden`.
 
-Earlier staging deploy after T002 content (`39978695295`, head `f9cc739f1982`) also recorded `site_url=https://d27iuevzdct8et.cloudfront.net` with conclusion `success`.
+Earlier staging deploy after T002 content (`39978695295`, head `f9cc739f1982`) also recorded `site_url=https://<redacted>` with conclusion `success`.
 
 ## AC1–AC6 on the assessed SHA
 
