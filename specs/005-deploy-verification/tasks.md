@@ -59,3 +59,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 - Mark an id `[X]` only in the pull request that closes it. A pull request may add or update its own task line here (constitution 2.0.0, principle V).
 - Do not edit `spec.md` or `plan.md` in an implementation pull request.
 - If Jorge prefers fewer pull requests, T003 and T004 can be dropped and SC-002 accepted on the oracle dry run in T001 instead. That is a scope change and needs a `docs:` pull request first.
+
+## Phase 5: Convergence
+
+- [ ] T007 After Jorge starts `workflow_dispatch` for `.github/workflows/branch-protection.yml` on `main`, record that run URL and the matching summary for `develop` and `main` in `specs/005-deploy-verification/converge.md`, set the verdict to `Converged`, and mark T005 `[X]` per SC-004 / US3 / T005 (missing). This agent cannot create the dispatch (HTTP 403 Resource not accessible by integration). Do not invent a run URL. Do not edit `spec.md` or `plan.md`.
