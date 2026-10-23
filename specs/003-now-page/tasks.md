@@ -33,7 +33,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 
 ## Phase 2: User Story 1 — structured content (P1)
 
-- [ ] T002 [US1][US3] Replace `content/now.md` with structured English front matter for all required fields and a real Last updated ISO date. Building and Learning are short lists; include at least one link in each list so lychee sees external URLs. Omit Current challenge, or set it, but if set it must be non-placeholder English. Keep `title: Now` and `layout: now`. Do not change `hugo.yaml` menu entries except to restore Now → `/now/` if a rebase dropped it. Do not edit layouts or assets except if T001 left a temporary fixture file that this task removes. After merge, confirm staging `/now/` returns 200 and record that run or URL for T004. The pull request body pastes AC1 (build + menu), AC2, and AC6 evidence.
+- [X] T002 [US1][US3] Replace `content/now.md` with structured English front matter for all required fields and a real Last updated ISO date. Building and Learning are short lists; include at least one link in each list so lychee sees external URLs. Omit Current challenge, or set it, but if set it must be non-placeholder English. Keep `title: Now` and `layout: now`. Do not change `hugo.yaml` menu entries except to restore Now → `/now/` if a rebase dropped it. Do not edit layouts or assets except if T001 left a temporary fixture file that this task removes. After merge, confirm staging `/now/` returns 200 and record that run or URL for T004. The pull request body pastes AC1 (build + menu), AC2, and AC6 evidence.
 
 ## Phase 3: User Story 2 — staleness indicator (P2)
 
