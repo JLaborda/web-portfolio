@@ -63,3 +63,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 ## Phase 5: Convergence
 
 - [X] T007 After Jorge starts `workflow_dispatch` for `.github/workflows/branch-protection.yml` on `main`, record that run URL and the matching summary for `develop` and `main` in `specs/005-deploy-verification/converge.md`, set the verdict to `Converged`, and mark T005 `[X]` per SC-004 / US3 / T005 (missing). This agent cannot create the dispatch (HTTP 403 Resource not accessible by integration). Do not invent a run URL. Do not edit `spec.md` or `plan.md`.
+
+## Phase 6: Follow-up — top-level url: only (FR-002)
+
+- [X] T008 In `.github/workflows/deploy.yml`, change `parse_front_matter` so a `url:` front-matter key fails the verify job only when the line is unindented (`line.startswith("url:")`, no `strip`). Nested list keys such as Building/Learning `url:` under `content/now.md` must not fail the job. Do not change other verify behaviour. Staging run `39973168501` failed verify after #57 because indented `url:` lines were rejected. The pull request body pastes a local proof: current `content/now.md` passes; a copy with a top-level `url:` fails.
