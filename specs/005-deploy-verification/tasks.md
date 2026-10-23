@@ -41,7 +41,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 ## Phase 3: Live evidence on staging
 
 - [X] T003 [US1] Add `content/posts/spec-005-probe.md` (non-draft, one line of body, title "Spec 005 probe"). After merge, the staging verify run lists `posts/spec-005-probe/index.html` as present and passes, and comments on this pull request. Record the run URL in T005
-- [ ] T004 [US1] Delete `content/posts/spec-005-probe.md`. After merge, the staging verify run lists `posts/spec-005-probe/index.html` as absent with `(404)` and `Not Found`, and passes. Record the run URL in T005. Jorge runs no `head-object` himself
+- [X] T004 [US1] Delete `content/posts/spec-005-probe.md`. After merge, the staging verify run lists `posts/spec-005-probe/index.html` as absent with `(404)` and `Not Found`, and passes. Record the run URL in T005. Jorge runs no `head-object` himself
 
 ## Phase 4: Convergence
 
