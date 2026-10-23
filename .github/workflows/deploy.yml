@@ -9,6 +9,10 @@ on:
       - develop
       - main
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -97,10 +101,570 @@ jobs:
               --metadata-directive REPLACE
           done < <(find public -type f \( -name '*.html' -o -name '*.xml' -o -name '*.json' -o -name 'robots.txt' \) -print0)
 
-      - name: Invalidate and record site URL
+      - name: Invalidate
+        run: |
+          set -euo pipefail
+          INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*" --query Invalidation.Id --output text)
+          aws cloudfront wait invalidation-completed --distribution-id "$DISTRIBUTION_ID" --id "$INVALIDATION_ID"
+
+      - name: Record site URL
         id: site
         run: |
           set -euo pipefail
-          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
           echo "site_url=${SITE_URL}" >> "$GITHUB_OUTPUT"
           echo "site_url=${SITE_URL}"
+
+  verify:
+    runs-on: ubuntu-latest
+    needs: deploy
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
+      BUCKET_NAME: ${{ vars.BUCKET_NAME }}
+      DISTRIBUTION_ID: ${{ vars.DISTRIBUTION_ID }}
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      BEFORE: ${{ github.event.before }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+
+      - name: Require deploy variables
+        run: |
+          set -euo pipefail
+          for name in SITE_URL BUCKET_NAME DISTRIBUTION_ID AWS_ROLE_ARN; do
+            if [ -z "${!name}" ]; then
+              printf '::error::%s is empty\n' "$name"
+              exit 1
+            fi
+          done
+          printf '::add-mask::%s\n' "$BUCKET_NAME"
+          printf '::add-mask::%s\n' "$DISTRIBUTION_ID"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: eu-west-1
+          audience: sts.amazonaws.com
+
+      - name: Mask account, bucket, and distribution
+        run: |
+          set -euo pipefail
+          account=$(aws sts get-caller-identity --query Account --output text)
+          if [ -z "$account" ]; then
+            printf '::error::account is empty\n'
+            exit 1
+          fi
+          printf '::add-mask::%s\n' "$account"
+          printf '::add-mask::%s\n' "$BUCKET_NAME"
+          printf '::add-mask::%s\n' "$DISTRIBUTION_ID"
+          umask 077
+          printf '%s' "$account" > "$RUNNER_TEMP/verify-account-id"
+
+      - name: Verify published site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          umask 077
+
+          # begin-verify-shell
+          require_environment() {
+            case "$GITHUB_REF_NAME" in
+              main) env_name=production ;;
+              develop) env_name=staging ;;
+              *)
+                printf '::error::environment name is not staging or production\n'
+                exit 1
+                ;;
+            esac
+          }
+
+          require_before() {
+            if [ -z "${BEFORE}" ]; then
+              printf '::error::BEFORE is empty\n'
+              exit 1
+            fi
+            if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              printf '::error::BEFORE is the all-zero SHA\n'
+              exit 1
+            fi
+          }
+
+          record() {
+            printf '%s | %s | %s | %s\n' "$1" "$2" "$3" "$4" >> "$report"
+            if [ "$4" != "pass" ]; then
+              failed=1
+            fi
+          }
+
+          check_present() {
+            local key="$1"
+            if aws s3api head-object --bucket "$BUCKET_NAME" --key "$key" >/dev/null 2>"$err_file"; then
+              record "object ${key}" "exists" "exists" "pass"
+            else
+              record "object ${key}" "exists" "missing" "fail"
+            fi
+          }
+
+          check_absent() {
+            local key="$1"
+            if aws s3api head-object --bucket "$BUCKET_NAME" --key "$key" >/dev/null 2>"$err_file"; then
+              record "object ${key}" "404 Not Found" "exists" "fail"
+              return 0
+            fi
+            if grep -F -q '(404)' "$err_file" \
+              && grep -F -q 'Not Found' "$err_file" \
+              && ! grep -F -q '(403)' "$err_file"; then
+              record "object ${key}" "404 Not Found" "404 Not Found" "pass"
+            elif grep -F -q '(403)' "$err_file"; then
+              record "object ${key}" "404 Not Found" "403" "fail"
+            else
+              record "object ${key}" "404 Not Found" "error" "fail"
+            fi
+          }
+
+          check_home() {
+            local code
+            if code=$(curl -sS -o /dev/null -w '%{http_code}' "${SITE_URL}/" 2>"$curl_err"); then
+              if [ "$code" = "200" ]; then
+                record "home" "200" "$code" "pass"
+              else
+                record "home" "200" "$code" "fail"
+              fi
+            else
+              record "home" "200" "error" "fail"
+            fi
+          }
+
+          check_redirect() {
+            local code
+            if code=$(curl -sI -o /dev/null -w '%{http_code}' "http://${SITE_URL#https://}/" 2>"$curl_err"); then
+              if [ "$code" = "301" ]; then
+                record "http redirect" "301" "$code" "pass"
+              else
+                record "http redirect" "301" "$code" "fail"
+              fi
+            else
+              record "http redirect" "301" "error" "fail"
+            fi
+          }
+
+          check_robots() {
+            local headers expected actual result
+            headers=$(mktemp)
+            if [ "$env_name" = "staging" ]; then
+              expected=noindex
+            elif [ "$env_name" = "production" ]; then
+              expected=absent
+            else
+              rm -f "$headers"
+              printf '::error::environment name is not staging or production\n'
+              exit 1
+            fi
+            if ! curl -fsSI "${SITE_URL}/" >"$headers" 2>"$curl_err"; then
+              record "x-robots-tag" "$expected" "error" "fail"
+              rm -f "$headers"
+              return 0
+            fi
+            if [ "$env_name" = "staging" ]; then
+              if grep -i -q '^x-robots-tag: noindex' "$headers"; then
+                actual=noindex
+                result=pass
+              else
+                actual=missing
+                result=fail
+              fi
+            else
+              if grep -i -q '^x-robots-tag:' "$headers"; then
+                actual=present
+                result=fail
+              else
+                actual=absent
+                result=pass
+              fi
+            fi
+            rm -f "$headers"
+            record "x-robots-tag" "$expected" "$actual" "$result"
+          }
+
+          guard_report() {
+            local file="$1"
+            local account="$2"
+            local bucket="$3"
+            local distribution="$4"
+            local hit=0
+            if grep -F -q -- "$account" "$file"; then
+              printf '::error::report contains a forbidden account value\n'
+              hit=1
+            fi
+            if grep -F -q -- "$bucket" "$file"; then
+              printf '::error::report contains a forbidden bucket value\n'
+              hit=1
+            fi
+            if grep -F -q -- "$distribution" "$file"; then
+              printf '::error::report contains a forbidden distribution value\n'
+              hit=1
+            fi
+            if grep -F -q -- '@' "$file"; then
+              printf '::error::report contains an email address\n'
+              hit=1
+            fi
+            if grep -F -q -- 'arn:aws' "$file"; then
+              printf '::error::report contains an arn\n'
+              hit=1
+            fi
+            return "$hit"
+          }
+
+          start_report() {
+            report=$(mktemp)
+            failed=0
+            {
+              printf 'Run: %s\n' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+              printf 'Environment: %s\n' "$env_name"
+              printf 'Commit: %s\n' "$GITHUB_SHA"
+              printf '\n'
+              printf 'check | expected | actual | result\n'
+            } > "$report"
+          }
+
+          load_keys() {
+            local line seen_flag key found_index
+            present_keys=()
+            absent_keys=()
+            page_changed=0
+            seen_flag=0
+            if [ ! -s "$1" ]; then
+              printf '::error::key derivation produced no output\n'
+              exit 1
+            fi
+            while IFS= read -r line || [ -n "$line" ]; do
+              case "$line" in
+                "PAGE_CHANGED 0") page_changed=0; seen_flag=1 ;;
+                "PAGE_CHANGED 1") page_changed=1; seen_flag=1 ;;
+                PRESENT\ *)
+                  key=${line#PRESENT }
+                  if [ -z "$key" ]; then
+                    printf '::error::object key is empty\n'
+                    exit 1
+                  fi
+                  present_keys+=("$key")
+                  ;;
+                ABSENT\ *)
+                  key=${line#ABSENT }
+                  if [ -z "$key" ]; then
+                    printf '::error::object key is empty\n'
+                    exit 1
+                  fi
+                  absent_keys+=("$key")
+                  ;;
+                "") ;;
+                *)
+                  printf '::error::unexpected key-derivation output\n'
+                  exit 1
+                  ;;
+              esac
+            done < "$1"
+            if [ "$seen_flag" -ne 1 ]; then
+              printf '::error::key derivation omitted PAGE_CHANGED\n'
+              exit 1
+            fi
+            found_index=0
+            for key in "${present_keys[@]}"; do
+              if [ "$key" = "index.html" ]; then
+                found_index=1
+              fi
+            done
+            if [ "$found_index" -ne 1 ]; then
+              printf '::error::present set is missing index.html\n'
+              exit 1
+            fi
+          }
+
+          note_page_source() {
+            if [ "$page_changed" -eq 0 ]; then
+              printf '%s\n' 'no page source changed' >> "$report"
+            fi
+          }
+
+          publish_report() {
+            local account summary_file numbers number
+            account=$(tr -d '\n' < "$RUNNER_TEMP/verify-account-id")
+            if [ -z "$account" ] || [ -z "$BUCKET_NAME" ] || [ -z "$DISTRIBUTION_ID" ]; then
+              printf '::error::a masked value is empty\n'
+              exit 1
+            fi
+            summary_file=$(mktemp)
+            cp "$report" "$summary_file"
+            if ! guard_report "$report" "$account" "$BUCKET_NAME" "$DISTRIBUTION_ID" \
+              || ! guard_report "$summary_file" "$account" "$BUCKET_NAME" "$DISTRIBUTION_ID"; then
+              printf '%s\n' 'verification report withheld because it failed the secret guard' >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
+            cat "$summary_file" >> "$GITHUB_STEP_SUMMARY"
+            numbers=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" --jq '.[].number')
+            if [ -z "$numbers" ]; then
+              printf '::error::no pull request for the deployed SHA\n'
+              exit 1
+            fi
+            while IFS= read -r number || [ -n "$number" ]; do
+              [ -n "$number" ] || continue
+              gh pr comment "$number" --body-file "$report" || exit 1
+            done <<< "$numbers"
+            if [ "$failed" -ne 0 ]; then
+              printf '::error::one or more verification checks failed\n'
+              exit 1
+            fi
+          }
+          # end-verify-shell
+
+          require_environment
+          require_before
+          err_file=$(mktemp)
+          curl_err=$(mktemp)
+          diff_file=$(mktemp)
+          keys_file=$(mktemp)
+          start_report
+          git fetch --no-tags origin "$BEFORE"
+          git diff --name-status -M "$BEFORE" "$GITHUB_SHA" > "$diff_file"
+          python3 - "$diff_file" > "$keys_file" <<'PY'
+          import os
+          import re
+          import subprocess
+          import sys
+
+
+          def fail_page(path):
+              print("::error::unsupported front matter in " + path, file=sys.stderr)
+              raise SystemExit(1)
+
+
+          def parse_front_matter(text, path):
+              if text is None:
+                  print("::error::cannot read " + path, file=sys.stderr)
+                  raise SystemExit(1)
+              lines = text.splitlines()
+              if lines and lines[0] == "+++":
+                  fail_page(path)
+              front = []
+              if lines and lines[0] == "---":
+                  for line in lines[1:]:
+                      if line == "---":
+                          break
+                      front.append(line)
+              for line in front:
+                  if line.strip().startswith("url:"):
+                      fail_page(path)
+              draft = False
+              slug = None
+              draft_re = re.compile(r'^draft:\s*["\']?true["\']?\s*$')
+              slug_re = re.compile(r"^slug:\s*(.*)$")
+              for line in front:
+                  if draft_re.match(line):
+                      draft = True
+                  if slug is None:
+                      match = slug_re.match(line)
+                      if match:
+                          value = match.group(1).strip()
+                          if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+                              value = value[1:-1]
+                          slug = value
+              return draft, slug
+
+
+          def is_page(path):
+              return path.startswith("content/") and path.endswith(".md")
+
+
+          def object_key(path, slug):
+              rel = path[len("content/"):]
+              if rel == "_index.md":
+                  return "index.html"
+              if rel.endswith("/_index.md") or rel.endswith("/index.md"):
+                  directory = rel.rsplit("/", 1)[0]
+                  return directory + "/index.html"
+              slash = rel.rfind("/")
+              if slash == -1:
+                  directory = ""
+                  filename = rel
+              else:
+                  directory = rel[:slash]
+                  filename = rel[slash + 1:]
+              stem = filename[:-3]
+              last = stem if slug is None or slug == "" else slug
+              if directory:
+                  return directory + "/" + last + "/index.html"
+              return last + "/index.html"
+
+
+          def classify(status, new_path, old_path, new_text, old_text):
+              present = []
+              absent = []
+              code = status[0] if status else ""
+              if code == "A":
+                  if not is_page(new_path):
+                      return present, absent
+                  draft, slug = parse_front_matter(new_text, new_path)
+                  if not draft:
+                      present.append(object_key(new_path, slug))
+                  return present, absent
+              if code == "D":
+                  if not is_page(old_path):
+                      return present, absent
+                  draft, slug = parse_front_matter(old_text, old_path)
+                  if not draft:
+                      absent.append(object_key(old_path, slug))
+                  return present, absent
+              if code == "M":
+                  if not is_page(new_path):
+                      return present, absent
+                  parent_draft, parent_slug = parse_front_matter(old_text, old_path)
+                  new_draft, new_slug = parse_front_matter(new_text, new_path)
+                  if not new_draft:
+                      present.append(object_key(new_path, new_slug))
+                  elif not parent_draft:
+                      absent.append(object_key(old_path, parent_slug))
+                  return present, absent
+              if code == "R":
+                  parent_draft = False
+                  parent_slug = None
+                  new_draft = False
+                  new_slug = None
+                  old_key = None
+                  new_key = None
+                  if is_page(old_path):
+                      parent_draft, parent_slug = parse_front_matter(old_text, old_path)
+                      old_key = object_key(old_path, parent_slug)
+                  if is_page(new_path):
+                      new_draft, new_slug = parse_front_matter(new_text, new_path)
+                      new_key = object_key(new_path, new_slug)
+                  if (
+                      old_key is not None
+                      and new_key is not None
+                      and old_key == new_key
+                  ):
+                      if not new_draft:
+                          present.append(new_key)
+                      elif not parent_draft:
+                          absent.append(old_key)
+                      return present, absent
+                  if old_key is not None and not parent_draft:
+                      absent.append(old_key)
+                  if new_key is not None and not new_draft:
+                      present.append(new_key)
+                  return present, absent
+              if is_page(new_path) or is_page(old_path):
+                  print("::error::unsupported diff status " + status + " for " + new_path, file=sys.stderr)
+                  raise SystemExit(1)
+              return present, absent
+
+
+          def read_blob(rev, path):
+              try:
+                  proc = subprocess.run(
+                      ["git", "show", rev + ":" + path],
+                      check=True,
+                      capture_output=True,
+                  )
+              except subprocess.CalledProcessError:
+                  print("::error::cannot read " + path + " at " + rev, file=sys.stderr)
+                  raise SystemExit(1)
+              try:
+                  return proc.stdout.decode("utf-8")
+              except UnicodeDecodeError:
+                  print("::error::cannot read " + path + " at " + rev, file=sys.stderr)
+                  raise SystemExit(1)
+
+
+          def parse_diff(text):
+              rows = []
+              for line in text.splitlines():
+                  if line == "":
+                      continue
+                  parts = line.split("\t")
+                  status = parts[0]
+                  if status.startswith("R"):
+                      if len(parts) != 3 or parts[1].startswith('"') or parts[2].startswith('"'):
+                          print("::error::unsupported diff line", file=sys.stderr)
+                          raise SystemExit(1)
+                      rows.append((status, parts[2], parts[1]))
+                      continue
+                  if len(parts) != 2 or parts[1].startswith('"'):
+                      print("::error::unsupported diff line", file=sys.stderr)
+                      raise SystemExit(1)
+                  rows.append((status, parts[1], parts[1]))
+              return rows
+
+
+          def main():
+              before = os.environ.get("BEFORE", "")
+              sha = os.environ.get("GITHUB_SHA", "")
+              if before == "" or sha == "":
+                  print("::error::BEFORE or GITHUB_SHA is empty", file=sys.stderr)
+                  raise SystemExit(1)
+              if len(sys.argv) != 2:
+                  print("::error::diff path missing", file=sys.stderr)
+                  raise SystemExit(1)
+              diff_path = sys.argv[1]
+              try:
+                  with open(diff_path, encoding="utf-8") as handle:
+                      diff_text = handle.read()
+              except (OSError, UnicodeDecodeError):
+                  print("::error::cannot read the diff", file=sys.stderr)
+                  raise SystemExit(1)
+              present = []
+              absent = []
+              contributed = False
+              for status, new_path, old_path in parse_diff(diff_text):
+                  code = status[0] if status else ""
+                  new_text = None
+                  old_text = None
+                  if code in ("A", "M", "R") and is_page(new_path):
+                      new_text = read_blob(sha, new_path)
+                  if code in ("D", "M", "R") and is_page(old_path):
+                      old_text = read_blob(before, old_path)
+                  got_present, got_absent = classify(status, new_path, old_path, new_text, old_text)
+                  if got_present or got_absent:
+                      contributed = True
+                  present.extend(got_present)
+                  absent.extend(got_absent)
+              overlap = (set(present) - {"index.html"}) & set(absent)
+              if overlap:
+                  for key in sorted(overlap):
+                      print("::error::object key " + key + " is both present and absent", file=sys.stderr)
+                  raise SystemExit(1)
+              print("PAGE_CHANGED " + ("1" if contributed else "0"))
+              print("PRESENT index.html")
+              for key in sorted(set(present)):
+                  if key != "index.html":
+                      print("PRESENT " + key)
+              for key in sorted(set(absent)):
+                  if key == "index.html":
+                      continue
+                  print("ABSENT " + key)
+
+
+          if __name__ == "__main__":
+              main()
+          PY
+          load_keys "$keys_file"
+          for key in "${present_keys[@]}"; do
+            check_present "$key"
+          done
+          if [ "${#absent_keys[@]}" -gt 0 ]; then
+            for key in "${absent_keys[@]}"; do
+              check_absent "$key"
+            done
+          fi
+          check_home
+          check_redirect
+          check_robots
+          note_page_source
+          publish_report
