@@ -32,5 +32,5 @@
 ## Notes
 
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
-- The two waived items stay unchecked. The reason is on the same line. The Reviewer accepts or rejects those waivers.
+- The three waived items stay unchecked. The reason is on the same line. The Reviewer accepts or rejects those waivers.
 - `/speckit-specify` and `/speckit-clarify` maintain this file. It is not a `/speckit-checklist` artifact.
