@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-23
 
-Status: Approved by Jorge — PR #N
+Status: Approved by Jorge — PR #56
 
 **Input**: User description: "A hiring manager visiting the portfolio sees what Jorge is working on right now (proof of activity) in under 30 seconds. The /now page shows Current goal, Building, Learning, Reading, Current challenge (optional), and Last updated. Jorge updates it by editing a single Markdown file. Main menu keeps a Now link. Staleness colour is computed in the browser with a small local script (green if Last updated is under 30 days ago, amber if 30 days or older). English only. Out of scope: /log (TIL), automation from SmartWealthAI/health-stream-xai, other languages, any staleness alert beyond the colour."
 

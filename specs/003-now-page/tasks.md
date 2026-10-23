@@ -1,6 +1,6 @@
 # Tasks: Now Page
 
-Status: Approved by Jorge — PR #N
+Status: Approved by Jorge — PR #56
 
 **Input**: Design documents from `/specs/003-now-page/`
 
@@ -41,7 +41,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 
 ## Phase 4: Convergence
 
-- [ ] T004 Run `/speckit-converge` and add `specs/003-now-page/converge.md` with: the staging `/now/` 200 evidence from T002; the AC1–AC6 verification results on the converge SHA; the date, the SHA, and the verdict `Converged`; `Status: Approved by Jorge — PR #N`. Title the pull request exactly `chore(003): converge`. Do not edit `spec.md` or `plan.md`. No account id, bucket name, distribution id, hostname, or email in the file. Reviewer QA reviews; Jorge merges.
+- [ ] T004 Run `/speckit-converge` and add `specs/003-now-page/converge.md` with: the staging `/now/` 200 evidence from T002; the AC1–AC6 verification results on the converge SHA; the date, the SHA, and the verdict `Converged`; `Status: Approved by Jorge — PR #56`. Title the pull request exactly `chore(003): converge`. Do not edit `spec.md` or `plan.md`. No account id, bucket name, distribution id, hostname, or email in the file. Reviewer QA reviews; Jorge merges.
 
 ## Dependencies
 

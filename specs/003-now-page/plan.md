@@ -2,7 +2,7 @@
 
 **Branch**: `003-now-page` | **Date**: 2026-10-23 | **Spec**: [spec.md](./spec.md)
 
-Status: Approved by Jorge — PR #N
+Status: Approved by Jorge — PR #56
 
 **Input**: Feature specification from `/specs/003-now-page/spec.md`
 
