@@ -119,7 +119,7 @@ data "aws_iam_policy_document" "invalidate" {
   statement {
     sid       = "InvalidateOwnDistribution"
     effect    = "Allow"
-    actions   = ["cloudfront:CreateInvalidation"]
+    actions   = ["cloudfront:CreateInvalidation", "cloudfront:GetInvalidation"]
     resources = [aws_cloudfront_distribution.site.arn]
   }
 }
