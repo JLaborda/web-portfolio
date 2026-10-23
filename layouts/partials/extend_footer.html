@@ -1,0 +1,7 @@
+{{- /* Load the Now staleness script only on /now/. */ -}}
+{{- if eq .RelPermalink "/now/" -}}
+  {{- with resources.Get "js/now-staleness.js" -}}
+    {{- $js := . | minify | fingerprint -}}
+    <script src="{{ $js.RelPermalink }}" integrity="{{ $js.Data.Integrity }}" crossorigin="anonymous"></script>
+  {{- end -}}
+{{- end -}}

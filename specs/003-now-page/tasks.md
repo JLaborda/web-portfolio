@@ -37,7 +37,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 
 ## Phase 3: User Story 2 — staleness indicator (P2)
 
-- [ ] T003 [US2] Add `assets/js/now-staleness.js` and, if needed, `assets/css/extended/now-staleness.css`. Wire the script only on `/now/` via `layouts/partials/extend_footer.html` (project override). The script reads a `data-last-updated` ISO date, applies green when under 30 local days and amber when 30 or older, and performs no network requests. With JS disabled, the ISO date remains visible. Do not edit `themes/PaperMod` or `content/now.md` except for a class/hook required by the layout. The pull request body pastes AC4 and AC5 commands and states the manual green/amber check.
+- [X] T003 [US2] Add `assets/js/now-staleness.js` and, if needed, `assets/css/extended/now-staleness.css`. Wire the script only on `/now/` via `layouts/partials/extend_footer.html` (project override). The script reads a `data-last-updated` ISO date, applies green when under 30 local days and amber when 30 or older, and performs no network requests. With JS disabled, the ISO date remains visible. Do not edit `themes/PaperMod` or `content/now.md` except for a class/hook required by the layout. The pull request body pastes AC4 and AC5 commands and states the manual green/amber check.
 
 ## Phase 4: Convergence
 
