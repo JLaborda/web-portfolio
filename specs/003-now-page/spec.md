@@ -19,6 +19,7 @@ Numbers 003 and 004 are reserved: 003 is this Now page; 004 is reserved for late
 - Q: How is staleness shown? → A: A small local JavaScript file (no third-party scripts, no dependencies) paints green when Last updated is less than 30 days ago and amber when it is 30 days or older. With JavaScript disabled, only the ISO date shows and the page still works; there are no console errors.
 - Q: Language and navigation? → A: English only. The main menu has a "Now" link to `/now/` (already present from feature 001; this feature keeps it).
 - Q: What is out of scope? → A: The `/log` (TIL) page; all automation (PR injection from SmartWealthAI/health-stream-xai, TIL drafts, a staleness GitHub Action); other languages; any staleness alert other than the colour.
+- Q: Does FR-008 forbid naming SmartWealthAI or health-stream-xai on `/now/`? → A: No. FR-008 forbids injection or automation from those repositories, not naming them as projects Jorge is building. The Verification guard was narrowed to `health-stream-xai.*inject|SmartWealthAI.*inject|/log/` so approved Now content that lists health-stream-xai no longer fails the guard (issue #63).
 
 ## Context
 
@@ -235,5 +236,5 @@ set -euo pipefail
 set -euo pipefail
 grep -E '^defaultContentLanguage: *en$' hugo.yaml
 if git diff --name-only origin/develop...HEAD | grep -E '^(infra/|\.github/workflows/)'; then exit 1; fi
-if grep -R -E 'health-stream-xai|SmartWealthAI.*inject|/log/' layouts assets content/now.md 2>/dev/null; then exit 1; fi
+if grep -R -E 'health-stream-xai.*inject|SmartWealthAI.*inject|/log/' layouts assets content/now.md 2>/dev/null; then exit 1; fi
 ```
