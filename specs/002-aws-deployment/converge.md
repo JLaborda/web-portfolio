@@ -4,13 +4,15 @@ Feature: `specs/002-aws-deployment`
 
 Command: `/speckit-converge`
 
-Status: Approved by Jorge — PR #34
+Status: T016/T017 approved by Jorge — PR #34. T020 re-converge recorded below (PR pending Jorge merge).
 
-Assessed commit: `5e20f1ddc5f99c899127f22cf6c99b1acaae5ff9`
+Assessed commit (T016/T017): `5e20f1ddc5f99c899127f22cf6c99b1acaae5ff9`
+
+Assessed commit (T020 re-converge): `e8fb157b112c2680d333d1a036696a2678a336f9`
 
 Date: 2026-10-23
 
-This file is the T016 and T017 record. `/speckit-converge` did not modify `spec.md` or `plan.md`, and it did not append a phase to `tasks.md`. `.specify/extensions.yml` is not present, so no before-converge or after-converge hooks ran.
+This file is the T016, T017, and T020 record. `/speckit-converge` did not modify `spec.md` or `plan.md`, and it did not append a phase to `tasks.md`. `.specify/extensions.yml` is not present, so no before-converge or after-converge hooks ran. Account ids, bucket names, distribution ids, and ARNs with an account id are omitted or written as `<redacted>`.
 
 ## Prerequisite check
 
@@ -116,11 +118,117 @@ Outcome: `converged`.
 
 No further `/speckit-implement` pass is needed for feature 002. Jorge reviews this converge pull request. It carries `needs-human`. Auto-merge is not enabled.
 
-## Verdict
+## Verdict (T016/T017)
 
 Date: 2026-10-23
 
 SHA: `5e20f1ddc5f99c899127f22cf6c99b1acaae5ff9`
+
+**"✅ Converged — the implementation satisfies the spec, plan, and tasks."**
+
+Verdict: Converged
+
+## T020 — First successful deploys after T019 (FR-022)
+
+T019 landed as merge commit `5f46161efc88c80e9e59090a23b0ce51902eec02` (pull request #39, `002-aws-deployment-t07`, merged 2026-10-23T08:39:23Z).
+
+Method: list `deploy.yml` runs via the GitHub API; keep only runs whose `head_sha` has `5f46161efc88c80e9e59090a23b0ce51902eec02` as an ancestor (`git merge-base --is-ancestor`); take the earliest `conclusion: success` on `develop` (staging) and on `main` (production). Do not treat earlier green runs that lack T019, or post-T019 failures at Invalidate, as this evidence.
+
+The first push of T019 itself (run `39926189148`, head `5f46161efc88c80e9e59090a23b0ce51902eec02`) failed at step `Invalidate` before IAM `cloudfront:GetInvalidation` was applied. That failure is accepted by FR-022 / T020. Later failures `39933030396` and `39938609717` also failed at Invalidate before the successful runs below.
+
+### Staging (develop) — first success including T019
+
+| Field | Value |
+|-------|-------|
+| Run id | `39940179261` |
+| Link | https://github.com/JLaborda/web-portfolio/actions/runs/39940179261 |
+| Head SHA | `862dbf574101cde6420d0524225f6878a70f79a1` |
+| Branch | `develop` |
+| Conclusion | `success` |
+| Created | `2026-10-23T10:35:23Z` |
+
+Deploy job step order and timestamps (UTC):
+
+| Step | Started | Completed | Conclusion |
+|------|---------|-----------|------------|
+| Invalidate | `2026-10-23T10:36:03Z` | `2026-10-23T10:36:25Z` | `success` |
+| Record site URL | `2026-10-23T10:36:25Z` | `2026-10-23T10:36:25Z` | `success` |
+
+Log order on the deploy job: the Invalidate step runs `aws cloudfront wait invalidation-completed` (script echo `2026-10-23T10:36:03.8120031Z`); that step completes at `10:36:25Z` before Record site URL starts; first printed `site_url=` line is `2026-10-23T10:36:25.7010624Z` → `site_url=https://d27iuevzdct8et.cloudfront.net`. Invalidate finished before `site_url` was produced or used.
+
+### Production (main) — first success including T019
+
+| Field | Value |
+|-------|-------|
+| Run id | `39942404001` |
+| Link | https://github.com/JLaborda/web-portfolio/actions/runs/39942404001 |
+| Head SHA | `7b7dc423e38f26e7ad664df97043593713eea186` |
+| Branch | `main` |
+| Conclusion | `success` |
+| Created | `2026-10-23T10:54:44Z` |
+
+Deploy job step order and timestamps (UTC):
+
+| Step | Started | Completed | Conclusion |
+|------|---------|-----------|------------|
+| Invalidate | `2026-10-23T10:55:16Z` | `2026-10-23T10:55:37Z` | `success` |
+| Record site URL | `2026-10-23T10:55:37Z` | `2026-10-23T10:55:37Z` | `success` |
+
+Log order on the deploy job: wait command echo `2026-10-23T10:55:16.0676278Z`; Invalidate completes at `10:55:37Z` before Record site URL; first printed `site_url=` line is `2026-10-23T10:55:37.5767096Z` → `site_url=https://d3kitcqjidoveq.cloudfront.net`. Invalidate finished before `site_url` was produced or used. No earlier successful `main` run contains T019 (prior success `39768850371` is from 2026-10-22, before T019).
+
+## `/speckit-converge` re-run (T020)
+
+Date: 2026-10-23
+
+Assessed SHA: `e8fb157b112c2680d333d1a036696a2678a336f9`
+
+### Prerequisite check
+
+```text
+SPECIFY_FEATURE_DIRECTORY=specs/002-aws-deployment
+.specify/scripts/bash/check-prerequisites.sh --json --require-spec --require-tasks --include-tasks
+```
+
+```json
+{"FEATURE_DIR":"/workspace/specs/002-aws-deployment","AVAILABLE_DOCS":["research.md","data-model.md","contracts/","quickstart.md","tasks.md"]}
+```
+
+`spec.md`, `plan.md`, and `tasks.md` are present. `.specify/extensions.yml` is not present; no before-converge or after-converge hooks ran.
+
+### What was checked (re-run)
+
+- FR-001 through FR-021: still satisfied as in the T016/T017 record above (workflows, Terraform layout, hostnames, branch protection, T018 removal cycle).
+- FR-022: `.github/workflows/deploy.yml` has `group: deploy-${{ github.ref }}`, `cancel-in-progress: false`, stores `Invalidation.Id`, runs `aws cloudfront wait invalidation-completed` before any `site_url=${SITE_URL}`. `infra/site/cdn.tf` grants `cloudfront:CreateInvalidation` and `cloudfront:GetInvalidation` on `aws_cloudfront_distribution.site.arn` only; policy `name` remains `cloudfront-create-invalidation`. `infra/shared` deploy policies allow only S3 on the environment bucket; no `GetInvalidation` in `infra/shared`. T020 run evidence above shows wait completing before `site_url=` on both environments.
+- SC-001 through SC-005; US1/AC1–AC3, US2/AC1–AC3, US3/AC1–AC3: unchanged from the prior record.
+- Constitution I–VII: no MUST violations found in scope.
+- Tasks T001–T020: T019 code is present; T020 evidence is recorded in this section.
+
+### Convergence Findings
+
+No actionable findings. `/speckit-converge` did not append a Convergence phase to `tasks.md`.
+
+| ID | Gap Type | Severity | Source | Evidence | Remaining Work |
+|----|----------|----------|--------|----------|----------------|
+| — | — | — | — | FR-022 and first successful post-T019 deploys match the spec | — |
+
+**Summary metrics:**
+
+- Requirements checked: 22 (FR-001 through FR-022)
+- Success criteria checked: 5 (SC-001 through SC-005)
+- Acceptance scenarios checked: 9 (US1/AC1–AC3, US2/AC1–AC3, US3/AC1–AC3)
+- Plan decisions checked: 13 (prior 12 plus FR-022 concurrency / invalidation wait / GetInvalidation on site invalidate policy)
+- Constitution principles checked: 7 (I through VII)
+- Tasks checked: T001 through T020
+- Findings by gap type: missing 0, partial 0, contradicts 0, unrequested 0
+- Findings by severity: CRITICAL 0, HIGH 0, MEDIUM 0, LOW 0
+
+Outcome: `converged`.
+
+### Verdict (T020 re-converge)
+
+Date: 2026-10-23
+
+SHA: `e8fb157b112c2680d333d1a036696a2678a336f9`
 
 **"✅ Converged — the implementation satisfies the spec, plan, and tasks."**
 
