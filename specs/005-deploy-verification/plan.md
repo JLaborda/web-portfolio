@@ -81,7 +81,7 @@ docs/adr/
    - Front matter: lines between an opening `---` and the next exact `---`. A first line `+++` or a `url:` key exits 1 and names the path.
    - Draft: a line matching `^draft:\s*["']?true["']?\s*$`.
    - Key: `content/_index.md` → `index.html`; `content/<dir>/_index.md` or `content/<dir>/index.md` → `<dir>/index.html`; otherwise `<dir>/<slug or filename stem>/index.html`.
-   - `A`/`M`, new not draft → present. `D`, parent not draft → absent. `M`, parent not draft and new draft → absent. `R*` → old key absent if the parent was published, new key present if the new blob is published. Never-published drafts → neither set.
+   - `A`/`M`, new not draft → present. `D`, parent not draft → absent. `M`, parent not draft and new draft → absent. `R*` → derive old and new keys; equal keys follow the same rules as `M` for that one key; differing keys → old absent if parent published, new present if new published. Never put the same key in both sets (issue #44). Never-published drafts → neither set.
 5. `index.html` is always in the present set. If no page source changed, the summary says so.
 6. Present: `aws s3api head-object --bucket "$BUCKET_NAME" --key "$key"` exits 0. Absent: exit non-zero and stderr contains `(404)` and `Not Found` and not `(403)`. Exit 0 on an absent key fails.
 

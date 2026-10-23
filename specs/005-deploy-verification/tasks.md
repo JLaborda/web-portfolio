@@ -23,6 +23,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 | Branch | Task | Requirements | needs-human | Depends on | Verification |
 |--------|------|--------------|-------------|------------|--------------|
 | `005-deploy-verification-t01` | T001 | FR-001, FR-002, FR-003, FR-004, FR-006, FR-007, FR-008 | No: no IAM, secret, region, DNS, cost, or protection change | PR #36 merged; spec 002 FR-022 `deploy.yml` change on `develop` | FR-001, FR-002, FR-003, FR-004 (implementation) blocks; FR-006 diff guard; FR-007 implementation check; FR-008 implementation guard; oracle dry run |
+| `005-deploy-verification-t06` | T006 | FR-002 (rename same-key / differing-key) | No: workflow-only follow-up to T001; no IAM, secret, region, DNS, cost, or protection change | T001 merged; docs fix for issues #43 and #44 merged | FR-002 oracle dry run including the four rename rows; no key in both present and absent |
 | `005-deploy-verification-t02` | T002 | FR-005, FR-008 | Yes: consumes secret `BRANCH_PROTECTION_READ_TOKEN` and reads branch protection | T001 merged | FR-005 (implementation) block; FR-008 guard |
 | `005-deploy-verification-t03` | T003 | US1 scenario 1, SC-001 | No | T001 merged | Staging verify run after merge |
 | `005-deploy-verification-t04` | T004 | US1 scenario 2, SC-002 | No | T003 merged and its staging run green | Staging verify run after merge |
@@ -31,6 +32,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 ## Phase 1: User Stories 1 and 2 — the deploy checks itself and comments (P1, P2)
 
 - [X] T001 [US1][US2] In `.github/workflows/deploy.yml`, add job `verify` as designed in [plan.md](./plan.md): `needs: deploy`, same environment expression, permissions `id-token: write`, `contents: read`, `pull-requests: write`, checkout `fetch-depth: 2`, existing OIDC deploy role, masking via `aws sts get-caller-identity`, `git fetch --no-tags origin "$BEFORE"`, `git diff --name-status -M "$BEFORE" "$GITHUB_SHA"`, parent blob read with `git show "$BEFORE:<path>"`, HeadObject present/absent rules, curl checks, report, exact-string guard, summary, and comment on each pull request from `commits/${GITHUB_SHA}/pulls`. Do not edit `infra/` or the `deploy` job's permissions. The pull request body pastes: every FR-001 to FR-004 implementation block with its exit status; the FR-006 `infra` diff guard; a local dry run of the key-derivation block against every oracle row in spec FR-002 (both tables, including the `2292272cdb^1..2292272cdb` range) with expected and actual sets; the FR-004 guard fixture run with a 40-character SHA. After merge, the first staging run must be green and must comment on this pull request; its run URL is recorded in T005
+- [ ] T006 [US1] In `.github/workflows/deploy.yml`, update the `verify` key-derivation block so a rename (`R` status) follows the FR-002 clarification from issue #44: when the old and new object keys are equal, treat the row as a modification of that one key (present if the new blob is published; absent if the new blob is a draft and the parent was published); when the keys differ, keep old absent / new present. A key must not appear in both sets. Do not edit `infra/`. The pull request body pastes a local dry run against the four rename oracle rows (same-slug keep, page-to-bundle keep, and the two differing-key rows) with expected and actual sets, and shows that the same-key cases no longer exit with `object key ... is both present and absent`
 
 ## Phase 2: User Story 3 — branch protection is read on a schedule (P3)
 
@@ -48,7 +50,8 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 ## Dependencies
 
 - T001 needs PR #36 merged and spec 002 FR-022 (`deploy.yml` invalidation wait) on `develop` (spec FR-007).
-- T002 needs T001 merged (one feature PR at a time). T002 and T001 touch different files but merge sequentially.
+- T006 needs T001 merged and the `docs:` pull request that fixes issues #43 and #44 merged. It only edits the `verify` key block in `deploy.yml`.
+- T002 needs T001 merged (one feature PR at a time). T002 and T001 touch different files but merge sequentially. T006 may merge before or after T002; they touch different files.
 - T003 needs T001; T004 needs T003; T005 needs T004 and the release to `main`.
 
 ## Notes
