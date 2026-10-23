@@ -460,7 +460,7 @@ jobs:
                           break
                       front.append(line)
               for line in front:
-                  if line.strip().startswith("url:"):
+                  if line.startswith("url:"):
                       fail_page(path)
               draft = False
               slug = None
