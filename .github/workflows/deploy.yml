@@ -9,6 +9,10 @@ on:
       - develop
       - main
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -97,10 +101,15 @@ jobs:
               --metadata-directive REPLACE
           done < <(find public -type f \( -name '*.html' -o -name '*.xml' -o -name '*.json' -o -name 'robots.txt' \) -print0)
 
-      - name: Invalidate and record site URL
+      - name: Invalidate
+        run: |
+          set -euo pipefail
+          INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*" --query Invalidation.Id --output text)
+          aws cloudfront wait invalidation-completed --distribution-id "$DISTRIBUTION_ID" --id "$INVALIDATION_ID"
+
+      - name: Record site URL
         id: site
         run: |
           set -euo pipefail
-          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
           echo "site_url=${SITE_URL}" >> "$GITHUB_OUTPUT"
           echo "site_url=${SITE_URL}"
