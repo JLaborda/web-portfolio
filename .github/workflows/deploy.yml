@@ -533,14 +533,32 @@ jobs:
                       absent.append(object_key(old_path, parent_slug))
                   return present, absent
               if code == "R":
+                  parent_draft = False
+                  parent_slug = None
+                  new_draft = False
+                  new_slug = None
+                  old_key = None
+                  new_key = None
                   if is_page(old_path):
                       parent_draft, parent_slug = parse_front_matter(old_text, old_path)
-                      if not parent_draft:
-                          absent.append(object_key(old_path, parent_slug))
+                      old_key = object_key(old_path, parent_slug)
                   if is_page(new_path):
                       new_draft, new_slug = parse_front_matter(new_text, new_path)
+                      new_key = object_key(new_path, new_slug)
+                  if (
+                      old_key is not None
+                      and new_key is not None
+                      and old_key == new_key
+                  ):
                       if not new_draft:
-                          present.append(object_key(new_path, new_slug))
+                          present.append(new_key)
+                      elif not parent_draft:
+                          absent.append(old_key)
+                      return present, absent
+                  if old_key is not None and not parent_draft:
+                      absent.append(old_key)
+                  if new_key is not None and not new_draft:
+                      present.append(new_key)
                   return present, absent
               if is_page(new_path) or is_page(old_path):
                   print("::error::unsupported diff status " + status + " for " + new_path, file=sys.stderr)
