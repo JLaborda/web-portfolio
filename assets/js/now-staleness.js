@@ -13,14 +13,14 @@
   }
 
   var parts = iso.split("-");
-  var updated = new Date(
+  var updated = Date.UTC(
     Number(parts[0]),
     Number(parts[1]) - 1,
     Number(parts[2])
   );
   var now = new Date();
-  var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  var days = Math.floor((today - updated) / 86400000);
+  var today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  var days = (today - updated) / 86400000;
 
   var mark = document.querySelector(".now-staleness");
   if (!mark) {
