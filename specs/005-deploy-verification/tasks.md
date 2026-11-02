@@ -28,6 +28,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 | `005-deploy-verification-t03` | T003 | US1 scenario 1, SC-001 | No | T001 merged | Staging verify run after merge |
 | `005-deploy-verification-t04` | T004 | US1 scenario 2, SC-002 | No | T003 merged and its staging run green | Staging verify run after merge |
 | `005-deploy-verification-t05` | T005 | Converge, US1 scenario 3, US3, SC-003, SC-004 | No (Jorge merges converge anyway) | T004 merged; Jorge's release of `develop` to `main` | `converge.md` |
+| `005-deploy-verification-t09` | T009, T010 | FR-002, FR-004, FR-005 (issues #44, #45, #49, #61) | No: workflow-only; no IAM, secret, region, DNS, cost, or protection change | The 2026-11-02 follow-up `docs:` pull request merged | FR-002 oracle dry run including the new rows; front-matter fixtures; rendered table sample; FR-005 and FR-008 implementation blocks; stubbed curl/jq runs |
 
 ## Phase 1: User Stories 1 and 2 — the deploy checks itself and comments (P1, P2)
 
@@ -53,6 +54,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 - T006 needs T001 merged and the `docs:` pull request that fixes issues #43 and #44 merged. It only edits the `verify` key block in `deploy.yml`.
 - T002 needs T001 merged (one feature PR at a time). T002 and T001 touch different files but merge sequentially. T006 may merge before or after T002; they touch different files.
 - T003 needs T001; T004 needs T003; T005 needs T004 and the release to `main`.
+- T009 and T010 need the 2026-11-02 follow-up `docs:` pull request merged. They may share one pull request (different files).
 
 ## Notes
 
@@ -67,3 +69,8 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 ## Phase 6: Follow-up — top-level url: only (FR-002)
 
 - [X] T008 In `.github/workflows/deploy.yml`, change `parse_front_matter` so a `url:` front-matter key fails the verify job only when the line is unindented (`line.startswith("url:")`, no `strip`). Nested list keys such as Building/Learning `url:` under `content/now.md` must not fail the job. Do not change other verify behaviour. Staging run `39973168501` failed verify after #57 because indented `url:` lines were rejected. The pull request body pastes a local proof: current `content/now.md` passes; a copy with a top-level `url:` fails.
+
+## Phase 7: Follow-up fixes (issues #44, #45, #49, #61)
+
+- [ ] T009 [US1][US2] In `.github/workflows/deploy.yml`, job `verify` only: (a) in the key-derivation block, when a key is in both sets, keep it only in the present set instead of exiting with `object key ... is both present and absent` (FR-002, issue #44); (b) in `parse_front_matter`, fail only on an unindented `url` key, quoted or not, with optional spaces before the colon (`^["']?url["']?\s*:`), and keep indented `url:` allowed (FR-002, issue #61); (c) in `start_report`, `record`, and `note_page_source`, write the report as a GitHub-flavored Markdown table as defined in the 2026-11-02 Clarifications, with a blank line before `no page source changed` (FR-004, issue #45). Keep the secret guard on the final text. Do not edit `infra/` or the `deploy` job. The pull request body pastes: a local dry run of the key block against every FR-002 oracle row including the new rows; `parse_front_matter` fixtures for `url:`, `"url":`, `'url':`, `url :` (fail) and the current `content/now.md` (pass); a rendered sample of the summary table.
+- [ ] T010 [US3] In `.github/workflows/branch-protection.yml`, record a curl transport error as status `000` (`|| status=000`), read contexts with `(.required_status_checks.contexts // []) | sort` and `enforce_admins` with `.enforce_admins.enabled // false`, so each case writes a `fail` row and the loop continues to the other branch (FR-005, issue #49). Do not change triggers, permissions, the secret, or the expected contexts. The pull request body pastes the FR-005 and FR-008 implementation blocks and a local run with a stubbed `curl` that fails and a stubbed body without `required_status_checks`, showing both branch rows and exit 1. The first live run is the Monday schedule or Jorge's `workflow_dispatch` on `main` after the next release.
