@@ -2,7 +2,7 @@
 
 **Branch**: `006-custom-domain` | **Date**: 2026-11-03 | **Spec**: [spec.md](./spec.md)
 
-Status: Approved by Jorge — PR #N
+Status: Approved by Jorge — PR #71
 
 **Input**: Feature specification from `/specs/006-custom-domain/spec.md`
 

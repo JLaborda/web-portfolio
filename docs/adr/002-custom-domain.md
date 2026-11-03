@@ -1,6 +1,6 @@
 # ADR 002: Production custom domain jlaborda.com (overrides spec 002 “no custom domain”)
 
-**Status**: Accepted — PR #N (Jorge's merge of that pull request accepts it)
+**Status**: Accepted — PR #71 (Jorge's merge of that pull request accepts it)
 
 **Date**: 2026-11-03
 

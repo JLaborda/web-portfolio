@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-03
 
-Status: Approved by Jorge — PR #N
+Status: Approved by Jorge — PR #71
 
 **Input**: User description: "Serve the production Hugo portfolio on https://jlaborda.com. Jorge registers jlaborda.com and jorgelaborda.com by hand in Route 53 (privacy protection, auto-renew). Hosted zones already exist after registration; Terraform reads them with data sources and does not register domains or create zones. Canonical host is the apex. www.jlaborda.com, jorgelaborda.com, and www.jorgelaborda.com return HTTP 301 to https://jlaborda.com keeping the path, via a CloudFront Function on the production distribution (all four aliases). One ACM certificate in us-east-1, DNS-validated in Terraform. Route 53 alias A/AAAA to the production distribution. Production Hugo baseURL and SITE_URL become https://jlaborda.com. Spec 005 verify checks the custom domain and one redirect. Staging stays on its default CloudFront hostname. Out of scope: email/MX, staging subdomain, other TLDs, HSTS preload."
 

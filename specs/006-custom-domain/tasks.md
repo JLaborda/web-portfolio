@@ -1,6 +1,6 @@
 # Tasks: Custom Domain jlaborda.com
 
-Status: Approved by Jorge — PR #N
+Status: Approved by Jorge — PR #71
 
 **Input**: Design documents from `/specs/006-custom-domain/`
 
