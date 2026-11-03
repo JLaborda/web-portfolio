@@ -21,6 +21,11 @@ Numbers 003 and 004 are reserved: 003 is this Now page; 004 is reserved for late
 - Q: What is out of scope? → A: The `/log` (TIL) page; all automation (PR injection from SmartWealthAI/health-stream-xai, TIL drafts, a staleness GitHub Action); other languages; any staleness alert other than the colour.
 - Q: Does FR-008 forbid naming SmartWealthAI or health-stream-xai on `/now/`? → A: No. FR-008 forbids injection or automation from those repositories, not naming them as projects Jorge is building. The Verification guard was narrowed to `health-stream-xai.*inject|SmartWealthAI.*inject|/log/` so approved Now content that lists health-stream-xai no longer fails the guard (issue #63).
 
+### Session 2026-11-02
+
+- Q: What is a valid Building or Learning item? → A: A map with a `text` key whose value is non-blank after trim, and an optional `url`. A bare string item, a missing `text`, or a blank `text` fails the build with an error that names the field and the 1-based item number, for example `Building item 2 has no text in content/now.md`. Issue #58.
+- Q: Can a Now field fall back to a site-level parameter in `hugo.yaml`? → A: No. The layout reads each field only from the front matter of `content/now.md` (page `.Params`, not `.Param`). A site-level parameter with the same name never satisfies a required field and never renders on `/now/`. Issue #59.
+
 ## Context
 
 Feature 001 shipped a placeholder at `content/now.md` and a main-menu item labeled Now that points to `/now/`. That page still says it is a placeholder. A hiring manager cannot tell what Jorge is building or learning, or whether the page is current.
@@ -84,6 +89,8 @@ Jorge updates `/now/` by editing a single Markdown file and merging. He does not
 - Current challenge present but blank after trim: treat as absent (do not render the section).
 - Building or Learning is an empty list: that is a missing required field; the build fails and names the field.
 - Building or Learning entries without a link: allowed; the entry still renders as text.
+- A Building or Learning item that is not a map with a non-blank `text` (a bare string, a missing `text`, or a blank `text`): the build fails and the error names the field and the 1-based item number.
+- A site-level parameter named like a Now field (for example `params.current_goal` in `hugo.yaml`) while `content/now.md` omits that field: the build still fails for the missing field.
 - Last updated is not a valid `YYYY-MM-DD` calendar date: the build fails and names Last updated.
 - Last updated exactly 30 days before the browser's local "today": amber (threshold is `>= 30` days).
 - The visitor has JavaScript disabled or the script fails to load: the ISO date remains visible; no third-party request is attempted.
@@ -102,7 +109,7 @@ Jorge updates `/now/` by editing a single Markdown file and merging. He does not
 
 - **FR-003**: The Now page source MUST be a single Markdown file at `content/now.md`. A routine update MUST require editing only that file. Layouts, assets, and `hugo.yaml` MUST NOT need changes for a field-value update. **Acceptance**: AC6 — Verification shows that changing only `content/now.md` updates the published fields.
 
-- **FR-004**: Hugo MUST fail the build when any required field is missing. Required fields are Current goal, Building, Learning, Reading, and Last updated. The error message MUST name the missing field (for example `Current goal`). Current challenge MUST NOT be required. **Acceptance**: AC3 — a fixture that drops each required field fails the build with that field's name; a fixture that only omits Current challenge builds successfully.
+- **FR-004**: Hugo MUST fail the build when any required field is missing. Required fields are Current goal, Building, Learning, Reading, and Last updated. The error message MUST name the missing field (for example `Current goal`). Current challenge MUST NOT be required. Each Building and Learning item MUST have a non-blank `text`; otherwise the build fails and the error names the field and the 1-based item number. Fields are read only from the page's own front matter, never from site parameters. **Acceptance**: AC3 — a fixture that drops each required field fails the build with that field's name; a fixture with a Building or Learning item without `text` fails with that field's name and item number; a fixture that sets a site-level `params.current_goal` while `content/now.md` omits `current_goal` fails with `Current goal`; a fixture that only omits Current challenge builds successfully.
 
 - **FR-005**: Last updated MUST be an ISO calendar date `YYYY-MM-DD` in the Markdown file and MUST appear in that same format on the page. With the local script enabled, the staleness indicator MUST be green when the date is less than 30 local days before today, and amber when it is 30 local days ago or older. With the script disabled, only the date shows and the page remains usable. **Acceptance**: AC4 — Verification checks the ISO date in HTML and the script's 30-day threshold; a no-JS reading still shows the date.
 
@@ -131,7 +138,7 @@ Jorge updates `/now/` by editing a single Markdown file and merging. He does not
 |----|-----------|
 | AC1 | `/now/` returns 200 on staging and the main menu has a Now link to `/now/`. |
 | AC2 | The six fields render; if Current challenge is absent its section is not rendered (no empty heading). |
-| AC3 | If any required field is missing, the Hugo build fails with an error naming the missing field. |
+| AC3 | If any required field is missing, or a Building/Learning item has no text, the Hugo build fails with an error naming the field (and the item number for an item). A site-level parameter never stands in for a missing field. |
 | AC4 | Last updated shows the date in ISO format; with JS, green if under 30 days and amber if 30 days or older; with JS disabled only the date shows and there are no console errors from this page. |
 | AC5 | The script is local (no third-party requests); lychee passes with the Building/Learning links. |
 | AC6 | Updating `/now/` only requires editing one Markdown file (`content/now.md`). |

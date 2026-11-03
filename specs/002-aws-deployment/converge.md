@@ -49,16 +49,16 @@ T018 is the page-removal cycle on staging. The add half is pull request #32. The
 
 Add, pull request #32, deploy run `39778307366`, conclusion `success`, push of `500428731633dda52c2cf459d317edaae58516d4`:
 
-- `site_url=https://d27iuevzdct8et.cloudfront.net`
-- `curl -sS -o /dev/null -w '%{http_code}' https://d27iuevzdct8et.cloudfront.net/posts/spec-002-remove/` printed `200`
+- `site_url=https://<staging hostname redacted>`
+- `curl -sS -o /dev/null -w '%{http_code}' https://<staging hostname redacted>/posts/spec-002-remove/` printed `200`
 - `curl -fsS` of that URL piped to `grep -F spec-002-remove` exited 0. The page contains `spec-002-remove`
 - Jorge, locally, key `posts/spec-002-remove/index.html` on the staging bucket (bucket name redacted): object present, exit 0. `LastModified` 2026-10-22T12:26:32Z, `ContentLength` 8279, `ETag` `"c6a017a007fa8c9b6dcaabd3d7ccdb6a"`, `ContentType` `text/html`, `ServerSideEncryption` `AES256`
 
 Delete, pull request #33, deploy run `39801509001`, conclusion `success`, push of `5e20f1ddc5f99c899127f22cf6c99b1acaae5ff9`:
 
-- `site_url=https://d27iuevzdct8et.cloudfront.net`
+- `site_url=https://<staging hostname redacted>`
 - Sync log, bucket name redacted: `delete: s3://<redacted>/posts/spec-002-remove/index.html`
-- `if curl -fsS "https://d27iuevzdct8et.cloudfront.net/posts/spec-002-remove/" | grep -F 'spec-002-remove'; then exit 1; fi; echo exit=$?` printed `curl: (22) The requested URL returned error: 403` and `exit=0`
+- `if curl -fsS "https://<staging hostname redacted>/posts/spec-002-remove/" | grep -F 'spec-002-remove'; then exit 1; fi; echo exit=$?` printed `curl: (22) The requested URL returned error: 403` and `exit=0`
 - `curl -sS -o /dev/null -w '%{http_code}'` on that URL printed `403`
 - Jorge ran `if aws s3api head-object --bucket "$BUCKET_NAME" --key posts/spec-002-remove/index.html; then exit 1; fi` locally on the staging bucket (name redacted) at 08:45 Europe/Madrid on 2026-10-23. The call printed `An error occurred (404) when calling the HeadObject operation: Not Found` and `exit=254`. The `if` does not take the `exit 1` branch, so the check passes
 
@@ -66,8 +66,8 @@ Delete, pull request #33, deploy run `39801509001`, conclusion `success`, push o
 
 US3/AC3 also has the earlier successful deploy logs:
 
-- Staging run `39765229871`, push of `d224c53c30822368fa4e2c9b27a42331a04973b9`: `site_url=https://d27iuevzdct8et.cloudfront.net`
-- Production run `39768850371`, push of `2292272cdb129fa1eb50c493e6e0751528734f0b`: `site_url=https://d3kitcqjidoveq.cloudfront.net`
+- Staging run `39765229871`, push of `d224c53c30822368fa4e2c9b27a42331a04973b9`: `site_url=https://<staging hostname redacted>`
+- Production run `39768850371`, push of `2292272cdb129fa1eb50c493e6e0751528734f0b`: `site_url=https://<production hostname redacted>`
 
 `.github/workflows/deploy.yml` contains `site_url=${SITE_URL}` and does not contain `site_url=${{ vars.SITE_URL }}`. It has no `pull_request` trigger.
 
@@ -154,7 +154,7 @@ Deploy job step order and timestamps (UTC):
 | Invalidate | `2026-10-23T10:36:03Z` | `2026-10-23T10:36:25Z` | `success` |
 | Record site URL | `2026-10-23T10:36:25Z` | `2026-10-23T10:36:25Z` | `success` |
 
-Log order on the deploy job: the Invalidate step runs `aws cloudfront wait invalidation-completed` (script echo `2026-10-23T10:36:03.8120031Z`); that step completes at `10:36:25Z` before Record site URL starts; first printed `site_url=` line is `2026-10-23T10:36:25.7010624Z` → `site_url=https://d27iuevzdct8et.cloudfront.net`. Invalidate finished before `site_url` was produced or used.
+Log order on the deploy job: the Invalidate step runs `aws cloudfront wait invalidation-completed` (script echo `2026-10-23T10:36:03.8120031Z`); that step completes at `10:36:25Z` before Record site URL starts; first printed `site_url=` line is `2026-10-23T10:36:25.7010624Z` → `site_url=https://<staging hostname redacted>`. Invalidate finished before `site_url` was produced or used.
 
 ### Production (main) — first success including T019
 
@@ -174,7 +174,7 @@ Deploy job step order and timestamps (UTC):
 | Invalidate | `2026-10-23T10:55:16Z` | `2026-10-23T10:55:37Z` | `success` |
 | Record site URL | `2026-10-23T10:55:37Z` | `2026-10-23T10:55:37Z` | `success` |
 
-Log order on the deploy job: wait command echo `2026-10-23T10:55:16.0676278Z`; Invalidate completes at `10:55:37Z` before Record site URL; first printed `site_url=` line is `2026-10-23T10:55:37.5767096Z` → `site_url=https://d3kitcqjidoveq.cloudfront.net`. Invalidate finished before `site_url` was produced or used. No earlier successful `main` run contains T019 (prior success `39768850371` is from 2026-10-22, before T019).
+Log order on the deploy job: wait command echo `2026-10-23T10:55:16.0676278Z`; Invalidate completes at `10:55:37Z` before Record site URL; first printed `site_url=` line is `2026-10-23T10:55:37.5767096Z` → `site_url=https://<production hostname redacted>`. Invalidate finished before `site_url` was produced or used. No earlier successful `main` run contains T019 (prior success `39768850371` is from 2026-10-22, before T019).
 
 ## `/speckit-converge` re-run (T020)
 

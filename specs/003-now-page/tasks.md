@@ -26,6 +26,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 | `003-now-page-t02` | T002 | FR-001, FR-002, FR-003, FR-005 (date present), FR-006 (lychee links), FR-007, AC6 | No: content only | T001 merged | AC1 menu block; AC2 field block; AC6 note; `lychee --offline --root-dir public public`; staging `/now/` 200 after merge (URL recorded in converge) |
 | `003-now-page-t03` | T003 | FR-005, FR-006, AC4, AC5 | No: assets and one partial; no IAM, secret, region, DNS, cost, or protection change | T002 merged | AC4 and AC5 blocks; manual green/amber note in the pull request body |
 | `003-now-page-t04` | T004 | Converge, SC-001–SC-004, AC1–AC6 | No (Jorge merges converge anyway) | T003 merged; staging AC1 evidence available | `converge.md` with verdict `Converged` |
+| `003-now-page-t05` | T005 | FR-003, FR-004, AC3 (issues #58, #59) | No: layouts only; no IAM, secret, region, DNS, cost, or protection change | The 2026-11-02 follow-up `docs:` pull request merged | AC3 fixture runs including the new item and site-param cases; `hugo --gc --minify --panicOnWarning --baseURL /` on the current `content/now.md` exits 0 |
 
 ## Phase 1: User Stories 1 and 3 — layout and required fields (P1, P3)
 
@@ -43,12 +44,17 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 
 - [X] T004 Run `/speckit-converge` and add `specs/003-now-page/converge.md` with: the staging `/now/` 200 evidence from T002; the AC1–AC6 verification results on the converge SHA; the date, the SHA, and the verdict `Converged`; `Status: Approved by Jorge — PR #N` (N is the converge pull request). Title the pull request exactly `chore(003): converge`. Do not edit `spec.md` or `plan.md`. No account id, bucket name, distribution id, hostname, or email in the file. Reviewer QA reviews; Jorge merges.
 
+## Phase 5: Follow-up fixes (issues #58, #59)
+
+- [ ] T005 [US3] In `layouts/_default/now.html`, read every Now field with `index .Params "<key>"` (or `.Params.<key>`) instead of `.Param`, so only `content/now.md` is read (FR-003, FR-004, issue #59). Inside the Building and Learning `range` blocks, fail with `errorf` when an item is not a map or its `text` is missing or blank after trim; the message names the field and the 1-based item number, for example `Building item 2 has no text in %s` (FR-004, issue #58). Do not edit `content/now.md`, `assets/`, `hugo.yaml`, or `themes/PaperMod`. The pull request body pastes the AC3 fixture runs: every existing case, plus a bare-string Building item, a Learning item with a blank `text`, and a temporary site-level `params.current_goal` with `current_goal` removed from `content/now.md`; each exits non-zero and names the field. The current `content/now.md` builds with exit 0.
+
 ## Dependencies
 
 - T001 needs this `docs:` pull request merged (and constitution 3.0.0 in force).
 - T002 needs T001.
 - T003 needs T002 (needs a real `last_updated` on the page).
 - T004 needs T003 and staging AC1 evidence.
+- T005 needs the 2026-11-02 follow-up `docs:` pull request merged.
 
 ## Notes
 
