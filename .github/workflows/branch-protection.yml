@@ -40,7 +40,8 @@ jobs:
             status=$(curl -sS -o "$body" -w '%{http_code}' \
               -H "Authorization: Bearer ${TOKEN}" \
               -H 'Accept: application/vnd.github+json' \
-              "https://api.github.com/repos/JLaborda/web-portfolio/branches/${branch}/protection")
+              "https://api.github.com/repos/JLaborda/web-portfolio/branches/${branch}/protection") \
+              || status=000
 
             if [ "$status" != "200" ]; then
               printf '| %s | %s | (unavailable) | (unavailable) | fail |\n' \
@@ -50,8 +51,8 @@ jobs:
               continue
             fi
 
-            contexts=$(jq -c '.required_status_checks.contexts | sort' "$body")
-            enforce=$(jq -r '.enforce_admins.enabled' "$body")
+            contexts=$(jq -c '(.required_status_checks.contexts // []) | sort' "$body")
+            enforce=$(jq -r '.enforce_admins.enabled // false' "$body")
             if [ "$contexts" = "$expected" ] && [ "$enforce" = "true" ]; then
               result=pass
             else
