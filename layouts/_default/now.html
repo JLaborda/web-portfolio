@@ -2,31 +2,31 @@
 {{- /* FR-004 / AC3: fail the build when a required Now field is missing. */ -}}
 {{- $path := .File.Path -}}
 
-{{- $currentGoal := trim (string (.Param "current_goal" | default "")) " \t\n\r" -}}
+{{- $currentGoal := trim (string (index .Params "current_goal" | default "")) " \t\n\r" -}}
 {{- if eq $currentGoal "" -}}
   {{- errorf "Current goal is missing or empty in %s" $path -}}
 {{- end -}}
 
-{{- $building := .Param "building" -}}
+{{- $building := index .Params "building" -}}
 {{- if not $building -}}
   {{- errorf "Building is missing or empty in %s" $path -}}
 {{- else if eq (len $building) 0 -}}
   {{- errorf "Building is missing or empty in %s" $path -}}
 {{- end -}}
 
-{{- $learning := .Param "learning" -}}
+{{- $learning := index .Params "learning" -}}
 {{- if not $learning -}}
   {{- errorf "Learning is missing or empty in %s" $path -}}
 {{- else if eq (len $learning) 0 -}}
   {{- errorf "Learning is missing or empty in %s" $path -}}
 {{- end -}}
 
-{{- $reading := trim (string (.Param "reading" | default "")) " \t\n\r" -}}
+{{- $reading := trim (string (index .Params "reading" | default "")) " \t\n\r" -}}
 {{- if eq $reading "" -}}
   {{- errorf "Reading is missing or empty in %s" $path -}}
 {{- end -}}
 
-{{- $lastUpdated := trim (string (.Param "last_updated" | default "")) " \t\n\r" -}}
+{{- $lastUpdated := trim (string (index .Params "last_updated" | default "")) " \t\n\r" -}}
 {{- if eq $lastUpdated "" -}}
   {{- errorf "Last updated is missing or empty in %s" $path -}}
 {{- else if ne (len (findRE `^[0-9]{4}-[0-9]{2}-[0-9]{2}$` $lastUpdated)) 1 -}}
@@ -41,7 +41,7 @@
   {{- end -}}
 {{- end -}}
 
-{{- $currentChallenge := trim (string (.Param "current_challenge" | default "")) " \t\n\r" -}}
+{{- $currentChallenge := trim (string (index .Params "current_challenge" | default "")) " \t\n\r" -}}
 
 <article class="post-single">
   <header class="post-header">
@@ -58,12 +58,19 @@
     <section class="now-field">
       <h2>Building</h2>
       <ul>
-        {{- range $item := $building }}
+        {{- range $i, $item := $building }}
+        {{- if not (reflect.IsMap $item) -}}
+          {{- errorf "Building item %d has no text in %s" (add $i 1) $path -}}
+        {{- end -}}
+        {{- $itemText := trim (string (index $item "text" | default "")) " \t\n\r" -}}
+        {{- if eq $itemText "" -}}
+          {{- errorf "Building item %d has no text in %s" (add $i 1) $path -}}
+        {{- end -}}
         <li>
-          {{- with $item.url }}
-          <a href="{{ . }}">{{ $item.text }}</a>
+          {{- with index $item "url" }}
+          <a href="{{ . }}">{{ $itemText }}</a>
           {{- else }}
-          {{ $item.text }}
+          {{ $itemText }}
           {{- end }}
         </li>
         {{- end }}
@@ -73,12 +80,19 @@
     <section class="now-field">
       <h2>Learning</h2>
       <ul>
-        {{- range $item := $learning }}
+        {{- range $i, $item := $learning }}
+        {{- if not (reflect.IsMap $item) -}}
+          {{- errorf "Learning item %d has no text in %s" (add $i 1) $path -}}
+        {{- end -}}
+        {{- $itemText := trim (string (index $item "text" | default "")) " \t\n\r" -}}
+        {{- if eq $itemText "" -}}
+          {{- errorf "Learning item %d has no text in %s" (add $i 1) $path -}}
+        {{- end -}}
         <li>
-          {{- with $item.url }}
-          <a href="{{ . }}">{{ $item.text }}</a>
+          {{- with index $item "url" }}
+          <a href="{{ . }}">{{ $itemText }}</a>
           {{- else }}
-          {{ $item.text }}
+          {{ $itemText }}
           {{- end }}
         </li>
         {{- end }}
