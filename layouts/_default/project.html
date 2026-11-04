@@ -81,7 +81,11 @@
     <section class="project-field">
       <h2>Architecture</h2>
       <p>
-        <img src="{{ $architectureImage | relURL }}" alt="Architecture diagram for {{ $title }}">
+        {{- $architectureAlt := trim (string (index .Params "architecture_image_alt" | default "")) " \t\n\r" -}}
+        {{- if eq $architectureAlt "" -}}
+          {{- $architectureAlt = printf "Architecture diagram for %s" $title -}}
+        {{- end -}}
+        <img src="{{ $architectureImage | relURL }}" alt="{{ $architectureAlt }}">
       </p>
     </section>
 
