@@ -79,7 +79,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 
 ## Phase 8: Follow-up — deploy identifiers as secrets (issue #46)
 
-- [ ] T011 In `.github/workflows/deploy.yml`, for both jobs `deploy` and `verify`, read `AWS_ROLE_ARN`, `BUCKET_NAME`, and `DISTRIBUTION_ID` from `${{ secrets.* }}` (GitHub Environment secrets) instead of `${{ vars.* }}`. Keep `SITE_URL` as `${{ vars.SITE_URL }}` so the deploy job output `site_url` is not dropped. In `.github/workflows/terraform.yml`, read `AWS_PLAN_ROLE_ARN` from `${{ secrets.AWS_PLAN_ROLE_ARN }}` instead of `${{ vars.AWS_PLAN_ROLE_ARN }}`. Do not edit `infra/`. This pull request carries `needs-human`. The pull request body pastes greps showing `secrets.AWS_ROLE_ARN`, `secrets.BUCKET_NAME`, `secrets.DISTRIBUTION_ID`, and `secrets.AWS_PLAN_ROLE_ARN` in the workflows, and showing `SITE_URL` still comes from `vars`.
+- [X] T011 In `.github/workflows/deploy.yml`, for both jobs `deploy` and `verify`, read `AWS_ROLE_ARN`, `BUCKET_NAME`, and `DISTRIBUTION_ID` from `${{ secrets.* }}` (GitHub Environment secrets) instead of `${{ vars.* }}`. Keep `SITE_URL` as `${{ vars.SITE_URL }}` so the deploy job output `site_url` is not dropped. In `.github/workflows/terraform.yml`, read `AWS_PLAN_ROLE_ARN` from `${{ secrets.AWS_PLAN_ROLE_ARN }}` instead of `${{ vars.AWS_PLAN_ROLE_ARN }}`. Do not edit `infra/`. This pull request carries `needs-human`. The pull request body pastes greps showing `secrets.AWS_ROLE_ARN`, `secrets.BUCKET_NAME`, `secrets.DISTRIBUTION_ID`, and `secrets.AWS_PLAN_ROLE_ARN` in the workflows, and showing `SITE_URL` still comes from `vars`.
 
 ## Jorge's steps
 

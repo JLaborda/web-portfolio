@@ -24,9 +24,9 @@ jobs:
       site_url: ${{ steps.site.outputs.site_url }}
     env:
       SITE_URL: ${{ vars.SITE_URL }}
-      BUCKET_NAME: ${{ vars.BUCKET_NAME }}
-      DISTRIBUTION_ID: ${{ vars.DISTRIBUTION_ID }}
-      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+      DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -40,7 +40,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: eu-west-1
           audience: sts.amazonaws.com
 
@@ -124,9 +124,9 @@ jobs:
     environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
     env:
       SITE_URL: ${{ vars.SITE_URL }}
-      BUCKET_NAME: ${{ vars.BUCKET_NAME }}
-      DISTRIBUTION_ID: ${{ vars.DISTRIBUTION_ID }}
-      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+      DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       BEFORE: ${{ github.event.before }}
     steps:
       - name: Checkout
@@ -149,7 +149,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: eu-west-1
           audience: sts.amazonaws.com
 
