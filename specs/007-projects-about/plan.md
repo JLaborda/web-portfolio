@@ -103,9 +103,10 @@ In the project layout, for each required field, if the value is missing or (for 
 ### CV asset (AC5, ADR 003)
 
 - Canonical path: `static/cv/jorge-laborda-cv.pdf` → published URL `/cv/jorge-laborda-cv.pdf`.
-- About and the main menu link that URL as a download (`download` attribute optional; destination must be the PDF).
-- No CI job generates a PDF. Jorge uploads the file (Pasos de Jorge).
-- Until the PDF is in the tree, a PR that claims the CV is live must fail `test -f static/cv/jorge-laborda-cv.pdf` or lychee offline. Implementation PRs that only ship layouts may omit the binary and keep Verification notes that AC5 is gated on Jorge’s upload.
+- About and the main menu link that URL as a download (`download` attribute optional; destination must be the PDF). Those links land in the same implementation pull request as the PDF (tasks.md T003) so lychee offline stays green; do not add a lychee exclusion.
+- No CI job generates a PDF. Jorge provides the file via a pull request (Pasos de Jorge); the Web Developer’s T003 commits it with the links if needed.
+- `static/cv/` must contain only that PDF once T003 is done. Do not ship a README or other non-PDF under `static/cv/` (Hugo would publish it at `/cv/…`). Put agent/Jorge guidance in `specs/007-projects-about/tasks.md` or this plan instead.
+- Until the PDF is in the tree, a PR that claims the CV is live must fail `test -f static/cv/jorge-laborda-cv.pdf` or lychee offline. T002 (About placeholders) omits CV hrefs for that reason.
 
 ### Menu (AC6)
 
@@ -121,12 +122,13 @@ Weight may sit after Posts or next to About; the Verification greps for the PDF 
 
 ### Delivery order
 
-1. This `docs:` pull request (spec, plan, tasks, checklist, ADR 003), merged by Jorge (`needs-human`).
-2. `007-projects-about-t01` — project layout + required-field `errorf` + list page wiring + placeholder `smartwealthai.md` schema that builds.
-3. `007-projects-about-t02` — About placeholder structure, CV menu entry, `static/cv/` path ready for Jorge’s PDF (`.gitkeep` or README only until he uploads).
-4. Jorge completes «Pasos de Jorge» (prose, diagram, PDF, LinkedIn) — may be commits on a content branch or follow-ups he owns; agents do not invent his bio or case-study text.
-5. After staging shows `/projects/`, `/projects/smartwealthai/`, `/about/` 200 and AC5 passes, `chore(007): converge` writes `converge.md`, Reviewer QA signs off, Jorge merges.
-6. Jorge releases `develop` → `main` with a merge commit when he chooses.
+1. Docs pull request #74 (spec, plan, tasks, checklist, ADR 003), merged by Jorge (`needs-human`). *(done)*
+2. `007-projects-about-t01` — project layout + required-field `errorf` + list page wiring + placeholder `smartwealthai.md` schema that builds. *(done)*
+3. `007-projects-about-t02` — About placeholder structure only; no CV menu entry and no About PDF link (keeps lychee green). *(done, PR #77)*
+4. Jorge completes «Pasos de Jorge» prose/diagram/LinkedIn as ready, and uploads or delivers `static/cv/jorge-laborda-cv.pdf` via a pull request (exact filename; never generated).
+5. `007-projects-about-t03` — Web Developer: PDF in `static/cv/` (Jorge’s file), About + menu CV links in the same PR, delete `static/cv/README.md`, no lychee exclusion (FR-005, AC5, AC6 CV item).
+6. After staging shows `/projects/`, `/projects/smartwealthai/`, `/about/` 200 and AC5 passes, `chore(007): converge` (T004) writes `converge.md`, Reviewer QA signs off, Jorge merges.
+7. Jorge releases `develop` → `main` with a merge commit when he chooses.
 
 ## Complexity Tracking
 
