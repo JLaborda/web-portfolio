@@ -43,6 +43,3 @@ menu:
     - name: Posts
       url: /posts/
       weight: 4
-    - name: CV
-      url: /cv/jorge-laborda-cv.pdf
-      weight: 5
