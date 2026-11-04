@@ -1,37 +1,38 @@
 <!--
 Sync Impact Report
-- Version change: 1.2.0 → 2.0.0
-- Bump rationale: MAJOR. Principle I's approval rules are redefined in a
-  backward-incompatible way: the separate spec pull request and the
-  separate plan and tasks pull request are replaced by one `docs:` pull
-  request per feature, and Reviewer QA no longer reviews or approves
-  spec, plan, tasks, or checklist pull requests. A feature that followed
-  the 1.2.0 two-PR path would not comply with 2.0.0.
-- Decision: Jorge (Product Owner), 2026-10-23, to cut team usage. The
-  team group channel is gone; coordination is a chain of direct
-  messages between bots. This file never named the channel, so no
-  sentence about it is removed.
+- Version change: 2.0.0 → 3.0.0
+- Bump rationale: MAJOR. Principle I and the Roles section are redefined
+  in a backward-incompatible way: (1) the Tech Lead writes each `docs:`
+  pull request through one Cursor cloud agent on the Auto model for the
+  whole repository (follow-ups on that agent), not through the GitHub
+  API without a cloud agent; (2) that same agent is reused for all of
+  the Tech Lead's pull requests and fixes in this repository, and is
+  replaced only when its context becomes unmanageable; (3) the feature
+  converge pull request title MUST be `chore(NNN): converge` (not a
+  `docs:` title). A 2.0.0 docs pull request written via the GitHub API,
+  or a converge titled as `docs:`, would not comply with 3.0.0.
+- Decision: Jorge (Product Owner), 2026-10-23.
 - Modified principles:
   - I. Spec-driven development and PO approval: one `docs:` pull request
-    per feature carries `spec.md`, `checklists/`, `plan.md` and its
-    supporting files, `tasks.md`, and the feature's ADR. Jorge merges it.
-    Fixes are extra commits on that same pull request. Reviewer QA does
-    not review it. The `qa: checklist` commit and QA's acceptance of
-    waivers are replaced by the Tech Lead's marks, accepted by Jorge's
-    merge. `plan.md` and `tasks.md` carry `Status: Approved by Jorge — PR #N`.
-  - V. Scoped implementation PRs: an implementation pull request MAY add
-    or update the line of the task it closes in `tasks.md`. Reviewer QA
-    reviews each code pull request in one round; after fixes it looks
-    only at the new diff. One cloud agent per pull request, reused for
-    its fixes.
-- Modified sections: Roles; Branches and releases; Governance.
-- Unchanged: auto-merge of intermediate code pull requests by their
-  author after `QA verdict: APPROVED` on the current head SHA and no
-  `needs-human`; Jorge merges the converge pull request, constitution
-  amendments, non-feature pull requests, `needs-human` pull requests,
-  and every release to `main`. Branches stay protected.
-- Not rewritten: files already merged under 1.1.0 or 1.2.0, including
-  `Status: Approved by Reviewer QA — PR #N` lines.
+    per feature (spec, checklists, plan and supporting files, tasks,
+    ADR, and any constitution amendment that permits the feature's
+    shape) is written by the Tech Lead through the repository's Cursor
+    cloud agent on the Auto model. Reviewer QA does not review it.
+    Jorge merges it. Fixes are follow-ups on that same agent and extra
+    commits on the same pull request.
+  - V. Scoped implementation PRs: the converge pull request title is
+    exactly `chore(NNN): converge`. Reviewer QA reviews it; Jorge
+    merges it. Intermediate code pull requests still use one cloud
+    agent per pull request, reused for that pull request's fixes.
+- Modified sections: Roles; Governance (version line).
+- Unchanged: one `docs:` pull request per feature; Reviewer QA does not
+  review docs; auto-merge of intermediate code pull requests after
+  `QA verdict: APPROVED` on the current head SHA and no `needs-human`;
+  Jorge merges constitution amendments, non-feature pull requests,
+  `needs-human` pull requests, and every release to `main`. Branches
+  stay protected.
+- Not rewritten: files already merged under 1.1.0, 1.2.0, or 2.0.0,
+  including prior `Status:` lines and prior converge titles.
 - Added sections: none. Removed sections: none.
 - Follow-up TODOs: none
 - Templates and commands: unchanged. They read this file at runtime.
@@ -81,8 +82,13 @@ opened.
 
 Reviewer QA reviews each code pull request once, and that review flags
 every finding. The author fixes them in one push. After that push,
-Reviewer QA looks only at the new diff. One cloud agent serves one pull
-request and is reused for its fixes.
+Reviewer QA looks only at the new diff. For the Tech Lead's `docs:`
+work in this repository, one Cursor cloud agent on the Auto model
+serves the whole repository: it opens the `docs:` pull request, and
+fixes arrive as follow-ups on that same agent. That agent is replaced
+only when its context becomes unmanageable. For each intermediate
+implementation pull request, one cloud agent serves that pull request
+and is reused for its fixes.
 
 The pull request author is the agent that opened the pull request.
 Reviewer QA never runs `gh pr merge`, with or without `--auto`. The
@@ -109,12 +115,14 @@ that changes branch protection. Only Jorge or the Scrum Master Dev may
 remove `needs-human`, with a pull request comment that states the
 reason.
 
-When implementation of a spec is finished, Reviewer QA gives a final
-sign-off on the converge pull request. Jorge then verifies the feature
-personally. If he approves, he merges that close. If he does not approve,
-the work returns to the point that needs it: the spec, through extra
-commits on a new `docs:` pull request, or the implementation, through a
-new task pull request.
+When implementation of a spec is finished, the last pull request is the
+converge pull request. Its title MUST be exactly `chore(NNN): converge`
+(NNN is the feature number). Reviewer QA gives a final sign-off on that
+pull request. Jorge then verifies the feature personally. If he
+approves, he merges that close. If he does not approve, the work returns
+to the point that needs it: the spec, through extra commits on a new
+`docs:` pull request, or the implementation, through a new task pull
+request.
 
 These rules stay. At most one `docs:` pull request per feature is open.
 A pull request MUST NOT depend on an unmerged pull request, except that
@@ -131,14 +139,19 @@ Approval is recorded only as follows:
    `specs/NNN-name/checklists/requirements.md`, `plan.md` and every
    supporting file `/speckit-plan` wrote beside it, `tasks.md`, the
    `/speckit-checklist` files on the full path, and the feature's ADR
-   under `docs/adr/` when there is one. It contains no code, workflow,
-   or `infra/` change. The Tech Lead writes it through the GitHub API,
-   without a cloud agent. Reviewer QA does not review it. Jorge reviews
-   and merges it. Fixes go as extra commits on the same pull request.
-   `spec.md`, `plan.md`, and `tasks.md` each carry
-   `Status: Approved by Jorge — PR #N` (N is that pull request's
-   number) as the only status field, replacing `**Status**: Draft`. The
-   line MUST NOT include a date. Every item in
+   under `docs/adr/` when there is one. It MAY also carry an amendment
+   of this constitution when that amendment permits the feature's
+   shape. It contains no product code, workflow, or `infra/` change.
+   The Tech Lead writes it through this repository's Cursor cloud agent
+   on the Auto model (one agent per repository for all of the Tech
+   Lead's pull requests and fixes via follow-ups; switch agents only
+   when that agent's context becomes unmanageable). There is one such
+   `docs:` pull request per spec. Reviewer QA does not review it. Jorge
+   reviews and merges it. Fixes go as follow-ups on that agent and as
+   extra commits on the same pull request. `spec.md`, `plan.md`, and
+   `tasks.md` each carry `Status: Approved by Jorge — PR #N` (N is that
+   pull request's number) as the only status field, replacing
+   `**Status**: Draft`. The line MUST NOT include a date. Every item in
    `checklists/requirements.md` and in the `/speckit-checklist` files
    MUST be `[x]`, or left unchecked with a waiver and a reason on that
    same line. The Tech Lead writes those marks and waivers. On the full
@@ -233,18 +246,19 @@ governs. `/speckit-taskstoissues` is deprecated in 1.2.2 and MUST NOT be
 used.
 
 **Check:** the `docs:` pull request title starts with `docs:`, comes
-from `NNN-name`, and has no code, workflow, or `infra/` file. On
-`develop`, `spec.md`, `plan.md`, and `tasks.md` of a feature merged under
-2.0.0 each have `Status: Approved by Jorge — PR #N` and no other status.
-Every checklist item there is `[x]` or waived on its line. On the full
-path, `spec.md` contains `## Clarifications` and `### Session YYYY-MM-DD`,
-with either `- Q:` / `→ A:` bullets or the exact line
-`- No critical ambiguities found; no questions asked.`, and the
-description has an analyze report on the head SHA with no open CRITICAL
-or HIGH finding. A short-path description contains the exact line
-`Path: short (small change)`. `converge.md` has
-`Status: Approved by Jorge — PR #N`. Files merged under 1.1.0 or 1.2.0
-are not rewritten. No implementation pull request is opened before the
+from `NNN-name`, and has no product code, workflow, or `infra/` file.
+On `develop`, `spec.md`, `plan.md`, and `tasks.md` of a feature merged
+under 2.0.0 or 3.0.0 each have `Status: Approved by Jorge — PR #N` and
+no other status. Every checklist item there is `[x]` or waived on its
+line. On the full path, `spec.md` contains `## Clarifications` and
+`### Session YYYY-MM-DD`, with either `- Q:` / `→ A:` bullets or the
+exact line `- No critical ambiguities found; no questions asked.`, and
+the description has an analyze report on the head SHA with no open
+CRITICAL or HIGH finding. A short-path description contains the exact
+line `Path: short (small change)`. A converge pull request merged under
+3.0.0 is titled `chore(NNN): converge`. `converge.md` has
+`Status: Approved by Jorge — PR #N`. Files merged under 1.1.0, 1.2.0, or
+2.0.0 are not rewritten to the new converge title. No implementation pull request is opened before the
 `docs:` merge. `git merge-base --is-ancestor origin/develop HEAD` exits
 0 on its branch. Every feature pull request targets `develop`. `main`
 has only merges from `develop` made by Jorge.
@@ -377,12 +391,13 @@ NOT be implemented before a new `docs:` pull request under principle I,
 merged by Jorge.
 
 The last implementation PR of the feature is the one that gets
-`Converged`. It MUST add `specs/NNN-name/converge.md` with the full output
-of that final run, the date, the SHA of the commit it ran on, and the
-verdict `Converged`. `converge.md` also carries
-`Status: Approved by Jorge — PR #N` as its only status field, with no
-date. The PR description MUST paste that verdict. QA MUST
-block the PR if the file is missing or the verdict is not `Converged`.
+`Converged`. Its title MUST be exactly `chore(NNN): converge`. It MUST
+add `specs/NNN-name/converge.md` with the full output of that final run,
+the date, the SHA of the commit it ran on, and the verdict `Converged`.
+`converge.md` also carries `Status: Approved by Jorge — PR #N` as its
+only status field, with no date. The PR description MUST paste that
+verdict. QA MUST block the PR if the file is missing, the verdict is
+not `Converged`, or the title is not `chore(NNN): converge`.
 
 Reviewer QA MUST review each code pull request against `spec.md`,
 `plan.md`, `tasks.md`, the checklist files when the full path applies,
@@ -391,16 +406,17 @@ round that flags every finding. After the fix push, it reviews only the
 new diff. On an intermediate pull request, the review that allows the
 author to run `gh pr merge --auto --squash` is a COMMENT review that
 starts with `QA verdict: APPROVED` and names the current full head SHA.
-On the converge pull request, the review is the final sign-off, and
-Jorge merges only after it. Without that review on the current head, a
-code pull request MUST NOT be merged.
+On the converge pull request (`chore(NNN): converge`), the review is the
+final sign-off, and Jorge merges only after it. Without that review on
+the current head, a code pull request MUST NOT be merged.
 
 **Check:** the description lists the ids, `tasks.md` has them as `[X]`,
 and there are no extra or missing ids. A PR that is not the converge PR
 changes `tasks.md` only for the ids it closes and does not change
-`spec.md` or `plan.md`. The last PR contains `converge.md` with the date,
-the SHA, and `Converged`, and the description repeats the verdict. If
-the file is missing or the verdict is anything else, QA blocks the PR.
+`spec.md` or `plan.md`. The last PR is titled `chore(NNN): converge`,
+contains `converge.md` with the date, the SHA, and `Converged`, and the
+description repeats the verdict. If the file is missing, the title is
+wrong, or the verdict is anything else, QA blocks the PR.
 
 ### VI. Explainable in an interview, and cheap
 
@@ -443,24 +459,31 @@ review, or comment fails review. Pages under `content/` are English.
 - **Tech Lead.** Runs `/speckit-specify`, `/speckit-clarify`,
   `/speckit-plan`, `/speckit-checklist`, `/speckit-tasks`, and
   `/speckit-analyze` on the full path, or specify, plan, and tasks on
-  the short path. Writes the whole `docs:` pull request through the
-  GitHub API, without a cloud agent, including the ADR when there is
-  one, the checklist marks and waivers, and
-  `Status: Approved by Jorge — PR #N` on `spec.md`, `plan.md`, and
-  `tasks.md`. Fixes it with extra commits on the same pull request.
-  Never enables auto-merge on a `docs:` pull request.
+  the short path. Writes each feature's `docs:` pull request (spec,
+  plan, tasks, checklists, ADR when there is one, and a constitution
+  amendment when needed) through this repository's Cursor cloud agent
+  on the Auto model. One such agent serves all of the Tech Lead's pull
+  requests and fixes in this repository via follow-ups; switch to a
+  new agent only when that agent's context becomes unmanageable. One
+  `docs:` pull request per spec. Includes the checklist marks and
+  waivers, and `Status: Approved by Jorge — PR #N` on `spec.md`,
+  `plan.md`, and `tasks.md`. Fixes with follow-ups and extra commits on
+  the same pull request. Never enables auto-merge on a `docs:` pull
+  request. Reviewer QA does not review `docs:` pull requests; Jorge
+  merges them.
 - **Web Developer.** Runs `/speckit-implement` and, on the feature's last
-  PR, `/speckit-converge`, with one cloud agent per pull request that is
-  reused for its fixes. When implement stops on an unchecked checklist
-  item, MAY answer yes only when every unchecked item carries a waiver
-  that was in the merged `docs:` pull request. Does not enable
-  auto-merge when opening a pull request. On an implementation pull
-  request that is not the converge pull request, runs
-  `gh pr merge --auto --squash` only after `QA verdict: APPROVED` names
-  the current head SHA and `gh pr view <n> --json labels` shows no
-  `needs-human`. Before a later push, first runs
+  PR, `/speckit-converge`, with one cloud agent per implementation pull
+  request that is reused for that pull request's fixes. The converge
+  pull request title is exactly `chore(NNN): converge`. When implement
+  stops on an unchecked checklist item, MAY answer yes only when every
+  unchecked item carries a waiver that was in the merged `docs:` pull
+  request. Does not enable auto-merge when opening a pull request. On
+  an implementation pull request that is not the converge pull request,
+  runs `gh pr merge --auto --squash` only after `QA verdict: APPROVED`
+  names the current head SHA and `gh pr view <n> --json labels` shows
+  no `needs-human`. Before a later push, first runs
   `gh pr merge --disable-auto`. Does not run `gh pr merge` on the
-  converge pull request. Jorge merges it.
+  converge pull request. Jorge merges it after Reviewer QA's sign-off.
 - **Reviewer (QA).** Reviews code pull requests only, never a `docs:`
   pull request. One review round flags every finding; after the fix
   push, reviews only the new diff. Reviews against `spec.md`,
@@ -469,9 +492,9 @@ review, or comment fails review. Pages under `content/` are English.
   constitution. The intermediate approval is a COMMENT review that
   starts with `QA verdict: APPROVED` and names the full head SHA.
   Never runs `gh pr merge`, with or without `--auto`. On the converge
-  pull request, gives the final sign-off, checks that `converge.md`
-  exists and says `Converged`, and Jorge merges after his own
-  verification.
+  pull request titled `chore(NNN): converge`, gives the final
+  sign-off, checks that `converge.md` exists and says `Converged`, and
+  Jorge merges after his own verification.
 - **Scrum Master Dev.** Does not merge and does not run `gh pr merge`.
   When a step needs Jorge's personal verification, adds the label
   `needs-human` and a pull request comment with the reason, before
@@ -550,4 +573,4 @@ Before posting `QA verdict: APPROVED` or a converge sign-off, Reviewer
 QA MUST check compliance with this constitution. Reviewer QA does not
 run `gh pr merge`. A PR that contradicts a principle MUST NOT be merged.
 
-**Version**: 2.0.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-10-23
+**Version**: 3.0.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-10-23

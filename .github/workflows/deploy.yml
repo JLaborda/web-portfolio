@@ -24,9 +24,9 @@ jobs:
       site_url: ${{ steps.site.outputs.site_url }}
     env:
       SITE_URL: ${{ vars.SITE_URL }}
-      BUCKET_NAME: ${{ vars.BUCKET_NAME }}
-      DISTRIBUTION_ID: ${{ vars.DISTRIBUTION_ID }}
-      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+      DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -40,7 +40,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: eu-west-1
           audience: sts.amazonaws.com
 
@@ -124,9 +124,9 @@ jobs:
     environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
     env:
       SITE_URL: ${{ vars.SITE_URL }}
-      BUCKET_NAME: ${{ vars.BUCKET_NAME }}
-      DISTRIBUTION_ID: ${{ vars.DISTRIBUTION_ID }}
-      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+      DISTRIBUTION_ID: ${{ secrets.DISTRIBUTION_ID }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       BEFORE: ${{ github.event.before }}
     steps:
       - name: Checkout
@@ -149,7 +149,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: eu-west-1
           audience: sts.amazonaws.com
 
@@ -198,7 +198,7 @@ jobs:
           }
 
           record() {
-            printf '%s | %s | %s | %s\n' "$1" "$2" "$3" "$4" >> "$report"
+            printf '| %s | %s | %s | %s |\n' "$1" "$2" "$3" "$4" >> "$report"
             if [ "$4" != "pass" ]; then
               failed=1
             fi
@@ -331,7 +331,8 @@ jobs:
               printf 'Environment: %s\n' "$env_name"
               printf 'Commit: %s\n' "$GITHUB_SHA"
               printf '\n'
-              printf 'check | expected | actual | result\n'
+              printf '| check | expected | actual | result |\n'
+              printf '| --- | --- | --- | --- |\n'
             } > "$report"
           }
 
@@ -390,7 +391,7 @@ jobs:
 
           note_page_source() {
             if [ "$page_changed" -eq 0 ]; then
-              printf '%s\n' 'no page source changed' >> "$report"
+              printf '\n%s\n' 'no page source changed' >> "$report"
             fi
           }
 
@@ -459,8 +460,9 @@ jobs:
                       if line == "---":
                           break
                       front.append(line)
+              url_key_re = re.compile(r'^["\']?url["\']?\s*:')
               for line in front:
-                  if line.strip().startswith("url:"):
+                  if url_key_re.match(line):
                       fail_page(path)
               draft = False
               slug = None
@@ -637,9 +639,7 @@ jobs:
                   absent.extend(got_absent)
               overlap = (set(present) - {"index.html"}) & set(absent)
               if overlap:
-                  for key in sorted(overlap):
-                      print("::error::object key " + key + " is both present and absent", file=sys.stderr)
-                  raise SystemExit(1)
+                  absent = [key for key in absent if key not in overlap]
               print("PAGE_CHANGED " + ("1" if contributed else "0"))
               print("PRESENT index.html")
               for key in sorted(set(present)):

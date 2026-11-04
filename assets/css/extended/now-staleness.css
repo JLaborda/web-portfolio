@@ -1,0 +1,22 @@
+/* Staleness mark on /now/ only; hidden until JS sets a state class. */
+.now-staleness {
+  display: none;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-inline-start: 0.4rem;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.now-staleness.now-staleness--fresh,
+.now-staleness.now-staleness--stale {
+  display: inline-block;
+}
+
+.now-staleness--fresh {
+  background-color: #2e7d32;
+}
+
+.now-staleness--stale {
+  background-color: #f9a825;
+}

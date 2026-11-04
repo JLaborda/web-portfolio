@@ -76,7 +76,7 @@ jobs:
           TF_VAR_budget_alert_email: ${{ secrets.TF_VAR_budget_alert_email }}
         run: |
           set -euo pipefail
-          arn=$(printf '%s' "${{ vars.AWS_PLAN_ROLE_ARN }}" | tr -d '[:space:]')
+          arn=$(printf '%s' "${{ secrets.AWS_PLAN_ROLE_ARN }}" | tr -d '[:space:]')
           base_tree=$(git ls-tree -d "${{ github.event.pull_request.base.sha }}" infra)
           if [ -z "$arn" ] && [ -z "$base_tree" ]; then
             printf '%s\n' "::notice::AWS_PLAN_ROLE_ARN is unset; terraform plan skipped until bootstrap"

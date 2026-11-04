@@ -28,6 +28,8 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 | `005-deploy-verification-t03` | T003 | US1 scenario 1, SC-001 | No | T001 merged | Staging verify run after merge |
 | `005-deploy-verification-t04` | T004 | US1 scenario 2, SC-002 | No | T003 merged and its staging run green | Staging verify run after merge |
 | `005-deploy-verification-t05` | T005 | Converge, US1 scenario 3, US3, SC-003, SC-004 | No (Jorge merges converge anyway) | T004 merged; Jorge's release of `develop` to `main` | `converge.md` |
+| `005-deploy-verification-t09` | T009, T010 | FR-002, FR-004, FR-005 (issues #44, #45, #49, #61) | No: workflow-only; no IAM, secret, region, DNS, cost, or protection change | The 2026-11-02 follow-up `docs:` pull request merged | FR-002 oracle dry run including the new rows; front-matter fixtures; rendered table sample; FR-005 and FR-008 implementation blocks; stubbed curl/jq runs |
+| `005-deploy-verification-t11` | T011 | FR-001, FR-004 (issue #46); spec 002 FR-014, FR-017 | Yes: secrets | This `docs:` pull request merged; Jorge has created the environment secrets and the plan-role repository secret | Workflow greps for `secrets.AWS_ROLE_ARN`, `secrets.BUCKET_NAME`, `secrets.DISTRIBUTION_ID`, and `secrets.AWS_PLAN_ROLE_ARN`; `SITE_URL` remains a variable; one deploy log after merge shows those names masked |
 
 ## Phase 1: User Stories 1 and 2 — the deploy checks itself and comments (P1, P2)
 
@@ -45,7 +47,7 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 
 ## Phase 4: Convergence
 
-- [ ] T005 After Jorge releases `develop` to `main` (the release range adds and removes the probe, so it nets out), run `/speckit-converge` and write `specs/005-deploy-verification/converge.md` with: the staging run URLs from T001, T003, T004 and their pull request comments; the production verify run URL for the release merge, showing no `x-robots-tag` and every key in the `$BEFORE..$GITHUB_SHA` range; the first `workflow_dispatch` run URL of `branch-protection.yml` on `main` with both branches matching (this is the proof that `BRANCH_PROTECTION_READ_TOKEN` exists); the date, the SHA it ran on, and the verdict `Converged`; `Status: Approved by Jorge — PR #N`. No account id, bucket name, distribution id, hostname, or email in the file. Jorge merges this pull request
+- [X] T005 After Jorge releases `develop` to `main` (the release range adds and removes the probe, so it nets out), run `/speckit-converge` and write `specs/005-deploy-verification/converge.md` with: the staging run URLs from T001, T003, T004 and their pull request comments; the production verify run URL for the release merge, showing no `x-robots-tag` and every key in the `$BEFORE..$GITHUB_SHA` range; the first `workflow_dispatch` run URL of `branch-protection.yml` on `main` with both branches matching (this is the proof that `BRANCH_PROTECTION_READ_TOKEN` exists); the date, the SHA it ran on, and the verdict `Converged`; `Status: Approved by Jorge — PR #N`. No account id, bucket name, distribution id, hostname, or email in the file. Jorge merges this pull request
 
 ## Dependencies
 
@@ -53,9 +55,37 @@ One task per pull request, merged one at a time into `develop`. Each pull reques
 - T006 needs T001 merged and the `docs:` pull request that fixes issues #43 and #44 merged. It only edits the `verify` key block in `deploy.yml`.
 - T002 needs T001 merged (one feature PR at a time). T002 and T001 touch different files but merge sequentially. T006 may merge before or after T002; they touch different files.
 - T003 needs T001; T004 needs T003; T005 needs T004 and the release to `main`.
+- T009 and T010 need the 2026-11-02 follow-up `docs:` pull request merged. They may share one pull request (different files).
+- T011 needs this `docs:` pull request merged and Jorge's secrets created (see Jorge's steps). It may merge before or after T009/T010; they touch overlapping files in `deploy.yml`, so prefer T009 first if both are open.
 
 ## Notes
 
 - Mark an id `[X]` only in the pull request that closes it. A pull request may add or update its own task line here (constitution 2.0.0, principle V).
 - Do not edit `spec.md` or `plan.md` in an implementation pull request.
 - If Jorge prefers fewer pull requests, T003 and T004 can be dropped and SC-002 accepted on the oracle dry run in T001 instead. That is a scope change and needs a `docs:` pull request first.
+
+## Phase 5: Convergence
+
+- [X] T007 After Jorge starts `workflow_dispatch` for `.github/workflows/branch-protection.yml` on `main`, record that run URL and the matching summary for `develop` and `main` in `specs/005-deploy-verification/converge.md`, set the verdict to `Converged`, and mark T005 `[X]` per SC-004 / US3 / T005 (missing). This agent cannot create the dispatch (HTTP 403 Resource not accessible by integration). Do not invent a run URL. Do not edit `spec.md` or `plan.md`.
+
+## Phase 6: Follow-up — top-level url: only (FR-002)
+
+- [X] T008 In `.github/workflows/deploy.yml`, change `parse_front_matter` so a `url:` front-matter key fails the verify job only when the line is unindented (`line.startswith("url:")`, no `strip`). Nested list keys such as Building/Learning `url:` under `content/now.md` must not fail the job. Do not change other verify behaviour. Staging run `39973168501` failed verify after #57 because indented `url:` lines were rejected. The pull request body pastes a local proof: current `content/now.md` passes; a copy with a top-level `url:` fails.
+
+## Phase 7: Follow-up fixes (issues #44, #45, #49, #61)
+
+- [X] T009 [US1][US2] In `.github/workflows/deploy.yml`, job `verify` only: (a) in the key-derivation block, when a key is in both sets, keep it only in the present set instead of exiting with `object key ... is both present and absent` (FR-002, issue #44); (b) in `parse_front_matter`, fail only on an unindented `url` key, quoted or not, with optional spaces before the colon (`^["']?url["']?\s*:`), and keep indented `url:` allowed (FR-002, issue #61); (c) in `start_report`, `record`, and `note_page_source`, write the report as a GitHub-flavored Markdown table as defined in the 2026-11-02 Clarifications, with a blank line before `no page source changed` (FR-004, issue #45). Keep the secret guard on the final text. Do not edit `infra/` or the `deploy` job. The pull request body pastes: a local dry run of the key block against every FR-002 oracle row including the new rows; `parse_front_matter` fixtures for `url:`, `"url":`, `'url':`, `url :` (fail) and the current `content/now.md` (pass); a rendered sample of the summary table.
+- [X] T010 [US3] In `.github/workflows/branch-protection.yml`, record a curl transport error as status `000` (`|| status=000`), read contexts with `(.required_status_checks.contexts // []) | sort` and `enforce_admins` with `.enforce_admins.enabled // false`, so each case writes a `fail` row and the loop continues to the other branch (FR-005, issue #49). Do not change triggers, permissions, the secret, or the expected contexts. The pull request body pastes the FR-005 and FR-008 implementation blocks and a local run with a stubbed `curl` that fails and a stubbed body without `required_status_checks`, showing both branch rows and exit 1. The first live run is the Monday schedule or Jorge's `workflow_dispatch` on `main` after the next release.
+
+## Phase 8: Follow-up — deploy identifiers as secrets (issue #46)
+
+- [X] T011 In `.github/workflows/deploy.yml`, for both jobs `deploy` and `verify`, read `AWS_ROLE_ARN`, `BUCKET_NAME`, and `DISTRIBUTION_ID` from `${{ secrets.* }}` (GitHub Environment secrets) instead of `${{ vars.* }}`. Keep `SITE_URL` as `${{ vars.SITE_URL }}` so the deploy job output `site_url` is not dropped. In `.github/workflows/terraform.yml`, read `AWS_PLAN_ROLE_ARN` from `${{ secrets.AWS_PLAN_ROLE_ARN }}` instead of `${{ vars.AWS_PLAN_ROLE_ARN }}`. Do not edit `infra/`. This pull request carries `needs-human`. The pull request body pastes greps showing `secrets.AWS_ROLE_ARN`, `secrets.BUCKET_NAME`, `secrets.DISTRIBUTION_ID`, and `secrets.AWS_PLAN_ROLE_ARN` in the workflows, and showing `SITE_URL` still comes from `vars`.
+
+## Jorge's steps
+
+Issue #46 requires Jorge to create secrets before the T011 code merge and to delete the old variables afterwards. Order:
+
+1. Create the environment secrets in `staging` and in `production` for `AWS_ROLE_ARN`, `BUCKET_NAME`, and `DISTRIBUTION_ID`, and create the repository secret `AWS_PLAN_ROLE_ARN` for the plan role (same values the variables hold today). Do not commit those values.
+2. Merge the T011 code pull request (after QA and with `needs-human` still on).
+3. Delete the old environment variables `AWS_ROLE_ARN`, `BUCKET_NAME`, and `DISTRIBUTION_ID` from `staging` and `production`, and delete the old repository variable `AWS_PLAN_ROLE_ARN`. Leave `SITE_URL` as a variable.
+4. Check one staging or production deploy log and confirm those secret names are masked in step headers and action inputs.
