@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-04
 
-Status: Approved by Jorge — PR #N
+Status: Approved by Jorge — PR #74
 
 **Input**: User description: "Replace the Projects and About placeholders with a reusable Hugo case-study section and a real About page. Only SmartWealthAI in this feature. Structured front matter with required fields that fail the Hugo build when missing (same pattern as /now). About: short bio, stack, certifications (AWS MLA-C02 in progress), LinkedIn and GitHub only; no email yet. Jorge uploads a CV PDF to static/cv/; About and the menu link it as a download. Jorge writes all prose. Templates ship with marked placeholders. Menu keeps Projects and About next to Now and adds a CV download link. Out of scope: other projects, email, chatbot, /log, library."
 

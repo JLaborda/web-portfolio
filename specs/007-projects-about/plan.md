@@ -2,7 +2,7 @@
 
 **Branch**: `007-projects-about` | **Date**: 2026-11-04 | **Spec**: [spec.md](./spec.md)
 
-Status: Approved by Jorge — PR #N
+Status: Approved by Jorge — PR #74
 
 **Input**: Feature specification from `/specs/007-projects-about/spec.md`
 

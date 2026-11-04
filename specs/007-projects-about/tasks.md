@@ -1,6 +1,6 @@
 # Tasks: Project Case Studies and About Page
 
-Status: Approved by Jorge — PR #N
+Status: Approved by Jorge — PR #74
 
 **Input**: Design documents from `/specs/007-projects-about/`
 

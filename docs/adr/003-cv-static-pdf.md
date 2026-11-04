@@ -1,6 +1,6 @@
 # ADR 003: Serve the CV as a static PDF in the repository
 
-**Status**: Accepted — PR #N (Jorge's merge of that pull request accepts it)
+**Status**: Accepted — PR #74 (Jorge's merge of that pull request accepts it)
 
 **Date**: 2026-11-04
 
