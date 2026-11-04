@@ -1,0 +1,155 @@
+{{- define "main" -}}
+{{- /* FR-003 / AC3: fail the build when a required project field is missing. */ -}}
+{{- $path := .File.Path -}}
+
+{{- $title := trim (string (.Title | default "")) " \t\n\r" -}}
+{{- if eq $title "" -}}
+  {{- errorf "Title is missing or empty in %s" $path -}}
+{{- end -}}
+
+{{- $summary := trim (string (index .Params "summary" | default "")) " \t\n\r" -}}
+{{- if eq $summary "" -}}
+  {{- errorf "Summary is missing or empty in %s" $path -}}
+{{- end -}}
+
+{{- $problem := trim (string (index .Params "problem" | default "")) " \t\n\r" -}}
+{{- if eq $problem "" -}}
+  {{- errorf "Problem is missing or empty in %s" $path -}}
+{{- end -}}
+
+{{- $architectureImage := trim (string (index .Params "architecture_image" | default "")) " \t\n\r" -}}
+{{- if eq $architectureImage "" -}}
+  {{- errorf "Architecture image is missing or empty in %s" $path -}}
+{{- else -}}
+  {{- $staticRel := strings.TrimPrefix "/" $architectureImage -}}
+  {{- if not (fileExists (printf "static/%s" $staticRel)) -}}
+    {{- errorf "Architecture image is missing or empty in %s" $path -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $decisions := index .Params "decisions" -}}
+{{- if not $decisions -}}
+  {{- errorf "Key decisions is missing or empty in %s" $path -}}
+{{- else if eq (len $decisions) 0 -}}
+  {{- errorf "Key decisions is missing or empty in %s" $path -}}
+{{- end -}}
+
+{{- $results := index .Params "results" -}}
+{{- if not $results -}}
+  {{- errorf "Results is missing or empty in %s" $path -}}
+{{- else if reflect.IsSlice $results -}}
+  {{- if eq (len $results) 0 -}}
+    {{- errorf "Results is missing or empty in %s" $path -}}
+  {{- end -}}
+{{- else -}}
+  {{- if eq (trim (string $results) " \t\n\r") "" -}}
+    {{- errorf "Results is missing or empty in %s" $path -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $stack := index .Params "stack" -}}
+{{- if not $stack -}}
+  {{- errorf "Stack is missing or empty in %s" $path -}}
+{{- else if eq (len $stack) 0 -}}
+  {{- errorf "Stack is missing or empty in %s" $path -}}
+{{- end -}}
+
+{{- $repoURL := trim (string (index .Params "repo_url" | default "")) " \t\n\r" -}}
+{{- if eq $repoURL "" -}}
+  {{- errorf "Repository URL is missing or empty in %s" $path -}}
+{{- end -}}
+
+{{- $demoURL := trim (string (index .Params "demo_url" | default "")) " \t\n\r" -}}
+
+<article class="post-single">
+  <header class="post-header">
+    {{ partial "breadcrumbs.html" . }}
+    <h1 class="post-title">{{ $title }}</h1>
+  </header>
+
+  <div class="post-content project-page">
+    <section class="project-field">
+      <h2>Summary</h2>
+      <p>{{ $summary }}</p>
+    </section>
+
+    <section class="project-field">
+      <h2>Problem</h2>
+      <p>{{ $problem }}</p>
+    </section>
+
+    <section class="project-field">
+      <h2>Architecture</h2>
+      <p>
+        <img src="{{ $architectureImage | relURL }}" alt="Architecture diagram for {{ $title }}">
+      </p>
+    </section>
+
+    <section class="project-field">
+      <h2>Key decisions</h2>
+      <ul>
+        {{- range $i, $item := $decisions }}
+        {{- $itemText := "" -}}
+        {{- if reflect.IsMap $item -}}
+          {{- $itemText = trim (string (index $item "text" | default "")) " \t\n\r" -}}
+        {{- else -}}
+          {{- $itemText = trim (string $item) " \t\n\r" -}}
+        {{- end -}}
+        {{- if eq $itemText "" -}}
+          {{- errorf "Key decisions item %d has no text in %s" (add $i 1) $path -}}
+        {{- end -}}
+        <li>{{ $itemText }}</li>
+        {{- end }}
+      </ul>
+    </section>
+
+    <section class="project-field">
+      <h2>Results</h2>
+      {{- if reflect.IsSlice $results }}
+      <ul>
+        {{- range $i, $item := $results }}
+        {{- $itemText := trim (string $item) " \t\n\r" -}}
+        {{- if eq $itemText "" -}}
+          {{- errorf "Results item %d has no text in %s" (add $i 1) $path -}}
+        {{- end -}}
+        <li>{{ $itemText }}</li>
+        {{- end }}
+      </ul>
+      {{- else }}
+      <p>{{ trim (string $results) " \t\n\r" }}</p>
+      {{- end }}
+    </section>
+
+    <section class="project-field">
+      <h2>Stack</h2>
+      <ul>
+        {{- range $i, $item := $stack }}
+        {{- $itemText := trim (string $item) " \t\n\r" -}}
+        {{- if eq $itemText "" -}}
+          {{- errorf "Stack item %d has no text in %s" (add $i 1) $path -}}
+        {{- end -}}
+        <li>{{ $itemText }}</li>
+        {{- end }}
+      </ul>
+    </section>
+
+    <section class="project-field">
+      <h2>Repository</h2>
+      <p><a href="{{ $repoURL }}" rel="noopener noreferrer">{{ $repoURL }}</a></p>
+    </section>
+
+    {{- with $demoURL }}
+    <section class="project-field">
+      <h2>Demo</h2>
+      <p><a href="{{ . }}" rel="noopener noreferrer">{{ . }}</a></p>
+    </section>
+    {{- end }}
+
+    {{- with .Content }}
+    <div class="project-body">
+      {{ . }}
+    </div>
+    {{- end }}
+  </div>
+</article>
+{{- end -}}
