@@ -20,3 +20,7 @@ PLACEHOLDER: Jorge lists certifications here.
 
 - [LinkedIn](https://www.linkedin.com/in/jorge-daniel-laborda-sicilia)
 - [GitHub](https://github.com/JLaborda)
+
+## CV
+
+[Download CV (PDF)](/cv/jorge-laborda-cv.pdf)
