@@ -1,41 +1,25 @@
 <!--
 Sync Impact Report
-- Version change: 2.0.0 → 3.0.0
-- Bump rationale: MAJOR. Principle I and the Roles section are redefined
-  in a backward-incompatible way: (1) the Tech Lead writes each `docs:`
-  pull request through one Cursor cloud agent on the Auto model for the
-  whole repository (follow-ups on that agent), not through the GitHub
-  API without a cloud agent; (2) that same agent is reused for all of
-  the Tech Lead's pull requests and fixes in this repository, and is
-  replaced only when its context becomes unmanageable; (3) the feature
-  converge pull request title MUST be `chore(NNN): converge` (not a
-  `docs:` title). A 2.0.0 docs pull request written via the GitHub API,
-  or a converge titled as `docs:`, would not comply with 3.0.0.
-- Decision: Jorge (Product Owner), 2026-10-23.
+- Version change: 3.0.0 → 3.1.0
+- Bump rationale: MINOR. Principle III is expanded so that when the
+  deployment feature deferred DNS or a custom domain, a later feature
+  may record and implement that decision in its own `docs:` pull
+  request and plan, with Jorge's merge and `needs-human`. This permits
+  spec 006 (custom domain) without rewriting spec 002's historical
+  "no custom domain" deferral. No MAJOR incompatibility with 3.0.0
+  process rules.
+- Decision: Jorge (Product Owner), 2026-11-03, with ADR 002.
 - Modified principles:
-  - I. Spec-driven development and PO approval: one `docs:` pull request
-    per feature (spec, checklists, plan and supporting files, tasks,
-    ADR, and any constitution amendment that permits the feature's
-    shape) is written by the Tech Lead through the repository's Cursor
-    cloud agent on the Auto model. Reviewer QA does not review it.
-    Jorge merges it. Fixes are follow-ups on that same agent and extra
-    commits on the same pull request.
-  - V. Scoped implementation PRs: the converge pull request title is
-    exactly `chore(NNN): converge`. Reviewer QA reviews it; Jorge
-    merges it. Intermediate code pull requests still use one cloud
-    agent per pull request, reused for that pull request's fixes.
-- Modified sections: Roles; Governance (version line).
-- Unchanged: one `docs:` pull request per feature; Reviewer QA does not
-  review docs; auto-merge of intermediate code pull requests after
-  `QA verdict: APPROVED` on the current head SHA and no `needs-human`;
-  Jorge merges constitution amendments, non-feature pull requests,
-  `needs-human` pull requests, and every release to `main`. Branches
-  stay protected.
-- Not rewritten: files already merged under 1.1.0, 1.2.0, or 2.0.0,
-  including prior `Status:` lines and prior converge titles.
+  - III. AWS hosting as a constraint: DNS / custom domain may be
+    decided in a later feature's plan when the deployment feature
+    deferred them; ACM remains in `us-east-1`; `needs-human` unchanged.
+- Modified sections: Governance (version line).
+- Unchanged: OIDC, budgets, dual roles, Spec Kit docs agent rules,
+  converge titles, English-only.
+- Not rewritten: merged specs under earlier versions.
 - Added sections: none. Removed sections: none.
 - Follow-up TODOs: none
-- Templates and commands: unchanged. They read this file at runtime.
+- Templates and commands: unchanged.
 -->
 
 # web-portfolio Constitution
@@ -300,27 +284,30 @@ Hosting MUST be AWS, with these rules:
   restricted to `main` (or to `develop`, if a later decision moves deploys
   there) through a protected GitHub Environment.
 - An AWS Budgets alert of about 1 USD per month MUST exist.
-- The bucket region and DNS MUST be decided in the deployment feature's
-  plan. v1.1.0 said: "The bucket region and DNS MUST be decided in the
-  deployment feature's plan, and that plan MUST have Jorge's approval
-  before it is implemented." That approval is unchanged. Any change to
+- The bucket region MUST be decided in the deployment feature's plan.
+  DNS and a custom domain SHOULD be decided there too. When that plan
+  deferred DNS or a custom domain (as spec 002 did), a later feature
+  MAY record the decision in its own plan and ADR, with Jorge's merge
+  of that feature's `docs:` pull request. v1.1.0 said the deployment
+  plan "MUST have Jorge's approval before it is implemented." That
+  approval is unchanged for region and for any DNS work. Any change to
   the AWS region, to DNS or a custom domain, or to anything that creates
   real AWS resources or costs needs Jorge's explicit approval. The pull
   request that carries that change, whether it is a `docs:` or an
   implementation pull request, MUST carry the label `needs-human`. Jorge
   merges it. It never auto-merges. This constitution does not fix region
-  or DNS.
+  or DNS names.
 
 **Check:** the plan role's policy does not allow apply or changes to S3 or
 CloudFront; the deploy role's Environment requires protection and is not
-available on PRs; the deployment feature's `plan.md` records region and
-DNS with Jorge's approval. v1.1.0 said the plan "records region and DNS
-with Jorge's approval." That check is unchanged. A pull request that
-changes region, DNS, or a custom domain, or that creates real AWS
-resources or costs, carries `needs-human`. Jorge approves and merges it.
-`plan.md`, `tasks.md`, or another intermediate artifact in that pull
-request uses `Status: Approved by Jorge — PR #N`. It never auto-merges.
-gitleaks finds no static keys.
+available on PRs; the deployment feature's `plan.md` records region with
+Jorge's approval, and DNS is recorded either there or in a later
+feature's plan/ADR that Jorge merged. A pull request that changes
+region, DNS, or a custom domain, or that creates real AWS resources or
+costs, carries `needs-human`. Jorge approves and merges it. `plan.md`,
+`tasks.md`, or another intermediate artifact in that pull request uses
+`Status: Approved by Jorge — PR #N`. It never auto-merges. gitleaks
+finds no static keys.
 
 ### IV. Verifiable quality in CI
 
@@ -573,4 +560,4 @@ Before posting `QA verdict: APPROVED` or a converge sign-off, Reviewer
 QA MUST check compliance with this constitution. Reviewer QA does not
 run `gh pr merge`. A PR that contradicts a principle MUST NOT be merged.
 
-**Version**: 3.0.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-10-23
+**Version**: 3.1.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-11-03
