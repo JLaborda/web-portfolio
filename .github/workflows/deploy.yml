@@ -327,10 +327,9 @@ jobs:
             report=$(mktemp)
             failed=0
             {
-              printf 'Run: %s\n' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-              printf 'Environment: %s\n' "$env_name"
-              printf 'Commit: %s\n' "$GITHUB_SHA"
-              printf '\n'
+              printf 'Run: %s\n\n' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+              printf 'Environment: %s\n\n' "$env_name"
+              printf 'Commit: %s\n\n' "$GITHUB_SHA"
               printf '| check | expected | actual | result |\n'
               printf '| --- | --- | --- | --- |\n'
             } > "$report"
