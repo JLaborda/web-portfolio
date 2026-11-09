@@ -1,6 +1,5 @@
 ---
 title: SmartWealthAI
-layout: project
 summary: "PLACEHOLDER: One-paragraph summary of SmartWealthAI for hiring managers."
 problem: "PLACEHOLDER: The problem SmartWealthAI addresses."
 architecture_image: /images/projects/smartwealthai-credit-architecture.png
