@@ -29,7 +29,7 @@ One task per pull request, merged one at a time into `develop` (Now and SmartWea
 
 ## Phase 1: User Story 3 — Now sync (P2)
 
-- [ ] T001 [US3] Update `content/now.md` Building to list SmartWealthAI and fintech-sec-rag-agent (portfolio optional); remove health-stream-xai; set `last_updated` to the edit date (ISO). Keep GitHub URLs for projects without on-site case studies. Do not add `content/projects/fintech-sec-rag-agent.md`. Do not edit `themes/PaperMod`, `infra/`, or workflows.
+- [X] T001 [US3] Update `content/now.md` Building to list SmartWealthAI and fintech-sec-rag-agent (portfolio optional); remove health-stream-xai; set `last_updated` to the edit date (ISO). Keep GitHub URLs for projects without on-site case studies. Do not add `content/projects/fintech-sec-rag-agent.md`. Do not edit `themes/PaperMod`, `infra/`, or workflows.
 
 ## Phase 2: User Story 1 — SmartWealthAI case study (P1) 🎯 MVP
 
