@@ -30,7 +30,7 @@ Export `SPECIFY_FEATURE_DIRECTORY=specs/009-learning-diary` on implementation br
 
 ## Phase 2: User Stories 1–3 — first diary entry + convention 🎯 MVP
 
-- [ ] T002 [US1][US2][US3] Add one real English learning-diary post under `content/posts/` (new Markdown file with `title`, `date`, not draft). Topic = current work/learning. Draft may come from an agent; open PR with `needs-human` for Jorge’s edit/approval. Ensure Posts remains in `hugo.yaml` menu (already present—do not remove). Record the light weekly convention in this `tasks.md` Notes (already below) or a short comment in the PR body pointing here (AC-C1). Do not change theme visuals.
+- [X] T002 [US1][US2][US3] Add one real English learning-diary post under `content/posts/` (new Markdown file with `title`, `date`, not draft). Topic = current work/learning. Draft may come from an agent; open PR with `needs-human` for Jorge’s edit/approval. Ensure Posts remains in `hugo.yaml` menu (already present—do not remove). Record the light weekly convention in this `tasks.md` Notes (already below) or a short comment in the PR body pointing here (AC-C1). Do not change theme visuals.
 
 ## Phase 3: Convergence
 
