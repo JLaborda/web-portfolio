@@ -47,7 +47,7 @@ jobs:
       - name: Read Hugo version
         run: |
           set -euo pipefail
-          curl -fsSL -o /tmp/yq \
+          curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors --connect-timeout 20 -o /tmp/yq \
             "https://github.com/mikefarah/yq/releases/download/v4.54.1/yq_linux_amd64"
           sudo install -m 755 /tmp/yq /usr/local/bin/yq
           yq --version | grep -F '4.54.1'
@@ -58,7 +58,7 @@ jobs:
       - name: Build
         run: |
           set -euo pipefail
-          curl -fsSL -o /tmp/hugo.tar.gz \
+          curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors --connect-timeout 20 -o /tmp/hugo.tar.gz \
             "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"
           tar -xzf /tmp/hugo.tar.gz -C /tmp hugo
           sudo install -m 755 /tmp/hugo /usr/local/bin/hugo
