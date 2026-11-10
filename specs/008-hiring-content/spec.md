@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-10
 
-**Status**: Draft
+**Status**: Draft — Path: short (small change)
 
 **Input**: User description: "Replace remaining hiring-surface placeholders with real English content for ML Engineer / MLOps fintech recruiters. Wire a real home profile headline that Jorge supplies. Fill About with Jorge’s bio, stack, and certifications (no email yet). Replace all SmartWealthAI PLACEHOLDER prose with a complete case study (full existing project schema); agent drafts from the SmartWealthAI repo/README/specs, Jorge approves/edits before merge; keep the existing architecture diagram; results must be honest and may be qualitative—no invented metrics. Sync /now/ Building to SmartWealthAI + fintech-sec-rag-agent (portfolio repo optional) and remove health-stream-xai from Building. Stay on PaperMod; no visual redesign. Out of scope: fintech-sec-rag-agent case study page (feature 010), public email (011), visual elegance (012), CI/deploy chores, other projects as case studies."
 
