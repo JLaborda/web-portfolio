@@ -18,3 +18,9 @@ terraform {
 provider "aws" {
   region = "eu-west-1"
 }
+
+# ACM certificates for CloudFront must live in us-east-1 (constitution III).
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}

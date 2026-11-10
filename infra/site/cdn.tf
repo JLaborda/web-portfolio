@@ -45,12 +45,10 @@ resource "aws_cloudfront_response_headers_policy" "noindex" {
   }
 }
 
-resource "aws_cloudfront_function" "rewrite" {
-  name    = "web-portfolio-${var.environment}-rewrite"
-  runtime = "cloudfront-js-2.0"
-  comment = "Rewrite directory URLs to Hugo index.html objects."
-  publish = true
-  code    = <<-EOT
+locals {
+  # Staging: Hugo directory rewrite only.
+  # Production: www → apex 301 first, then the same Hugo rewrite for the canonical host.
+  rewrite_code_staging = <<-EOT
     function handler(event) {
       var request = event.request;
       var uri = request.uri;
@@ -70,6 +68,60 @@ resource "aws_cloudfront_function" "rewrite" {
       return request;
     }
   EOT
+
+  rewrite_code_production = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      var host = request.headers.host.value;
+      if (host === "www.jlaborda.com") {
+        var params = [];
+        Object.keys(request.querystring).forEach(function (key) {
+          var q = request.querystring[key];
+          if (q.multiValue) {
+            q.multiValue.forEach(function (mv) {
+              params.push(key + "=" + mv.value);
+            });
+          } else {
+            params.push(key + "=" + q.value);
+          }
+        });
+        var location = "https://jlaborda.com" + request.uri;
+        if (params.length > 0) {
+          location = location + "?" + params.join("&");
+        }
+        return {
+          statusCode: 301,
+          statusDescription: "Moved Permanently",
+          headers: {
+            location: { value: location }
+          }
+        };
+      }
+      var uri = request.uri;
+      if (uri === "/") {
+        request.uri = "/index.html";
+        return request;
+      }
+      if (uri.charAt(uri.length - 1) === "/") {
+        request.uri = uri + "index.html";
+        return request;
+      }
+      var slash = uri.lastIndexOf("/");
+      var last = uri.substring(slash + 1);
+      if (last.indexOf(".") === -1) {
+        request.uri = uri + "/index.html";
+      }
+      return request;
+    }
+  EOT
+}
+
+resource "aws_cloudfront_function" "rewrite" {
+  name    = "web-portfolio-${var.environment}-rewrite"
+  runtime = "cloudfront-js-2.0"
+  comment = var.environment == "production" ? "Redirect www to apex and rewrite directory URLs to Hugo index.html objects." : "Rewrite directory URLs to Hugo index.html objects."
+  publish = true
+  code    = var.environment == "production" ? local.rewrite_code_production : local.rewrite_code_staging
 }
 
 resource "aws_cloudfront_distribution" "site" {
@@ -77,6 +129,7 @@ resource "aws_cloudfront_distribution" "site" {
   comment             = "web-portfolio ${var.environment}"
   price_class         = "PriceClass_100"
   default_root_object = "index.html"
+  aliases             = var.environment == "production" ? ["jlaborda.com", "www.jlaborda.com"] : []
 
   origin {
     domain_name              = aws_s3_bucket.site.bucket_regional_domain_name
@@ -106,7 +159,10 @@ resource "aws_cloudfront_distribution" "site" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = var.environment != "production"
+    acm_certificate_arn            = var.environment == "production" ? aws_acm_certificate_validation.jlaborda[0].certificate_arn : null
+    ssl_support_method             = var.environment == "production" ? "sni-only" : null
+    minimum_protocol_version       = var.environment == "production" ? "TLSv1.2_2021" : null
   }
 }
 
