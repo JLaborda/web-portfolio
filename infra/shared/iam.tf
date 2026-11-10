@@ -86,6 +86,34 @@ data "aws_iam_policy_document" "plan" {
     resources = ["*"]
   }
 
+  # Spec 006 T001: CI production plan reads the hand-created jlaborda.com zone
+  # (ListHostedZones*) and ACM certificate state. Writes stay denied below.
+  statement {
+    sid    = "ReadRoute53"
+    effect = "Allow"
+    actions = [
+      "route53:GetChange",
+      "route53:GetHostedZone",
+      "route53:ListHostedZones",
+      "route53:ListHostedZonesByName",
+      "route53:ListResourceRecordSets",
+      "route53:ListTagsForResource",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "ReadAcm"
+    effect = "Allow"
+    actions = [
+      "acm:DescribeCertificate",
+      "acm:GetCertificate",
+      "acm:ListCertificates",
+      "acm:ListTagsForCertificate",
+    ]
+    resources = ["*"]
+  }
+
   statement {
     sid    = "ReadBudget"
     effect = "Allow"
@@ -100,16 +128,31 @@ data "aws_iam_policy_document" "plan" {
     sid    = "DenyPlanWrites"
     effect = "Deny"
     actions = [
+      "acm:AddTagsToCertificate",
+      "acm:DeleteCertificate",
+      "acm:ImportCertificate",
+      "acm:RequestCertificate",
       "budgets:ModifyBudget",
+      "cloudfront:CreateFunction",
       "cloudfront:CreateInvalidation",
+      "cloudfront:DeleteFunction",
+      "cloudfront:PublishFunction",
       "cloudfront:UpdateDistribution",
+      "cloudfront:UpdateFunction",
       "iam:CreateRole",
+      "route53:ChangeResourceRecordSets",
+      "route53:CreateHostedZone",
+      "route53:DeleteHostedZone",
       "s3:DeleteObject",
       "s3:PutObject",
     ]
     resources = ["*"]
   }
 }
+
+# Three OIDC roles only: plan (PR terraform plan) and staging/production deploy
+# (S3 sync + invalidation). Terraform apply of infra/shared and infra/site is
+# Jorge's SSO session (spec 002 FR-009); this repo defines no apply role.
 
 resource "aws_iam_role" "plan" {
   name               = "web-portfolio-plan"
