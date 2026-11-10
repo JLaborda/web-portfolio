@@ -256,6 +256,46 @@ jobs:
             fi
           }
 
+          # Spec 006 FR-006 / FR-007: production only. Staging keeps SITE_URL-based checks above.
+          check_production_custom_domain() {
+            local headers code loc
+            if [ "$env_name" != "production" ]; then
+              return 0
+            fi
+            if [ "$SITE_URL" = "https://jlaborda.com" ]; then
+              record "production SITE_URL" "https://jlaborda.com" "https://jlaborda.com" "pass"
+            else
+              # Do not echo SITE_URL: it must not leak a CloudFront hostname into the report.
+              record "production SITE_URL" "https://jlaborda.com" "unexpected" "fail"
+            fi
+            # Apex 200 is also covered by check_home via SITE_URL; assert the public name explicitly.
+            if code=$(curl -sS --retry 5 --retry-delay 5 --retry-all-errors --connect-timeout 20 \
+              -o /dev/null -w '%{http_code}' 'https://jlaborda.com/' 2>"$curl_err"); then
+              if [ "$code" = "200" ]; then
+                record "apex home" "200" "$code" "pass"
+              else
+                record "apex home" "200" "$code" "fail"
+              fi
+            else
+              record "apex home" "200" "error" "fail"
+            fi
+            headers=$(mktemp)
+            if ! curl -sSI --retry 5 --retry-delay 5 --retry-all-errors --connect-timeout 20 \
+              'https://www.jlaborda.com/now/' >"$headers" 2>"$curl_err"; then
+              record "www redirect" "301 Location https://jlaborda.com/now/" "error" "fail"
+              rm -f "$headers"
+              return 0
+            fi
+            code=$(tr -d '\r' <"$headers" | awk 'toupper($1) ~ /^HTTP/{print $2; exit}')
+            loc=$(tr -d '\r' <"$headers" | awk 'tolower($1)=="location:"{print $2; exit}')
+            if [ "$code" = "301" ] && [ "$loc" = "https://jlaborda.com/now/" ]; then
+              record "www redirect" "301 Location https://jlaborda.com/now/" "301 Location https://jlaborda.com/now/" "pass"
+            else
+              record "www redirect" "301 Location https://jlaborda.com/now/" "${code:-error}" "fail"
+            fi
+            rm -f "$headers"
+          }
+
           check_robots() {
             local headers expected actual result
             headers=$(mktemp)
@@ -664,6 +704,7 @@ jobs:
           fi
           check_home
           check_redirect
+          check_production_custom_domain
           check_robots
           note_page_source
           publish_report

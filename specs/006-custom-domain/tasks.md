@@ -32,7 +32,7 @@ One task (or cohesive pair) per pull request, merged one at a time into `develop
 
 ## Phase 2: SITE_URL and verify (P1, P2)
 
-- [ ] T002 [US1][US2] After Jorge sets production `SITE_URL` to `https://jlaborda.com`, update `.github/workflows/deploy.yml` job `verify` so production checks the apex HTTP 200 and `www.jlaborda.com` HTTP 301 with path preserved (FR-007). Leave staging verify on staging `SITE_URL`. Do not edit `infra/`. The pull request body pastes the new check snippets and a dry explanation of environment branching.
+- [X] T002 [US1][US2] After Jorge sets production `SITE_URL` to `https://jlaborda.com`, update `.github/workflows/deploy.yml` job `verify` so production checks the apex HTTP 200 and `www.jlaborda.com` HTTP 301 with path preserved (FR-007). Leave staging verify on staging `SITE_URL`. Do not edit `infra/`. The pull request body pastes the new check snippets and a dry explanation of environment branching.
 
 ## Phase 3: Convergence
 
