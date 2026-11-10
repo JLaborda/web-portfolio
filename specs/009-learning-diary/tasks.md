@@ -26,7 +26,7 @@ Export `SPECIFY_FEATURE_DIRECTORY=specs/009-learning-diary` on implementation br
 
 ## Phase 1: User Story 1 — remove welcome placeholder
 
-- [ ] T001 [US1] Delete `content/posts/welcome.md` (preferred) or prove it remains `draft: true` and is absent from `public/posts/` after hugo. Do not publish placeholder stub content. Do not edit PaperMod, `infra/`, or unrelated content files (`about.md`, `now.md`, projects).
+- [X] T001 [US1] Delete `content/posts/welcome.md` (preferred) or prove it remains `draft: true` and is absent from `public/posts/` after hugo. Do not publish placeholder stub content. Do not edit PaperMod, `infra/`, or unrelated content files (`about.md`, `now.md`, projects).
 
 ## Phase 2: User Stories 1–3 — first diary entry + convention 🎯 MVP
 
