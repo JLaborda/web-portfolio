@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-10
 
-**Status**: Draft
+**Status**: Draft — Path: short (small change)
 
 **Input**: User description: "Keep Posts in the main menu. Turn Posts into a weekly English learning diary about what Jorge is doing and learning (current work), not a placeholder blog. Remove or never publish the existing draft welcome post. Ship one real first diary entry in this feature wave. Establish a light convention for ongoing weekly posts so future entries stay consistent. English only. No visual redesign. Out of scope: automating posts from other repos, /log TIL product, non-English posts, hiring case study content (feature 008), second project case study (010), email, CI chores."
 
