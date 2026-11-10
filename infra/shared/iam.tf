@@ -86,6 +86,28 @@ data "aws_iam_policy_document" "plan" {
     resources = ["*"]
   }
 
+  # Spec 006: production plan reads the hand-created hosted zone and ACM state.
+  statement {
+    sid    = "ReadRoute53"
+    effect = "Allow"
+    actions = [
+      "route53:Get*",
+      "route53:List*",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "ReadAcm"
+    effect = "Allow"
+    actions = [
+      "acm:Describe*",
+      "acm:Get*",
+      "acm:List*",
+    ]
+    resources = ["*"]
+  }
+
   statement {
     sid    = "ReadBudget"
     effect = "Allow"
@@ -100,10 +122,16 @@ data "aws_iam_policy_document" "plan" {
     sid    = "DenyPlanWrites"
     effect = "Deny"
     actions = [
+      "acm:DeleteCertificate",
+      "acm:ImportCertificate",
+      "acm:RequestCertificate",
       "budgets:ModifyBudget",
       "cloudfront:CreateInvalidation",
       "cloudfront:UpdateDistribution",
       "iam:CreateRole",
+      "route53:ChangeResourceRecordSets",
+      "route53:CreateHostedZone",
+      "route53:DeleteHostedZone",
       "s3:DeleteObject",
       "s3:PutObject",
     ]
