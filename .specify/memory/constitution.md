@@ -1,119 +1,165 @@
 <!--
 Sync Impact Report
-- Version change: 3.0.0 → 3.1.0
-- Bump rationale: MINOR. Principle III is expanded so that when the
-  deployment feature deferred DNS or a custom domain, a later feature
-  may record and implement that decision in its own `docs:` pull
-  request and plan, with Jorge's merge and `needs-human`. This permits
-  spec 006 (custom domain) without rewriting spec 002's historical
-  "no custom domain" deferral. No MAJOR incompatibility with 3.0.0
-  process rules.
-- Decision: Jorge (Product Owner), 2026-11-03, with ADR 002.
+- Version change: 3.1.0 → 4.0.0
+- Bump rationale: MAJOR. Process rules are redefined for the software
+  factory. Former dual-role team titles are removed; only Manager,
+  Planner, Builder, Reviewer, Merge Triage, and Auditor remain. Merge
+  authority moves from Jorge's blanket merge of docs/release/
+  needs-human PRs and author-driven auto-merge after QA to Merge
+  Triage classification (green / yellow / red). Spec Kit path is set
+  by Jorge in the issue brief. Strict TDD commit order is required.
+  Dual-role and auto-merge author rules from 3.x are incompatible
+  with this model.
+- Decision: Jorge (Product Owner), 2026-11-13, issue #101.
 - Modified principles:
-  - III. AWS hosting as a constraint: DNS / custom domain may be
-    decided in a later feature's plan when the deployment feature
-    deferred them; ACM remains in `us-east-1`; `needs-human` unchanged.
-- Modified sections: Governance (version line).
-- Unchanged: OIDC, budgets, dual roles, Spec Kit docs agent rules,
-  converge titles, English-only.
+  - I. Spec-driven development and PO approval → Spec-driven development
+    and software factory approval (roles, merge chain, path selection,
+    TDD, Merge Triage).
+  - III. AWS hosting as a constraint: merge/`needs-human` wording
+    aligned with Merge Triage red/yellow rules; substance unchanged.
+  - V. Scoped implementation PRs: Reviewer and Merge Triage replace
+    the former QA dual-role and author auto-merge; strict TDD commit
+    order added.
+  - VI. Explainable in an interview, and cheap: cost/budget exceptions
+    classified at least yellow; Jorge merges yellow/red.
+- Modified sections:
+  - Roles: Manager, Planner, Builder, Reviewer, Merge Triage, Auditor
+    (old team roles removed).
+  - Branches and releases: Merge Triage merges green; yellow/red to
+    Jorge with `needs-human`.
+  - Governance: Reviewer compliance check; constitution amendments
+    always red.
+- Unchanged in substance: Principles II, IV, VII; Spec Kit path step
+  lists; feature branch naming; `SPECIFY_FEATURE_DIRECTORY`; English
+  only; ratification date 2026-10-20.
 - Not rewritten: merged specs under earlier versions.
 - Added sections: none. Removed sections: none.
+- Templates and commands: no role names in `.specify/templates/` or
+  commands; no sync edits required. Listed for completeness:
+  checklist-template.md, constitution-template.md, plan-template.md,
+  spec-template.md, tasks-template.md — unchanged.
 - Follow-up TODOs: none
-- Templates and commands: unchanged.
 -->
 
 # web-portfolio Constitution
 
 ## Core Principles
 
-### I. Spec-driven development and PO approval
+### I. Spec-driven development and software factory approval
 
-Development MUST NOT start without a `spec.md` approved by Jorge (Product
-Owner). `/speckit-constitution` is set once for the project. A later
-amendment is its own pull request and is not a feature step.
+Development MUST NOT start without a `spec.md` approved through the
+software factory chain below. `/speckit-constitution` is set once for
+the project. A later amendment is its own pull request and is not a
+feature step. Constitution amendments are always red (Merge Triage
+MUST NOT merge them; Jorge merges).
 
-A feature MUST follow the full path, in this order: `/speckit-specify`,
-`/speckit-clarify`, `/speckit-plan`, `/speckit-checklist`,
-`/speckit-tasks`, `/speckit-analyze`, `/speckit-implement`,
-`/speckit-converge`. On that path a step MUST NOT be skipped.
+The software factory roles are the only process roles named in this
+constitution: Manager, Planner, Builder, Reviewer, Merge Triage, and
+Auditor. The chain for a feature is:
 
-The short path MAY be used only for a small change. It is, in this order:
-`/speckit-specify`, `/speckit-plan`, `/speckit-tasks`,
-`/speckit-implement`, `/speckit-converge`. The Tech Lead MUST put this
-exact line in the `docs:` pull request description. It is description text,
-not a GitHub label:
+Manager → Planner → Merge Triage (`docs:` PR) → Builder → Reviewer →
+Merge Triage (code PR).
+
+Merge Triage escalates yellow and red classifications to the Manager
+and confirms every merge to the Manager. After each merge that unlocks
+the next task, the Manager hands the Builder that task. The Auditor
+only reads the activity log. The Manager is the only factory role that
+talks to Jorge (Product Owner).
+
+Jorge sets the Spec Kit path in the issue brief: full or short. The
+Planner MUST follow that path. Nothing else chooses the path.
+
+The full path, in this order: `/speckit-specify`, `/speckit-clarify`,
+`/speckit-plan`, `/speckit-checklist`, `/speckit-tasks`,
+`/speckit-analyze`, `/speckit-implement`, `/speckit-converge`. On that
+path a step MUST NOT be skipped.
+
+The short path, in this order: `/speckit-specify`, `/speckit-plan`,
+`/speckit-tasks`, `/speckit-implement`, `/speckit-converge`. On the
+short path, `/speckit-clarify`, `/speckit-checklist`, and
+`/speckit-analyze` are the only steps that MAY be omitted. The Planner
+MUST put this exact line in the `docs:` pull request description. It is
+description text, not a GitHub label:
 
 `Path: short (small change)`
 
-Jorge's merge of that pull request approves the label. Nothing else
-approves it. On the short path, `/speckit-clarify`,
-`/speckit-checklist`, and `/speckit-analyze` are the only steps that MAY
-be omitted.
+Jorge's merge of a yellow or red `docs:` pull request, or Merge
+Triage's merge of a green `docs:` pull request, approves that path
+label. Nothing else approves it.
 
-Jorge (Product Owner) approves and merges the `docs:` pull request that
-starts a feature and the converge pull request that closes it. He also
-merges an amendment of this constitution, a non-feature pull request, a
-pull request that carries the label `needs-human`, and every release
-from `develop` to `main`.
+#### Merge Triage classification
+
+Merge Triage classifies every pull request and the `develop` → `main`
+release as green, yellow, or red.
+
+- **Green:** Merge Triage merges. That includes green `docs:` PRs,
+  green code PRs (including converge), and a green `develop` → `main`
+  release.
+- **Yellow or red:** Merge Triage MUST NOT merge. It escalates to the
+  Manager, applies the GitHub label `needs-human`, and Jorge merges.
+
+Always red:
+
+- Changes to AWS infrastructure, IAM, or OIDC.
+- Changes to CI workflows or branch protection.
+- Amendments to this constitution.
+
+Always at least yellow:
+
+- Changes to AWS cost or budget.
+- New dependencies.
+
+Other `needs-human` cases from principles III and VI (region, DNS,
+custom domain, real AWS resources or costs, secrets) remain at least
+yellow and MAY be red when they also match an always-red rule above.
+If the label `needs-human` does not exist yet, whoever first needs it
+creates it once with `gh label create needs-human`. Only Jorge or the
+Manager may remove `needs-human`, with a pull request comment that
+states the reason.
+
+#### Spec Kit docs and implementation flow
 
 An intermediate pull request is an implementation task pull request
-between that `docs:` pull request and the converge pull request.
-Reviewer QA approves it in a COMMENT review that starts with
-`QA verdict: APPROVED` and names its current full head SHA. All bots
-share one GitHub account, so GitHub cannot enforce that review. This
-rule is the control. Nobody enables auto-merge when the pull request is
-opened.
+between the feature's `docs:` pull request and the converge pull
+request. Reviewer reviews each code pull request once and flags every
+finding. The Builder fixes them in one push. After that push, Reviewer
+looks only at the new diff. Reviewer NEVER merges and NEVER runs
+`gh pr merge`. Merge Triage merges only when the classification is
+green and Reviewer's verdict on the current head allows it.
 
-Reviewer QA reviews each code pull request once, and that review flags
-every finding. The author fixes them in one push. After that push,
-Reviewer QA looks only at the new diff. For the Tech Lead's `docs:`
-work in this repository, one Cursor cloud agent on the Auto model
-serves the whole repository: it opens the `docs:` pull request, and
-fixes arrive as follow-ups on that same agent. That agent is replaced
-only when its context becomes unmanageable. For each intermediate
-implementation pull request, one cloud agent serves that pull request
-and is reused for its fixes.
+For the Planner's `docs:` work in this repository, one Cursor cloud
+agent on the Auto model serves the whole repository: it opens the
+`docs:` pull request, and fixes arrive as follow-ups on that same
+agent. That agent is replaced only when its context becomes
+unmanageable. For each intermediate implementation pull request, one
+cloud agent serves that pull request and is reused for its fixes.
 
 The pull request author is the agent that opened the pull request.
-Reviewer QA never runs `gh pr merge`, with or without `--auto`. The
-author runs `gh pr view <n> --json labels` and, only when the APPROVED
-verdict names the current head SHA and the label `needs-human` is
-absent, runs `gh pr merge --auto --squash`. GitHub then merges when the
-required checks are green. If the repository setting "Allow auto-merge"
-is off, the author runs `gh pr merge --squash` under the same checks.
+Nobody enables auto-merge when the pull request is opened. Merge Triage
+is the role that merges green code and green `docs:` pull requests;
+authors MUST NOT run `gh pr merge` to land factory work.
 
-A push after that approval invalidates the verdict. The author first
-runs `gh pr merge --disable-auto`, then pushes, then waits for a new
-verdict that names the new head SHA.
-
-Exception: the Scrum Master Dev flags a step that needs Jorge's personal
-verification. The flag is the GitHub label `needs-human` on the pull
-request, plus a pull request comment that states the reason, added
-before Reviewer QA's verdict. While the label is present, auto-merge
-stays off and Jorge merges. If the label is added after auto-merge was
-enabled, the author runs `gh pr merge --disable-auto`. The flag covers a
-change to the AWS region, a change to DNS or a custom domain, a step
-that creates or changes real AWS resources or costs, including bootstrap
-and apply, a step that changes IAM permissions or secrets, and a step
-that changes branch protection. Only Jorge or the Scrum Master Dev may
-remove `needs-human`, with a pull request comment that states the
-reason.
+Strict TDD: each Builder task MUST have a commit that adds the failing
+test before the commit that adds the implementation. Reviewer MUST
+check that order in the pull request history. A code pull request that
+lacks that order MUST NOT be classified green.
 
 When implementation of a spec is finished, the last pull request is the
 converge pull request. Its title MUST be exactly `chore(NNN): converge`
-(NNN is the feature number). Reviewer QA gives a final sign-off on that
-pull request. Jorge then verifies the feature personally. If he
-approves, he merges that close. If he does not approve, the work returns
-to the point that needs it: the spec, through extra commits on a new
-`docs:` pull request, or the implementation, through a new task pull
-request.
+(NNN is the feature number). Reviewer gives a final sign-off on that
+pull request. Merge Triage merges it when green; yellow or red goes to
+Jorge with `needs-human`. If Jorge does not approve a yellow/red
+converge, or the Manager returns the work, it returns to the point that
+needs it: the spec, through extra commits on a new `docs:` pull
+request, or the implementation, through a new task pull request.
 
 These rules stay. At most one `docs:` pull request per feature is open.
 A pull request MUST NOT depend on an unmerged pull request, except that
 a `docs:` pull request MAY wait for a constitution amendment that
 permits its shape. The `docs:` pull request comes from branch
-`NNN-name`. Only Jorge's merge of the `docs:` pull request approves its
-checklist marks and waivers.
+`NNN-name`. Only the merge of the `docs:` pull request (by Merge Triage
+when green, or by Jorge when yellow or red) approves its checklist
+marks and waivers.
 
 Approval is recorded only as follows:
 
@@ -126,19 +172,20 @@ Approval is recorded only as follows:
    under `docs/adr/` when there is one. It MAY also carry an amendment
    of this constitution when that amendment permits the feature's
    shape. It contains no product code, workflow, or `infra/` change.
-   The Tech Lead writes it through this repository's Cursor cloud agent
-   on the Auto model (one agent per repository for all of the Tech
-   Lead's pull requests and fixes via follow-ups; switch agents only
-   when that agent's context becomes unmanageable). There is one such
-   `docs:` pull request per spec. Reviewer QA does not review it. Jorge
-   reviews and merges it. Fixes go as follow-ups on that agent and as
-   extra commits on the same pull request. `spec.md`, `plan.md`, and
+   The Planner writes it through this repository's Cursor cloud agent
+   on the Auto model (one agent per repository for all of the Planner's
+   pull requests and fixes via follow-ups; switch agents only when that
+   agent's context becomes unmanageable). There is one such `docs:`
+   pull request per spec. Reviewer does not review it. Merge Triage
+   classifies it; green merges, yellow or red go to Jorge with
+   `needs-human`. Fixes go as follow-ups on that agent and as extra
+   commits on the same pull request. `spec.md`, `plan.md`, and
    `tasks.md` each carry `Status: Approved by Jorge — PR #N` (N is that
    pull request's number) as the only status field, replacing
    `**Status**: Draft`. The line MUST NOT include a date. Every item in
    `checklists/requirements.md` and in the `/speckit-checklist` files
    MUST be `[x]`, or left unchecked with a waiver and a reason on that
-   same line. The Tech Lead writes those marks and waivers. On the full
+   same line. The Planner writes those marks and waivers. On the full
    path, the description pastes the `/speckit-analyze` report, which
    names the head SHA it ran on and leaves no CRITICAL or HIGH finding
    open; after a later commit that changes `spec.md`, `plan.md`, or
@@ -149,7 +196,7 @@ Approval is recorded only as follows:
    On the full path, `spec.md` MUST contain `## Clarifications`. When
    clarify accepts answers, it writes `### Session YYYY-MM-DD` and one
    bullet per answer: `- Q: <question> → A: <answer>`. When clarify finds
-   nothing material, the Tech Lead adds this text by hand, with
+   nothing material, the Planner adds this text by hand, with
    `YYYY-MM-DD` the day clarify ran:
 
    ```text
@@ -164,12 +211,12 @@ Approval is recorded only as follows:
    `docs:` pull request is merged into `develop`.
 
 A later change to a merged `spec.md`, `plan.md`, or `tasks.md` is a new
-`docs:` pull request from the same `NNN-name` branch, merged by Jorge,
-except for the `tasks.md` lines an implementation pull request may add
-under principle V.
+`docs:` pull request from the same `NNN-name` branch, classified by
+Merge Triage, except for the `tasks.md` lines an implementation pull
+request may add under principle V.
 
 `/speckit-implement` MUST stop and ask when any checklist item is
-unchecked. The Web Developer MAY answer yes only when every unchecked item
+unchecked. The Builder MAY answer yes only when every unchecked item
 carries a waiver that was in the merged `docs:` pull request. Otherwise
 the answer MUST be no.
 
@@ -197,8 +244,8 @@ MUST NOT open a new spec pull request for this transition.
 That pull request MUST also add
 `specs/001-minimal-hugo-site/checklists/requirements.md`, with every item
 `[x]` or waived with a reason. Neither change alters a requirement, so no
-new spec approval is required. QA MUST verify that the diff to `spec.md`
-is only that Clarifications section.
+new spec approval is required. Reviewer MUST verify that the diff to
+`spec.md` is only that Clarifications section.
 
 The `docs:` pull request comes from `NNN-name`. Each implementation PR
 comes from a short-lived branch `NNN-name-tXX`, created from `develop`,
@@ -221,7 +268,8 @@ in `.gitignore` and in `.specify/.gitignore`.
 
 PRs for one feature MUST be merged one at a time. Work from two features
 MUST NOT be merged in parallel. `main` MUST receive only releases from
-`develop`, and Jorge MUST perform that merge.
+`develop`. Merge Triage merges a green release; yellow or red releases
+go to Jorge with `needs-human`.
 
 `.specify/workflows/speckit/workflow.yml` does not govern this repo: it
 ends at implement, it does not include converge, and its integration list
@@ -232,25 +280,28 @@ used.
 **Check:** the `docs:` pull request title starts with `docs:`, comes
 from `NNN-name`, and has no product code, workflow, or `infra/` file.
 On `develop`, `spec.md`, `plan.md`, and `tasks.md` of a feature merged
-under 2.0.0 or 3.0.0 each have `Status: Approved by Jorge — PR #N` and
-no other status. Every checklist item there is `[x]` or waived on its
-line. On the full path, `spec.md` contains `## Clarifications` and
-`### Session YYYY-MM-DD`, with either `- Q:` / `→ A:` bullets or the
-exact line `- No critical ambiguities found; no questions asked.`, and
-the description has an analyze report on the head SHA with no open
-CRITICAL or HIGH finding. A short-path description contains the exact
-line `Path: short (small change)`. A converge pull request merged under
-3.0.0 is titled `chore(NNN): converge`. `converge.md` has
+under 2.0.0, 3.0.0, or 4.0.0 each have
+`Status: Approved by Jorge — PR #N` and no other status. Every checklist
+item there is `[x]` or waived on its line. On the full path, `spec.md`
+contains `## Clarifications` and `### Session YYYY-MM-DD`, with either
+`- Q:` / `→ A:` bullets or the exact line
+`- No critical ambiguities found; no questions asked.`, and the
+description has an analyze report on the head SHA with no open CRITICAL
+or HIGH finding. A short-path description contains the exact line
+`Path: short (small change)`. A converge pull request merged under 3.0.0
+or 4.0.0 is titled `chore(NNN): converge`. `converge.md` has
 `Status: Approved by Jorge — PR #N`. Files merged under 1.1.0, 1.2.0, or
-2.0.0 are not rewritten to the new converge title. No implementation pull request is opened before the
-`docs:` merge. `git merge-base --is-ancestor origin/develop HEAD` exits
-0 on its branch. Every feature pull request targets `develop`. `main`
-has only merges from `develop` made by Jorge.
-`git check-ignore -v .specify/feature.json` reports an ignore rule. An
-intermediate pull request does not have auto-merge enabled when it is
-opened; its author enables it only after a `QA verdict: APPROVED`
-COMMENT review that names the current full head SHA, and only when
-`needs-human` is absent. Reviewer QA does not run `gh pr merge`.
+2.0.0 are not rewritten to the new converge title. No implementation
+pull request is opened before the `docs:` merge.
+`git merge-base --is-ancestor origin/develop HEAD` exits 0 on its
+branch. Every feature pull request targets `develop`. `main` has only
+merges from `develop` made by Merge Triage (green) or Jorge
+(yellow/red). `git check-ignore -v .specify/feature.json` reports an
+ignore rule. The constitution names only Manager, Planner, Builder,
+Reviewer, Merge Triage, and Auditor as factory process roles. Each
+Builder task history shows a failing-test commit before the
+implementation commit. Merge Triage merges only green; yellow and red
+carry `needs-human` for Jorge.
 
 ### II. Fixed stack
 
@@ -287,27 +338,29 @@ Hosting MUST be AWS, with these rules:
 - The bucket region MUST be decided in the deployment feature's plan.
   DNS and a custom domain SHOULD be decided there too. When that plan
   deferred DNS or a custom domain (as spec 002 did), a later feature
-  MAY record the decision in its own plan and ADR, with Jorge's merge
-  of that feature's `docs:` pull request. v1.1.0 said the deployment
-  plan "MUST have Jorge's approval before it is implemented." That
-  approval is unchanged for region and for any DNS work. Any change to
-  the AWS region, to DNS or a custom domain, or to anything that creates
-  real AWS resources or costs needs Jorge's explicit approval. The pull
-  request that carries that change, whether it is a `docs:` or an
-  implementation pull request, MUST carry the label `needs-human`. Jorge
-  merges it. It never auto-merges. This constitution does not fix region
-  or DNS names.
+  MAY record the decision in its own plan and ADR, with the merge of
+  that feature's `docs:` pull request. v1.1.0 said the deployment plan
+  "MUST have Jorge's approval before it is implemented." That approval
+  is unchanged for region and for any DNS work. Any change to the AWS
+  region, to DNS or a custom domain, or to anything that creates real
+  AWS resources or costs needs Jorge's explicit approval through the
+  factory. The pull request that carries that change, whether it is a
+  `docs:` or an implementation pull request, MUST be classified at least
+  yellow and MUST carry `needs-human`. Changes to AWS infrastructure,
+  IAM, or OIDC are always red. AWS cost or budget changes are always at
+  least yellow. Jorge merges yellow and red. They never auto-merge. This
+  constitution does not fix region or DNS names.
 
 **Check:** the plan role's policy does not allow apply or changes to S3 or
 CloudFront; the deploy role's Environment requires protection and is not
 available on PRs; the deployment feature's `plan.md` records region with
 Jorge's approval, and DNS is recorded either there or in a later
-feature's plan/ADR that Jorge merged. A pull request that changes
-region, DNS, or a custom domain, or that creates real AWS resources or
-costs, carries `needs-human`. Jorge approves and merges it. `plan.md`,
-`tasks.md`, or another intermediate artifact in that pull request uses
-`Status: Approved by Jorge — PR #N`. It never auto-merges. gitleaks
-finds no static keys.
+feature's plan/ADR that was merged. A pull request that changes region,
+DNS, or a custom domain, or that creates real AWS resources or costs,
+carries `needs-human` and is yellow or red. Jorge merges it.
+`plan.md`, `tasks.md`, or another intermediate artifact in that pull
+request uses `Status: Approved by Jorge — PR #N`. It never auto-merges.
+gitleaks finds no static keys.
 
 ### IV. Verifiable quality in CI
 
@@ -334,7 +387,8 @@ step described in `spec.md` or `tasks.md`. A required gate in the red MUST
 block the merge. Once those workflows exist, `develop` and `main` MUST
 have branch protection with those checks required. Jorge SHOULD NOT bypass
 that protection, even as an admin. Turning the protection on is an
-acceptance criterion of the spec that introduces CI.
+acceptance criterion of the spec that introduces CI. Changes to CI
+workflows or branch protection are always red under principle I.
 
 **Check:** a missing shortcode, a broken internal link (for example
 `[x](/does-not-exist/)`) or the synthetic secret makes the matching job
@@ -375,7 +429,7 @@ the same rules. `/speckit-converge` MUST then be run again until
 
 If an appended task would require changing the scope of `spec.md`, it MUST
 NOT be implemented before a new `docs:` pull request under principle I,
-merged by Jorge.
+merged by Merge Triage when green or by Jorge when yellow or red.
 
 The last implementation PR of the feature is the one that gets
 `Converged`. Its title MUST be exactly `chore(NNN): converge`. It MUST
@@ -383,19 +437,24 @@ add `specs/NNN-name/converge.md` with the full output of that final run,
 the date, the SHA of the commit it ran on, and the verdict `Converged`.
 `converge.md` also carries `Status: Approved by Jorge — PR #N` as its
 only status field, with no date. The PR description MUST paste that
-verdict. QA MUST block the PR if the file is missing, the verdict is
-not `Converged`, or the title is not `chore(NNN): converge`.
+verdict. Reviewer MUST block the PR if the file is missing, the verdict
+is not `Converged`, or the title is not `chore(NNN): converge`.
 
-Reviewer QA MUST review each code pull request against `spec.md`,
+Each Builder task in the PR MUST include a commit with the failing test
+before the commit with the implementation. Reviewer MUST verify that
+order in the history.
+
+Reviewer MUST review each code pull request against `spec.md`,
 `plan.md`, `tasks.md`, the checklist files when the full path applies,
 `converge.md` when it is the last PR, and this constitution, in one
 round that flags every finding. After the fix push, it reviews only the
-new diff. On an intermediate pull request, the review that allows the
-author to run `gh pr merge --auto --squash` is a COMMENT review that
-starts with `QA verdict: APPROVED` and names the current full head SHA.
-On the converge pull request (`chore(NNN): converge`), the review is the
-final sign-off, and Jorge merges only after it. Without that review on
-the current head, a code pull request MUST NOT be merged.
+new diff. On an intermediate pull request, the review that allows Merge
+Triage to classify the PR is a COMMENT review that starts with
+`QA verdict: APPROVED` and names the current full head SHA. On the
+converge pull request (`chore(NNN): converge`), the review is the final
+sign-off. Without that review on the current head, a code pull request
+MUST NOT be merged. Reviewer NEVER runs `gh pr merge`. Merge Triage
+merges green code PRs; yellow and red go to Jorge with `needs-human`.
 
 **Check:** the description lists the ids, `tasks.md` has them as `[X]`,
 and there are no extra or missing ids. A PR that is not the converge PR
@@ -403,7 +462,8 @@ changes `tasks.md` only for the ids it closes and does not change
 `spec.md` or `plan.md`. The last PR is titled `chore(NNN): converge`,
 contains `converge.md` with the date, the SHA, and `Converged`, and the
 description repeats the verdict. If the file is missing, the title is
-wrong, or the verdict is anything else, QA blocks the PR.
+wrong, or the verdict is anything else, Reviewer blocks the PR. The
+commit history for each task shows failing test then implementation.
 
 ### VI. Explainable in an interview, and cheap
 
@@ -412,9 +472,11 @@ end to end in an MLOps interview. The site's monthly cost MUST stay around
 0–1 USD. v1.1.0 said this holds "unless an exception is documented in the
 plan and approved by Jorge." That approval is unchanged. A pull request
 that documents such an exception, or that creates real AWS resources or
-costs, MUST carry `needs-human`. Jorge merges it. It never auto-merges.
-An opaque service that hides the infrastructure MUST NOT be added
-when a documented primitive meets the requirement.
+costs, MUST be classified at least yellow, MUST carry `needs-human`, and
+Jorge merges it. AWS cost or budget changes are always at least yellow.
+New dependencies are always at least yellow. It never auto-merges. An
+opaque service that hides the infrastructure MUST NOT be added when a
+documented primitive meets the requirement.
 
 **Check:** the feature's `plan.md` names the services and the expected
 monthly cost; a service outside principle III is not implemented without
@@ -422,7 +484,8 @@ an amendment to this constitution or without Jorge's explicit approval in
 that plan. v1.1.0 said the same sentence, ending "or without Jorge's
 explicit approval in that plan." That approval is unchanged. The pull
 request that carries the exception or the new service MUST have
-`needs-human`, and Jorge merges it. It never auto-merges.
+`needs-human`, MUST be yellow or red, and Jorge merges it. It never
+auto-merges.
 
 ### VII. English only
 
@@ -436,64 +499,63 @@ review, or comment fails review. Pages under `content/` are English.
 
 ## Roles
 
-- **Jorge (Product Owner).** Approves this constitution by merging it.
-  Reviews and merges each feature's `docs:` pull request, including
-  `Path: short (small change)` when that line is present, and the
-  converge pull request that closes it. Merges a pull request that
-  carries `needs-human`, a non-feature pull request, and every release
-  from `develop` to `main`. Does not manually merge an intermediate
-  pull request. Enables the repository setting "Allow auto-merge".
-- **Tech Lead.** Runs `/speckit-specify`, `/speckit-clarify`,
-  `/speckit-plan`, `/speckit-checklist`, `/speckit-tasks`, and
-  `/speckit-analyze` on the full path, or specify, plan, and tasks on
-  the short path. Writes each feature's `docs:` pull request (spec,
-  plan, tasks, checklists, ADR when there is one, and a constitution
-  amendment when needed) through this repository's Cursor cloud agent
-  on the Auto model. One such agent serves all of the Tech Lead's pull
-  requests and fixes in this repository via follow-ups; switch to a
-  new agent only when that agent's context becomes unmanageable. One
-  `docs:` pull request per spec. Includes the checklist marks and
-  waivers, and `Status: Approved by Jorge — PR #N` on `spec.md`,
-  `plan.md`, and `tasks.md`. Fixes with follow-ups and extra commits on
-  the same pull request. Never enables auto-merge on a `docs:` pull
-  request. Reviewer QA does not review `docs:` pull requests; Jorge
-  merges them.
-- **Web Developer.** Runs `/speckit-implement` and, on the feature's last
-  PR, `/speckit-converge`, with one cloud agent per implementation pull
-  request that is reused for that pull request's fixes. The converge
-  pull request title is exactly `chore(NNN): converge`. When implement
-  stops on an unchecked checklist item, MAY answer yes only when every
-  unchecked item carries a waiver that was in the merged `docs:` pull
-  request. Does not enable auto-merge when opening a pull request. On
-  an implementation pull request that is not the converge pull request,
-  runs `gh pr merge --auto --squash` only after `QA verdict: APPROVED`
-  names the current head SHA and `gh pr view <n> --json labels` shows
-  no `needs-human`. Before a later push, first runs
-  `gh pr merge --disable-auto`. Does not run `gh pr merge` on the
-  converge pull request. Jorge merges it after Reviewer QA's sign-off.
-- **Reviewer (QA).** Reviews code pull requests only, never a `docs:`
-  pull request. One review round flags every finding; after the fix
-  push, reviews only the new diff. Reviews against `spec.md`,
+- **Jorge (Product Owner).** Approves this constitution by merging it
+  (always red). Sets the Spec Kit path (full or short) in each issue
+  brief. Merges every yellow or red pull request and every yellow or red
+  `develop` → `main` release after Merge Triage applies `needs-human`.
+  Talks to the factory only through the Manager. Does not merge green
+  factory pull requests; Merge Triage does.
+- **Manager.** Only factory role that talks to Jorge. Receives Merge
+  Triage escalations and merge confirmations. After each merge that
+  unlocks work, hands the Builder the next task. May remove
+  `needs-human` with Jorge, with a pull request comment that states the
+  reason.
+- **Planner.** Follows the Spec Kit path Jorge set in the issue brief.
+  Runs `/speckit-specify`, `/speckit-clarify`, `/speckit-plan`,
+  `/speckit-checklist`, `/speckit-tasks`, and `/speckit-analyze` on the
+  full path, or specify, plan, and tasks on the short path. Writes each
+  feature's `docs:` pull request (spec, plan, tasks, checklists, ADR
+  when there is one, and a constitution amendment when needed) through
+  this repository's Cursor cloud agent on the Auto model. One such agent
+  serves all of the Planner's pull requests and fixes in this repository
+  via follow-ups; switch to a new agent only when that agent's context
+  becomes unmanageable. One `docs:` pull request per spec. Includes the
+  checklist marks and waivers, and `Status: Approved by Jorge — PR #N`
+  on `spec.md`, `plan.md`, and `tasks.md`. Fixes with follow-ups and
+  extra commits on the same pull request. Never enables auto-merge on a
+  `docs:` pull request. Reviewer does not review `docs:` pull requests;
+  Merge Triage classifies and merges green ones.
+- **Builder.** Runs `/speckit-implement` and, on the feature's last PR,
+  `/speckit-converge`, with one cloud agent per implementation pull
+  request that is reused for that pull request's fixes. Receives each
+  task from the Manager after the prior merge. For each task, commits
+  the failing test before the implementation. The converge pull request
+  title is exactly `chore(NNN): converge`. When implement stops on an
+  unchecked checklist item, MAY answer yes only when every unchecked
+  item carries a waiver that was in the merged `docs:` pull request.
+  Does not enable auto-merge when opening a pull request. Does not run
+  `gh pr merge`; Merge Triage merges green code PRs.
+- **Reviewer.** Reviews code pull requests only, never a `docs:` pull
+  request. One review round flags every finding; after the fix push,
+  reviews only the new diff. Reviews against `spec.md`,
   `checklists/requirements.md`, `plan.md`, `tasks.md`, the
-  `/speckit-checklist` files when the full path applies, and this
-  constitution. The intermediate approval is a COMMENT review that
-  starts with `QA verdict: APPROVED` and names the full head SHA.
-  Never runs `gh pr merge`, with or without `--auto`. On the converge
-  pull request titled `chore(NNN): converge`, gives the final
-  sign-off, checks that `converge.md` exists and says `Converged`, and
-  Jorge merges after his own verification.
-- **Scrum Master Dev.** Does not merge and does not run `gh pr merge`.
-  When a step needs Jorge's personal verification, adds the label
-  `needs-human` and a pull request comment with the reason, before
-  Reviewer QA's verdict. The reason is a change to the AWS region, a
-  change to DNS or a custom domain, real AWS resources or costs
-  (including bootstrap and apply), IAM permissions or secrets, or branch
-  protection. If the label does not exist yet, whoever first needs it
-  creates it once with `gh label create needs-human`. If the label is
-  added after auto-merge was enabled, the pull request author runs
-  `gh pr merge --disable-auto`. Only Jorge or the Scrum Master Dev may
-  remove `needs-human`. Whoever removes it MUST add a pull request
-  comment that states the reason. No other role may remove the label.
+  `/speckit-checklist` files when the full path applies, this
+  constitution, and the strict TDD commit order (failing test before
+  implementation). The intermediate approval is a COMMENT review that
+  starts with `QA verdict: APPROVED` and names the full head SHA. Never
+  runs `gh pr merge`, with or without `--auto`. On the converge pull
+  request titled `chore(NNN): converge`, gives the final sign-off and
+  checks that `converge.md` exists and says `Converged`.
+- **Merge Triage.** Classifies every pull request and the
+  `develop` → `main` release as green, yellow, or red. Merges green
+  `docs:` PRs, green code PRs, and a green release. Escalates yellow and
+  red to the Manager, applies `needs-human`, and leaves the merge to
+  Jorge. Confirms every merge to the Manager. MUST treat constitution
+  amendments, AWS infra/IAM/OIDC changes, and CI workflow or branch
+  protection changes as always red; AWS cost/budget changes and new
+  dependencies as always at least yellow.
+- **Auditor.** Only reads the activity log. Does not open pull requests,
+  review, merge, or talk to Jorge.
 
 ## Branches and releases
 
@@ -526,19 +588,21 @@ under `docs/specs/`.
 `chore/`, `docs/`, `fix/`, and `ci/` MAY be used for a change with no new
 user-visible behavior (tooling, process documentation, fixes that do not
 change the product, CI). The PR MUST target `develop`, MUST pass the same
-CI gates, and Jorge MUST merge it. Any new behavior MUST have a spec
+CI gates, and Merge Triage MUST classify it: green merges; yellow or red
+go to Jorge with `needs-human`. Any new behavior MUST have a spec
 (`specs/NNN-name/`) and MUST NOT land on these branches.
 
 Amendments to this constitution follow that rule (`chore/` or `docs/`)
 unless they change visible behavior, in which case they require a spec.
-The `develop` → `main` release is not a feature branch: it MUST pass the
-same gates and only Jorge MUST merge it.
+They are always red. The `develop` → `main` release is not a feature
+branch: it MUST pass the same gates; Merge Triage merges it when green,
+and Jorge merges it when yellow or red.
 
 ## Governance
 
 This constitution overrides informal practice. An amendment MUST be
 proposed in a pull request to `develop` and MUST be approved and merged by
-Jorge. Until that merge, the amendment is not in force.
+Jorge (always red). Until that merge, the amendment is not in force.
 
 Versioning MUST follow Semantic Versioning:
 
@@ -557,7 +621,7 @@ than the date written in the pull request, the same pull request MUST set
 the last-amended date to the merge date before it is merged.
 
 Before posting `QA verdict: APPROVED` or a converge sign-off, Reviewer
-QA MUST check compliance with this constitution. Reviewer QA does not
-run `gh pr merge`. A PR that contradicts a principle MUST NOT be merged.
+MUST check compliance with this constitution. Reviewer does not run
+`gh pr merge`. A PR that contradicts a principle MUST NOT be merged.
 
-**Version**: 3.1.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-11-03
+**Version**: 4.0.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-11-13
