@@ -180,9 +180,13 @@ Approval is recorded only as follows:
    classifies it; green merges, yellow or red go to Jorge with
    `needs-human`. Fixes go as follow-ups on that agent and as extra
    commits on the same pull request. `spec.md`, `plan.md`, and
-   `tasks.md` each carry `Status: Approved by Jorge — PR #N` (N is that
-   pull request's number) as the only status field, replacing
-   `**Status**: Draft`. The line MUST NOT include a date. Every item in
+   `tasks.md` each carry exactly one status field, replacing
+   `**Status**: Draft`. When Merge Triage merges the `docs:` pull
+   request as green, that field MUST be
+   `Status: Merged by Merge Triage (green) — PR #N` (N is that pull
+   request's number). When Jorge merges it as yellow or red, that field
+   MUST be `Status: Approved by Jorge — PR #N`. The line MUST NOT
+   include a date. Every item in
    `checklists/requirements.md` and in the `/speckit-checklist` files
    MUST be `[x]`, or left unchecked with a waiver and a reason on that
    same line. The Planner writes those marks and waivers. On the full
@@ -280,17 +284,23 @@ used.
 **Check:** the `docs:` pull request title starts with `docs:`, comes
 from `NNN-name`, and has no product code, workflow, or `infra/` file.
 On `develop`, `spec.md`, `plan.md`, and `tasks.md` of a feature merged
-under 2.0.0, 3.0.0, or 4.0.0 each have
-`Status: Approved by Jorge — PR #N` and no other status. Every checklist
-item there is `[x]` or waived on its line. On the full path, `spec.md`
-contains `## Clarifications` and `### Session YYYY-MM-DD`, with either
+under 2.0.0 or 3.0.0 each have
+`Status: Approved by Jorge — PR #N` and no other status. Under 4.0.0
+each has either `Status: Merged by Merge Triage (green) — PR #N` (green
+merge) or `Status: Approved by Jorge — PR #N` (yellow or red merge by
+Jorge), and no other status. Every checklist item there is `[x]` or
+waived on its line. On the full path, `spec.md` contains
+`## Clarifications` and `### Session YYYY-MM-DD`, with either
 `- Q:` / `→ A:` bullets or the exact line
 `- No critical ambiguities found; no questions asked.`, and the
 description has an analyze report on the head SHA with no open CRITICAL
 or HIGH finding. A short-path description contains the exact line
 `Path: short (small change)`. A converge pull request merged under 3.0.0
-or 4.0.0 is titled `chore(NNN): converge`. `converge.md` has
-`Status: Approved by Jorge — PR #N`. Files merged under 1.1.0, 1.2.0, or
+or 4.0.0 is titled `chore(NNN): converge`. Under 3.0.0, `converge.md`
+has `Status: Approved by Jorge — PR #N`. Under 4.0.0 it has
+`Status: Merged by Merge Triage (green) — PR #N` when Merge Triage
+merged green, or `Status: Approved by Jorge — PR #N` when Jorge merged
+yellow or red. Files merged under 1.1.0, 1.2.0, or
 2.0.0 are not rewritten to the new converge title. No implementation
 pull request is opened before the `docs:` merge.
 `git merge-base --is-ancestor origin/develop HEAD` exits 0 on its
@@ -435,10 +445,13 @@ The last implementation PR of the feature is the one that gets
 `Converged`. Its title MUST be exactly `chore(NNN): converge`. It MUST
 add `specs/NNN-name/converge.md` with the full output of that final run,
 the date, the SHA of the commit it ran on, and the verdict `Converged`.
-`converge.md` also carries `Status: Approved by Jorge — PR #N` as its
-only status field, with no date. The PR description MUST paste that
-verdict. Reviewer MUST block the PR if the file is missing, the verdict
-is not `Converged`, or the title is not `chore(NNN): converge`.
+`converge.md` also carries exactly one status field, with no date:
+`Status: Merged by Merge Triage (green) — PR #N` when Merge Triage
+merges the converge pull request as green, or
+`Status: Approved by Jorge — PR #N` when Jorge merges it as yellow or
+red. The PR description MUST paste that verdict. Reviewer MUST block
+the PR if the file is missing, the verdict is not `Converged`, or the
+title is not `chore(NNN): converge`.
 
 Each Builder task in the PR MUST include a commit with the failing test
 before the commit with the implementation. Reviewer MUST verify that
@@ -520,11 +533,14 @@ review, or comment fails review. Pages under `content/` are English.
   serves all of the Planner's pull requests and fixes in this repository
   via follow-ups; switch to a new agent only when that agent's context
   becomes unmanageable. One `docs:` pull request per spec. Includes the
-  checklist marks and waivers, and `Status: Approved by Jorge — PR #N`
-  on `spec.md`, `plan.md`, and `tasks.md`. Fixes with follow-ups and
-  extra commits on the same pull request. Never enables auto-merge on a
-  `docs:` pull request. Reviewer does not review `docs:` pull requests;
-  Merge Triage classifies and merges green ones.
+  checklist marks and waivers, and the matching status line on
+  `spec.md`, `plan.md`, and `tasks.md`:
+  `Status: Merged by Merge Triage (green) — PR #N` for a green merge, or
+  `Status: Approved by Jorge — PR #N` for a yellow or red merge by
+  Jorge. Fixes with follow-ups and extra commits on the same pull
+  request. Never enables auto-merge on a `docs:` pull request. Reviewer
+  does not review `docs:` pull requests; Merge Triage classifies and
+  merges green ones.
 - **Builder.** Runs `/speckit-implement` and, on the feature's last PR,
   `/speckit-converge`, with one cloud agent per implementation pull
   request that is reused for that pull request's fixes. Receives each
