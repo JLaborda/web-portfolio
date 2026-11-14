@@ -4,7 +4,7 @@ Feature: `specs/009-learning-diary`
 
 Command: `/speckit-converge`
 
-Status: Pending Merge Triage — PR TBD
+Status: Pending Merge Triage — PR #103
 
 Assessed commit: `e822e807cd9b8a6c6ff4c455dac4ec1b5e1e96de` (`develop` after T001 #96 + T002 #98)
 
