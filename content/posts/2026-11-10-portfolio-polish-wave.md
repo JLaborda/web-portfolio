@@ -1,23 +1,21 @@
 ---
-title: "Week of 10 Nov: portfolio polish and a learning diary"
+title: "Week of 10 Nov: Risk-tiered merges for an AI software factory"
 date: 2026-11-10
 draft: false
-ShowToc: true
+ShowToc: false
+tags: ["weekly-log", "mlops", "fintech"]
 ---
 
-This week I treated the portfolio as a hiring surface again, not a side experiment.
+This week I treated the portfolio as a hiring surface again: an English site for ML Engineer / MLOps roles in fintech. Content first, PaperMod stays, and Posts becomes a weekly learning diary instead of an empty blog.
 
-I ran a focused review session on what the site is for: an English hiring portfolio for ML Engineer / MLOps roles in fintech. The agreement was content first—PaperMod stays for now—and Posts stays in the menu as a weekly learning diary instead of an empty blog.
+### Shipped & Built
+* **[web-portfolio](https://github.com/JLaborda/web-portfolio):** custom domain [jlaborda.com](https://jlaborda.com) live; specs merged for hiring content (008) and this learning diary (009).
+* **[web-portfolio](https://github.com/JLaborda/web-portfolio):** constitution amended to v4.0.0 to run the repo with a bot-based software factory (Spec Kit + TDD + GitHub Issues).
 
-On the build side, the custom domain [jlaborda.com](https://jlaborda.com) is live. Spec work landed for two parallel content features: hiring placeholders and case-study substance (008), and this learning diary (009). I am replacing the old unpublished welcome draft with real posts, starting with this one.
+### Engineering Note: Not every PR deserves the same gate
+Letting agents merge their own work is only safe if the gate matches the risk. Every PR is now classified green, yellow or red. Green content and code PRs are merged automatically after review; yellow ones (e.g. text that speaks in my name) wait for me; red ones — AWS/IAM/OIDC, CI, branch protection or constitution changes — always need a human. It is the same idea as risk-based approval in a fintech change process: automate the boring path, keep humans on the blast radius.
 
-What I am building and studying in parallel:
-
-- **SmartWealthAI** — I am rewriting the credit / MLOps case study.
-- **fintech-sec-rag-agent** — next case study after SmartWealthAI, with a day-one architecture diagram.
-- **AWS MLA-C02** — still on the learning list for the ML Engineer Associate path.
-- This **web-portfolio** repo — Spec Kit-driven content PRs, small scoped merges, English only.
-
-The diary convention I am committing to: English; one Markdown file under `content/posts/` per week; topic = what I am doing or learning; catch-up posts are fine when a week slips.
-
-Next week I expect more substance on the SmartWealthAI case study and keeping Now in sync with what is actually active.
+### Next Up
+* Rewrite the SmartWealthAI credit / MLOps case study.
+* Then start the fintech-sec-rag-agent case study, with a day-one architecture diagram.
+* Keep studying for AWS MLA-C02.
