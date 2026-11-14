@@ -33,7 +33,7 @@ One task per pull request, merged one at a time into `develop` (Now and SmartWea
 
 ## Phase 2: User Story 1 — SmartWealthAI case study (P1) 🎯 MVP
 
-- [ ] T002 [US1][US4] Replace all placeholder fields and body in `content/projects/smartwealthai.md` with a complete English case study (summary, problem, decisions, results, stack; keep `architecture_image` / alt pointing at `static/images/projects/smartwealthai-credit-architecture.png` unless Jorge supplies a replacement). Draft from SmartWealthAI public materials; honest results only; no invented metrics. Keep `repo_url: https://github.com/JLaborda/SmartWealthAI`. Omit `demo_url` unless a public demo exists. Open the PR with `needs-human` for Jorge’s approval. Do not edit layouts or PaperMod.
+- [X] T002 [US1][US4] Replace all placeholder fields and body in `content/projects/smartwealthai.md` with a complete English case study (summary, problem, decisions, results, stack; keep `architecture_image` / alt pointing at `static/images/projects/smartwealthai-credit-architecture.png` unless Jorge supplies a replacement). Draft from SmartWealthAI public materials; honest results only; no invented metrics. Keep `repo_url: https://github.com/JLaborda/SmartWealthAI`. Omit `demo_url` unless a public demo exists. Open the PR with `needs-human` for Jorge’s approval. Do not edit layouts or PaperMod.
 
 ## Phase 3: User Stories 2 & 4 — headline + About (P1)
 
