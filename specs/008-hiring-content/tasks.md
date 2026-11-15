@@ -41,7 +41,7 @@ One task per pull request, merged one at a time into `develop` (Now and SmartWea
 
 ## Phase 4: Convergence
 
-- [ ] T004 Run `/speckit-converge` and add `specs/008-hiring-content/converge.md` with staging evidence, Verification results, date, SHA, verdict `Converged`. Title exactly `chore(008): converge`. Do not edit `spec.md` or `plan.md`. Reviewer QA reviews; Jorge merges.
+- [X] T004 Run `/speckit-converge` and add `specs/008-hiring-content/converge.md` with staging evidence, Verification results, date, SHA, verdict `Converged`. Title exactly `chore(008): converge`. Do not edit `spec.md` or `plan.md`. Reviewer QA reviews; Jorge merges.
 
 ## Pasos de Jorge
 
