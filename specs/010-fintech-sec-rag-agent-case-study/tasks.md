@@ -42,7 +42,7 @@ One task per pull request, merged one at a time into `develop`. Converge title: 
 
 ## Phase 2: User Story 1 — case study page (P1) 🎯 MVP
 
-- [ ] T002 [US1][US4] Add `content/projects/fintech-sec-rag-agent.md` (CA-1, CA-2, CA-4). Label the PR `needs-human` (FR-007). Supersedes the 008 “do not add” note (FR-008).
+- [X] T002 [US1][US4] Add `content/projects/fintech-sec-rag-agent.md` (CA-1, CA-2, CA-4). Label the PR `needs-human` (FR-007). Supersedes the 008 “do not add” note (FR-008).
 
   **Failing test (commit 1 — must fail before the page exists / is complete):**
   ```bash
