@@ -19,7 +19,7 @@ params:
   profileMode:
     enabled: true
     title: Jorge D. Laborda Sicilia
-    subtitle: Placeholder headline
+    subtitle: ML Engineer · PhD in AI · Building MLOps for fintech on AWS
     buttons:
       - name: Search
         url: /search/
