@@ -89,7 +89,7 @@ One task per pull request, merged one at a time into `develop`. Converge title: 
 
 ## Phase 4: Convergence (CA-6)
 
-- [ ] T004 [US4] Run `/speckit-converge` and add `specs/010-fintech-sec-rag-agent-case-study/converge.md` with the full Verification block from `spec.md`, staging evidence that `/projects/fintech-sec-rag-agent/` renders (CA-6), date, SHA, and verdict `Converged`. Title exactly `chore(010): converge`. Do not edit `spec.md` or `plan.md`.
+- [X] T004 [US4] Run `/speckit-converge` and add `specs/010-fintech-sec-rag-agent-case-study/converge.md` with the full Verification block from `spec.md`, staging evidence that `/projects/fintech-sec-rag-agent/` renders (CA-6), date, SHA, and verdict `Converged`. Title exactly `chore(010): converge`. Do not edit `spec.md` or `plan.md`.
 
   **Failing test (commit 1 — must fail before `converge.md` exists with Converged):**
   ```bash
