@@ -73,7 +73,7 @@ One task per pull request, merged one at a time into `develop`. Converge title: 
 
 ## Phase 3: User Story 3 — Now link (P2)
 
-- [ ] T003 [US3] Retarget Now Building to the case study (CA-5).
+- [X] T003 [US3] Retarget Now Building to the case study (CA-5).
 
   **Failing test (commit 1 — must fail while Now still points only at GitHub):**
   ```bash
