@@ -169,8 +169,9 @@ if grep -Ei 'mailto:|@[a-z0-9.-]+\.[a-z]{2,}' public/about/index.html; then exit
 grep -Fi 'SmartWealthAI' public/now/index.html
 grep -Fi 'fintech-sec-rag-agent' public/now/index.html
 ! grep -Fi 'health-stream-xai' public/now/index.html
-# no second case study from this feature
-! test -f public/projects/fintech-sec-rag-agent/index.html
+# AC-N1: this feature (008) adds no fintech-sec-rag-agent case study.
+# The former `! test -f public/projects/fintech-sec-rag-agent/index.html`
+# guard is superseded by #104 / spec 010, which ships that page on purpose.
 # menu + lang
 menu=$(sed -n '/<ul id="menu"/,/<\/ul>/p' public/index.html)
 printf '%s\n' "$menu" | grep -F 'Projects'
