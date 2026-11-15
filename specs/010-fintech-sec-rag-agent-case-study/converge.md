@@ -90,9 +90,9 @@ Run from repository root against develop SHA `2a455d955797e90ed0d6f9795dd21ec2e9
 set -euo pipefail
 test -f static/images/projects/fintech-sec-rag-agent-sketch.png
 test -f content/projects/fintech-sec-rag-agent.md
-! grep -Ei '^draft:[[:space:]]*true' content/projects/fintech-sec-rag-agent.md
+if grep -Eiq '^draft:[[:space:]]*true' content/projects/fintech-sec-rag-agent.md; then echo "FAIL: draft true"; exit 1; fi
 grep -F 'repo_url: https://github.com/JLaborda/fintech-sec-rag-agent' content/projects/fintech-sec-rag-agent.md
-! grep -E '^demo_url:' content/projects/fintech-sec-rag-agent.md
+if grep -Eq '^demo_url:' content/projects/fintech-sec-rag-agent.md; then echo "FAIL: demo_url key present"; exit 1; fi
 grep -F 'architecture_image: /images/projects/fintech-sec-rag-agent-sketch.png' content/projects/fintech-sec-rag-agent.md
 grep -E '^architecture_image_alt:' content/projects/fintech-sec-rag-agent.md
 grep -Fi 'OpenSearch' content/projects/fintech-sec-rag-agent.md
@@ -108,7 +108,7 @@ grep -E '<h2>Results</h2>' public/projects/fintech-sec-rag-agent/index.html
 grep -E '<h2>Stack</h2>' public/projects/fintech-sec-rag-agent/index.html
 grep -F 'fintech-sec-rag-agent-sketch.png' public/projects/fintech-sec-rag-agent/index.html
 grep -F 'https://github.com/JLaborda/fintech-sec-rag-agent' public/projects/fintech-sec-rag-agent/index.html
-! grep -E '<h2>Demo</h2>' public/projects/fintech-sec-rag-agent/index.html
+if grep -Eq '<h2>Demo</h2>' public/projects/fintech-sec-rag-agent/index.html; then echo "FAIL: Demo heading"; exit 1; fi
 grep -F '/projects/fintech-sec-rag-agent/' public/now/index.html
 lychee --offline --root-dir public public
 ```

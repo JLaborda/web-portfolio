@@ -48,7 +48,7 @@ One task per pull request, merged one at a time into `develop`. Converge title: 
   ```bash
   set -euo pipefail
   test -f content/projects/fintech-sec-rag-agent.md
-  ! grep -Ei '^draft:[[:space:]]*true' content/projects/fintech-sec-rag-agent.md
+  if grep -Eiq '^draft:[[:space:]]*true' content/projects/fintech-sec-rag-agent.md; then echo "FAIL: draft true"; exit 1; fi
   grep -F 'summary:' content/projects/fintech-sec-rag-agent.md
   grep -F 'problem:' content/projects/fintech-sec-rag-agent.md
   grep -F 'architecture_image: /images/projects/fintech-sec-rag-agent-sketch.png' content/projects/fintech-sec-rag-agent.md
@@ -59,12 +59,12 @@ One task per pull request, merged one at a time into `develop`. Converge title: 
   grep -Fi 'AWS' content/projects/fintech-sec-rag-agent.md
   grep -F 'stack:' content/projects/fintech-sec-rag-agent.md
   grep -F 'repo_url: https://github.com/JLaborda/fintech-sec-rag-agent' content/projects/fintech-sec-rag-agent.md
-  ! grep -E '^demo_url:' content/projects/fintech-sec-rag-agent.md
+  if grep -Eq '^demo_url:' content/projects/fintech-sec-rag-agent.md; then echo "FAIL: demo_url key present"; exit 1; fi
   hugo --gc --minify --panicOnWarning --baseURL /
   test -f public/projects/fintech-sec-rag-agent/index.html
   grep -E '<h2>Summary</h2>' public/projects/fintech-sec-rag-agent/index.html
   grep -E '<h2>Results</h2>' public/projects/fintech-sec-rag-agent/index.html
-  ! grep -E '<h2>Demo</h2>' public/projects/fintech-sec-rag-agent/index.html
+  if grep -Eq '<h2>Demo</h2>' public/projects/fintech-sec-rag-agent/index.html; then echo "FAIL: Demo heading"; exit 1; fi
   ```
 
   **Implementation (commit 2):** Create `content/projects/fintech-sec-rag-agent.md` using the SmartWealthAI schema (`title`, `summary`, `problem`, `architecture_image`, `architecture_image_alt`, `decisions`, `results`, `stack`, `repo_url`). Put honest current status in `results`: pipeline deployed on AWS; OpenSearch indexing is the current blocker; invent no metrics or output screenshots. Draft from the public fintech-sec-rag-agent README / `specs/001-10k-signal-demo`. Omit `demo_url`. Do not set `draft: true`. Do not edit layouts, PaperMod, `infra/`, or workflows.
@@ -99,9 +99,9 @@ One task per pull request, merged one at a time into `develop`. Converge title: 
   # Full feature Verification (CA-1..CA-6 local gates):
   test -f static/images/projects/fintech-sec-rag-agent-sketch.png
   test -f content/projects/fintech-sec-rag-agent.md
-  ! grep -Ei '^draft:[[:space:]]*true' content/projects/fintech-sec-rag-agent.md
+  if grep -Eiq '^draft:[[:space:]]*true' content/projects/fintech-sec-rag-agent.md; then echo "FAIL: draft true"; exit 1; fi
   grep -F 'repo_url: https://github.com/JLaborda/fintech-sec-rag-agent' content/projects/fintech-sec-rag-agent.md
-  ! grep -E '^demo_url:' content/projects/fintech-sec-rag-agent.md
+  if grep -Eq '^demo_url:' content/projects/fintech-sec-rag-agent.md; then echo "FAIL: demo_url key present"; exit 1; fi
   grep -F '/projects/fintech-sec-rag-agent/' content/now.md
   hugo --gc --minify --panicOnWarning --baseURL /
   test -f public/projects/fintech-sec-rag-agent/index.html
