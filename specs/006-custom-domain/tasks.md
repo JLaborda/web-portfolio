@@ -36,7 +36,7 @@ One task (or cohesive pair) per pull request, merged one at a time into `develop
 
 ## Phase 3: Convergence
 
-- [ ] T003 After Jorge releases `develop` to `main`, run `/speckit-converge` and write `specs/006-custom-domain/converge.md` with AC1–AC6 evidence (apex 200, www redirect, sitemap/canonical sample, default hostname still 200, clean plan, MX/email TXT still present), the date, the SHA, and `Converged`; `Status: Approved by Jorge — PR #N`. Title exactly `chore(006): converge`. No secrets, account ids, zone ids, distribution ids, or CloudFront hostnames; the public product name `jlaborda.com` is allowed. Jorge merges after QA sign-off.
+- [X] T003 After Jorge releases `develop` to `main`, run `/speckit-converge` and write `specs/006-custom-domain/converge.md` with AC1–AC6 evidence (apex 200, www redirect, sitemap/canonical sample, default hostname still 200, clean plan, MX/email TXT still present), the date, the SHA, and `Converged`; `Status: Approved by Jorge — PR #N`. Title exactly `chore(006): converge`. No secrets, account ids, zone ids, distribution ids, or CloudFront hostnames; the public product name `jlaborda.com` is allowed. Jorge merges after QA sign-off.
 
 ## Dependencies
 
