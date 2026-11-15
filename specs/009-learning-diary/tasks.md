@@ -34,7 +34,7 @@ Export `SPECIFY_FEATURE_DIRECTORY=specs/009-learning-diary` on implementation br
 
 ## Phase 3: Convergence
 
-- [ ] T003 Run `/speckit-converge` and add `specs/009-learning-diary/converge.md` with Verification evidence, date, SHA, verdict `Converged`. Title exactly `chore(009): converge`. Do not edit `spec.md` or `plan.md`.
+- [X] T003 Run `/speckit-converge` and add `specs/009-learning-diary/converge.md` with Verification evidence, date, SHA, verdict `Converged`. Title exactly `chore(009): converge`. Do not edit `spec.md` or `plan.md`.
 
 ## Pasos de Jorge
 
