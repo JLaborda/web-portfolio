@@ -99,13 +99,13 @@ test -f public/index.html
 test -f public/about/index.html
 test -f public/projects/smartwealthai/index.html
 test -f public/now/index.html
-! grep -Fi 'Placeholder headline' public/index.html
-! grep -Fi 'PLACEHOLDER' public/about/index.html
-! grep -Fi 'PLACEHOLDER' public/projects/smartwealthai/index.html
-if grep -Ei 'mailto:|@[a-z0-9.-]+\.[a-z]{2,}' public/about/index.html; then exit 1; fi
+if grep -Fiq 'Placeholder headline' public/index.html; then echo "FAIL: Placeholder headline"; exit 1; fi
+if grep -Fiq 'PLACEHOLDER' public/about/index.html; then echo "FAIL: PLACEHOLDER in about"; exit 1; fi
+if grep -Fiq 'PLACEHOLDER' public/projects/smartwealthai/index.html; then echo "FAIL: PLACEHOLDER in smartwealthai"; exit 1; fi
+if grep -Ei 'mailto:|@[a-z0-9.-]+\.[a-z]{2,}' public/about/index.html; then echo "FAIL: mailto/email in about"; exit 1; fi
 grep -Fi 'SmartWealthAI' public/now/index.html
 grep -Fi 'fintech-sec-rag-agent' public/now/index.html
-! grep -Fi 'health-stream-xai' public/now/index.html
+if grep -Fiq 'health-stream-xai' public/now/index.html; then echo "FAIL: health-stream-xai in now"; exit 1; fi
 # AC-N1: 008 adds no fintech-sec-rag-agent case study (page may exist via 010)
 menu=$(sed -n -E '/<ul id="?menu"?/,/<\/ul>/p' public/index.html)
 printf '%s\n' "$menu" | grep -F 'Projects'

@@ -128,19 +128,19 @@ A recruiter who reads `/now/` and then Posts finds the diary consistent with “
 
 ```bash
 set -euo pipefail
-hugo --gc --minify --panicOnWarning --baseURL /
+rm -rf public && hugo --gc --minify --panicOnWarning --baseURL /
 test -f public/posts/index.html
 # at least one published post page exists beyond the section index
 post_count=$(find public/posts -mindepth 2 -name index.html | wc -l)
 test "$post_count" -ge 1
 # welcome stub must not be a published post
-! test -f public/posts/welcome/index.html
-# menu
-menu=$(sed -n '/<ul id="menu"/,/<\/ul>/p' public/index.html)
+if test -f public/posts/welcome/index.html; then echo "FAIL: welcome post published"; exit 1; fi
+# menu (minify-safe: hugo --minify may emit id=menu)
+menu=$(sed -n -E '/<ul id="?menu"?/,/<\/ul>/p' public/index.html)
 printf '%s\n' "$menu" | grep -F 'Posts'
 printf '%s\n' "$menu" | grep -E 'href="?/posts/"?'
 # no obvious placeholder stub markers in published post bodies
-! grep -RFi 'This section is placeholder text' public/posts --include='*.html'
+if grep -RFiq 'This section is placeholder text' public/posts --include='*.html'; then echo "FAIL: placeholder text in posts"; exit 1; fi
 grep -E 'lang="?en"?' public/posts/index.html
 lychee --offline --root-dir public public
 ```
