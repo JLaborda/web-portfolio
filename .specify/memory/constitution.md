@@ -1,43 +1,30 @@
 <!--
 Sync Impact Report
-- Version change: 3.1.0 → 4.0.0
-- Bump rationale: MAJOR. Process rules are redefined for the software
-  factory. Former dual-role team titles are removed; only Manager,
-  Planner, Builder, Reviewer, Merge Triage, and Auditor remain. Merge
-  authority moves from Jorge's blanket merge of docs/release/
-  needs-human PRs and author-driven auto-merge after QA to Merge
-  Triage classification (green / yellow / red). Spec Kit path is set
-  by Jorge in the issue brief. Strict TDD commit order is required.
-  Dual-role and auto-merge author rules from 3.x are incompatible
-  with this model.
-- Decision: Jorge (Product Owner), 2026-11-13, issue #101.
+- Version change: 4.0.0 → 4.0.1
+- Bump rationale: PATCH. Clarifies the constitution-amendment procedure
+  (standalone red PR remains; a feature `docs:` PR MAY include an
+  amendment that enables its shape and is then wholly red), scopes the
+  `main` merge invariant to releases from v4.0.0 onwards, and removes
+  the obsolete Reviewer COMMENT approval prefix. No change to
+  green/yellow/red classifications or who merges what.
+- Decision: Jorge (Product Owner), 2026-11-15, issue #117.
 - Modified principles:
-  - I. Spec-driven development and PO approval → Spec-driven development
-    and software factory approval (roles, merge chain, path selection,
-    TDD, Merge Triage).
-  - III. AWS hosting as a constraint: merge/`needs-human` wording
-    aligned with Merge Triage red/yellow rules; substance unchanged.
-  - V. Scoped implementation PRs: Reviewer and Merge Triage replace
-    the former QA dual-role and author auto-merge; strict TDD commit
-    order added.
-  - VI. Explainable in an interview, and cheap: cost/budget exceptions
-    classified at least yellow; Jorge merges yellow/red.
+  - I. Spec-driven development and software factory approval:
+    amendment vs feature `docs:` PR rule reconciled; Check/`main`
+    invariant scoped from v4.0.0.
+  - V. Scoped implementation PRs: Reviewer COMMENT approval is
+    `APPROVED` plus head SHA (no legacy prefix).
 - Modified sections:
-  - Roles: Manager, Planner, Builder, Reviewer, Merge Triage, Auditor
-    (old team roles removed).
-  - Branches and releases: Merge Triage merges green; yellow/red to
-    Jorge with `needs-human`.
-  - Governance: Reviewer compliance check; constitution amendments
-    always red.
-- Unchanged in substance: Principles II, IV, VII; Spec Kit path step
-  lists; feature branch naming; `SPECIFY_FEATURE_DIRECTORY`; English
-  only; ratification date 2026-10-20.
-- Not rewritten: merged specs under earlier versions.
+  - Roles (Reviewer): approval COMMENT wording.
+  - Governance: version line; Reviewer pre-approval wording; Sync
+    Impact Report.
+- Unchanged in substance: Principles II–IV, VI–VII; Merge Triage
+  green/yellow/red rules; factory chain; Spec Kit paths; English only;
+  ratification date 2026-10-20.
+- Not rewritten: releases or merges on `main` before v4.0.0; merged
+  specs under earlier versions.
 - Added sections: none. Removed sections: none.
-- Templates and commands: no role names in `.specify/templates/` or
-  commands; no sync edits required. Listed for completeness:
-  checklist-template.md, constitution-template.md, plan-template.md,
-  spec-template.md, tasks-template.md — unchanged.
+- Templates and commands: unchanged.
 - Follow-up TODOs: none
 -->
 
@@ -49,9 +36,16 @@ Sync Impact Report
 
 Development MUST NOT start without a `spec.md` approved through the
 software factory chain below. `/speckit-constitution` is set once for
-the project. A later amendment is its own pull request and is not a
-feature step. Constitution amendments are always red (Merge Triage
-MUST NOT merge them; Jorge merges).
+the project.
+
+Constitution amendments are always red (Merge Triage MUST NOT merge
+them; Jorge merges). A standalone amendment pull request (for example
+under `docs/` or `chore/`) remains allowed and is always red. An
+amendment that enables a feature's shape MAY be included in that
+feature's `docs:` pull request; when it is, the whole `docs:` pull
+request is classified red and only Jorge merges it. That combined
+`docs:` pull request is still not a separate feature step beyond the
+feature's documentation approval.
 
 The software factory roles are the only process roles named in this
 constitution: Manager, Planner, Builder, Reviewer, Merge Triage, and
@@ -102,7 +96,8 @@ Always red:
 
 - Changes to AWS infrastructure, IAM, or OIDC.
 - Changes to CI workflows or branch protection.
-- Amendments to this constitution.
+- Amendments to this constitution (standalone amendment PRs, and any
+  feature `docs:` PR that carries such an amendment).
 
 Always at least yellow:
 
@@ -155,8 +150,8 @@ request, or the implementation, through a new task pull request.
 
 These rules stay. At most one `docs:` pull request per feature is open.
 A pull request MUST NOT depend on an unmerged pull request, except that
-a `docs:` pull request MAY wait for a constitution amendment that
-permits its shape. The `docs:` pull request comes from branch
+a `docs:` pull request MAY wait for a standalone constitution amendment
+that permits its shape. The `docs:` pull request comes from branch
 `NNN-name`. Only the merge of the `docs:` pull request (by Merge Triage
 when green, or by Jorge when yellow or red) approves its checklist
 marks and waivers.
@@ -171,15 +166,17 @@ Approval is recorded only as follows:
    `/speckit-checklist` files on the full path, and the feature's ADR
    under `docs/adr/` when there is one. It MAY also carry an amendment
    of this constitution when that amendment permits the feature's
-   shape. It contains no product code, workflow, or `infra/` change.
-   The Planner writes it through this repository's Cursor cloud agent
-   on the Auto model (one agent per repository for all of the Planner's
-   pull requests and fixes via follow-ups; switch agents only when that
-   agent's context becomes unmanageable). There is one such `docs:`
-   pull request per spec. Reviewer does not review it. Merge Triage
-   classifies it; green merges, yellow or red go to Jorge with
-   `needs-human`. Fixes go as follow-ups on that agent and as extra
-   commits on the same pull request. `spec.md`, `plan.md`, and
+   shape. When it does, the whole `docs:` pull request is always red
+   and only Jorge merges it. It contains no product code, workflow, or
+   `infra/` change. The Planner writes it through this repository's
+   Cursor cloud agent on the Auto model (one agent per repository for
+   all of the Planner's pull requests and fixes via follow-ups; switch
+   agents only when that agent's context becomes unmanageable). There
+   is one such `docs:` pull request per spec. Reviewer does not review
+   it. Merge Triage classifies it; green merges, yellow or red go to
+   Jorge with `needs-human` (a `docs:` PR that carries a constitution
+   amendment is always red). Fixes go as follow-ups on that agent and
+   as extra commits on the same pull request. `spec.md`, `plan.md`, and
    `tasks.md` each carry exactly one status field, replacing
    `**Status**: Draft`. When Merge Triage merges the `docs:` pull
    request as green, that field MUST be
@@ -271,9 +268,10 @@ rewrites it when `SPECIFY_FEATURE_DIRECTORY` is used, except with
 in `.gitignore` and in `.specify/.gitignore`.
 
 PRs for one feature MUST be merged one at a time. Work from two features
-MUST NOT be merged in parallel. `main` MUST receive only releases from
-`develop`. Merge Triage merges a green release; yellow or red releases
-go to Jorge with `needs-human`.
+MUST NOT be merged in parallel. From constitution v4.0.0 onwards, `main`
+MUST receive only releases from `develop`. Merge Triage merges a green
+release; yellow or red releases go to Jorge with `needs-human`. Earlier
+releases on `main` are not rewritten.
 
 `.specify/workflows/speckit/workflow.yml` does not govern this repo: it
 ends at implement, it does not include converge, and its integration list
@@ -304,14 +302,16 @@ yellow or red. Files merged under 1.1.0, 1.2.0, or
 2.0.0 are not rewritten to the new converge title. No implementation
 pull request is opened before the `docs:` merge.
 `git merge-base --is-ancestor origin/develop HEAD` exits 0 on its
-branch. Every feature pull request targets `develop`. `main` has only
-merges from `develop` made by Merge Triage (green) or Jorge
-(yellow/red). `git check-ignore -v .specify/feature.json` reports an
+branch. Every feature pull request targets `develop`. From constitution
+v4.0.0 onwards, `main` has only merges from `develop` made by Merge
+Triage (green) or Jorge (yellow/red); earlier releases are not
+rewritten. `git check-ignore -v .specify/feature.json` reports an
 ignore rule. The constitution names only Manager, Planner, Builder,
 Reviewer, Merge Triage, and Auditor as factory process roles. Each
 Builder task history shows a failing-test commit before the
 implementation commit. Merge Triage merges only green; yellow and red
-carry `needs-human` for Jorge.
+carry `needs-human` for Jorge. A feature `docs:` PR that carries a
+constitution amendment is red and merged only by Jorge.
 
 ### II. Fixed stack
 
@@ -462,8 +462,8 @@ Reviewer MUST review each code pull request against `spec.md`,
 `converge.md` when it is the last PR, and this constitution, in one
 round that flags every finding. After the fix push, it reviews only the
 new diff. On an intermediate pull request, the review that allows Merge
-Triage to classify the PR is a COMMENT review that starts with
-`QA verdict: APPROVED` and names the current full head SHA. On the
+Triage to classify the PR is a COMMENT review that states `APPROVED`
+and names the current full head SHA. On the
 converge pull request (`chore(NNN): converge`), the review is the final
 sign-off. Without that review on the current head, a code pull request
 MUST NOT be merged. Reviewer NEVER runs `gh pr merge`. Merge Triage
@@ -540,7 +540,8 @@ review, or comment fails review. Pages under `content/` are English.
   Jorge. Fixes with follow-ups and extra commits on the same pull
   request. Never enables auto-merge on a `docs:` pull request. Reviewer
   does not review `docs:` pull requests; Merge Triage classifies and
-  merges green ones.
+  merges green ones, except that a `docs:` PR that carries a
+  constitution amendment is always red and Jorge merges it.
 - **Builder.** Runs `/speckit-implement` and, on the feature's last PR,
   `/speckit-converge`, with one cloud agent per implementation pull
   request that is reused for that pull request's fixes. Receives each
@@ -558,7 +559,7 @@ review, or comment fails review. Pages under `content/` are English.
   `/speckit-checklist` files when the full path applies, this
   constitution, and the strict TDD commit order (failing test before
   implementation). The intermediate approval is a COMMENT review that
-  starts with `QA verdict: APPROVED` and names the full head SHA. Never
+  states `APPROVED` and names the full head SHA. Never
   runs `gh pr merge`, with or without `--auto`. On the converge pull
   request titled `chore(NNN): converge`, gives the final sign-off and
   checks that `converge.md` exists and says `Converged`.
@@ -567,9 +568,10 @@ review, or comment fails review. Pages under `content/` are English.
   `docs:` PRs, green code PRs, and a green release. Escalates yellow and
   red to the Manager, applies `needs-human`, and leaves the merge to
   Jorge. Confirms every merge to the Manager. MUST treat constitution
-  amendments, AWS infra/IAM/OIDC changes, and CI workflow or branch
-  protection changes as always red; AWS cost/budget changes and new
-  dependencies as always at least yellow.
+  amendments (including a feature `docs:` PR that carries one), AWS
+  infra/IAM/OIDC changes, and CI workflow or branch protection changes
+  as always red; AWS cost/budget changes and new dependencies as always
+  at least yellow.
 - **Auditor.** Only reads the activity log. Does not open pull requests,
   review, merge, or talk to Jorge.
 
@@ -608,17 +610,23 @@ CI gates, and Merge Triage MUST classify it: green merges; yellow or red
 go to Jorge with `needs-human`. Any new behavior MUST have a spec
 (`specs/NNN-name/`) and MUST NOT land on these branches.
 
-Amendments to this constitution follow that rule (`chore/` or `docs/`)
-unless they change visible behavior, in which case they require a spec.
-They are always red. The `develop` → `main` release is not a feature
-branch: it MUST pass the same gates; Merge Triage merges it when green,
-and Jorge merges it when yellow or red.
+Amendments to this constitution MAY use a standalone `chore/` or `docs/`
+pull request (always red; Jorge merges), or MAY be included in a feature
+`docs:` pull request when the amendment enables that feature's shape
+(then the whole `docs:` PR is red; Jorge merges). Unless they change
+visible behavior beyond governance text, they do not require a separate
+product spec. The `develop` → `main` release is not a feature branch: it
+MUST pass the same gates; from constitution v4.0.0 onwards, Merge Triage
+merges it when green, and Jorge merges it when yellow or red; earlier
+releases on `main` are not rewritten.
 
 ## Governance
 
 This constitution overrides informal practice. An amendment MUST be
 proposed in a pull request to `develop` and MUST be approved and merged by
-Jorge (always red). Until that merge, the amendment is not in force.
+Jorge (always red). That pull request MAY be a standalone amendment, or a
+feature `docs:` pull request that carries the amendment under principle I.
+Until that merge, the amendment is not in force.
 
 Versioning MUST follow Semantic Versioning:
 
@@ -636,8 +644,8 @@ is the date Jorge merges the amendment. If that merge falls on a later day
 than the date written in the pull request, the same pull request MUST set
 the last-amended date to the merge date before it is merged.
 
-Before posting `QA verdict: APPROVED` or a converge sign-off, Reviewer
-MUST check compliance with this constitution. Reviewer does not run
-`gh pr merge`. A PR that contradicts a principle MUST NOT be merged.
+Before posting an `APPROVED` COMMENT review or a converge sign-off,
+Reviewer MUST check compliance with this constitution. Reviewer does not
+run `gh pr merge`. A PR that contradicts a principle MUST NOT be merged.
 
-**Version**: 4.0.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-11-13
+**Version**: 4.0.1 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-11-15
