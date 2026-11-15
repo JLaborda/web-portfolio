@@ -37,7 +37,7 @@ One task per pull request, merged one at a time into `develop` (Now and SmartWea
 
 ## Phase 3: User Stories 2 & 4 — headline + About (P1)
 
-- [ ] T003 [US2][US4] After Jorge supplies text (Pasos de Jorge): set `params.profileMode.subtitle` in `hugo.yaml` to his exact headline; replace placeholders in `content/about.md` with his bio, stack, and certifications; keep LinkedIn, GitHub, CV link; no email/`mailto:`. Do not invent copy. Keep menu Projects/Now/About/Posts/CV. Label `needs-human` for Jorge’s voice check. Do not edit PaperMod or `infra/`.
+- [X] T003 [US2][US4] After Jorge supplies text (Pasos de Jorge): set `params.profileMode.subtitle` in `hugo.yaml` to his exact headline; replace placeholders in `content/about.md` with his bio, stack, and certifications; keep LinkedIn, GitHub, CV link; no email/`mailto:`. Do not invent copy. Keep menu Projects/Now/About/Posts/CV. Label `needs-human` for Jorge’s voice check. Do not edit PaperMod or `infra/`.
 
 ## Phase 4: Convergence
 
