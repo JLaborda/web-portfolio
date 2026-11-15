@@ -4,7 +4,7 @@ Feature: `specs/010-fintech-sec-rag-agent-case-study`
 
 Command: `/speckit-converge`
 
-Status: Merged by Merge Triage (green) — PR #N
+Status: Merged by Merge Triage (green) — PR #110
 
 Assessed commit (develop): `2a455d955797e90ed0d6f9795dd21ec2e9d85a32`
 
