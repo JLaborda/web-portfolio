@@ -29,7 +29,7 @@ One task per pull request, merged one at a time into `develop`. Converge title: 
 
 ## Phase 1: User Story 2 — architecture sketch (P1)
 
-- [ ] T001 [US2] Copy the architecture sketch into this repo (CA-3).
+- [X] T001 [US2] Copy the architecture sketch into this repo (CA-3).
 
   **Failing test (commit 1 — must fail before the image exists):**
   ```bash
