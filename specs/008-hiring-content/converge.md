@@ -4,7 +4,7 @@ Feature: `specs/008-hiring-content`
 
 Command: `/speckit-converge`
 
-Status: Pending Jorge merge — PR #N
+Status: Pending Jorge merge — PR #114
 
 Assessed commit (develop): `8a87adaee0dad39dfab3083a7416720e5fe72ad9`
 
