@@ -111,6 +111,15 @@ DNS-over-HTTPS (`https://dns.google/resolve`) on 2026-11-10, counts only (no rec
 
 Infra has no Terraform resources that create, update, or destroy MX or email TXT for this zone (`data "aws_route53_zone"` plus ACM validation CNAMEs and apex/www alias A/AAAA only).
 
+Before/after match (values not recorded; source: OVH zone history, owner check 2026-11-15 — Jorge compared the zone before vs after the 2026-11-10 apply):
+
+| Record | Before/after match | Notes |
+|--------|--------------------|-------|
+| MX `jlaborda.com` | **no** | Changed: one MX record added (OVH-managed mail host, priority 100); all other MX records unchanged. Hostname omitted. |
+| SPF TXT `jlaborda.com` | **yes** | Unchanged. |
+
+**AC6 result: FAILED.** An MX value changed (one record added). Follow-up: the added MX is outside Terraform (Terraform owns no MX/mail TXT, so the change did not come from the apply); owner to confirm whether the added MX is intended. No DNS change in this documentation PR.
+
 ## SC-001–SC-006
 
 | ID | Result | Evidence |
@@ -120,7 +129,7 @@ Infra has no Terraform resources that create, update, or destroy MX or email TXT
 | SC-003 | Pass | AC3 sitemap + canonical samples |
 | SC-004 | Pass | AC4 default CloudFront hostname HTTP 200 |
 | SC-005 | Pass | AC5 three `No changes` lines on run `42830704689` |
-| SC-006 | Pass | AC6 MX count 2, SPF TXT count 1 via DoH |
+| SC-006 | Fail | AC6 FAILED: MX before/after match no (one MX added); SPF TXT match yes (OVH zone history, 2026-11-15) |
 
 ## What was checked (code)
 
@@ -132,16 +141,16 @@ Infra has no Terraform resources that create, update, or destroy MX or email TXT
 - **FR-006**: Production `SITE_URL` is `https://jlaborda.com` (verify assert + live HTML/sitemap).
 - **FR-007**: Production verify checks apex 200 and www 301 with path; staging still uses staging `SITE_URL` only for those existing checks.
 - **FR-008**: Clean production plan evidence above; default hostname still 200.
-- **FR-009**: No MX/email TXT resources in Terraform; live MX/SPF still present.
+- **FR-009**: No MX/email TXT resources in Terraform; live MX/SPF still present. AC6 FAILED on value match (one MX added outside Terraform; SPF unchanged).
 - **Constitution III**: ACM in `us-east-1`; DNS/custom-domain path carried `needs-human` on T001.
 
 ## Convergence Findings
 
-No actionable findings. `/speckit-converge` did not append a phase to `tasks.md`.
+`/speckit-converge` did not append a phase to `tasks.md`. One mail-DNS finding was recorded after the OVH zone-history check (2026-11-15):
 
 | ID | Gap Type | Severity | Source | Evidence | Remaining Work |
 |----|----------|----------|--------|----------|----------------|
-| — | — | — | — | Implementation matches the spec, plan, and tasks | — |
+| AC6 | partial | MEDIUM | OVH zone history (owner, 2026-11-15) | MX before/after match no (one MX added, priority 100); SPF TXT match yes; Terraform owns no MX/mail TXT | Owner confirms whether the added MX is intended; no DNS change in docs PRs |
 
 **Summary metrics:**
 
@@ -151,10 +160,10 @@ No actionable findings. `/speckit-converge` did not append a phase to `tasks.md`
 - Plan decisions checked: hand-created zone data source, us-east-1 ACM, production-only aliases, combined www redirect + Hugo rewrite, no MX/TXT in Terraform, staging unchanged, verify extension
 - Constitution principles checked: III (hosting/ACM/DNS) in scope; no MUST violations found
 - Tasks checked: T001 through T003
-- Findings by gap type: missing 0, partial 0, contradicts 0, unrequested 0
-- Findings by severity: CRITICAL 0, HIGH 0, MEDIUM 0, LOW 0
+- Findings by gap type: missing 0, partial 1, contradicts 0, unrequested 0
+- Findings by severity: CRITICAL 0, HIGH 0, MEDIUM 1, LOW 0
 
-Outcome: **Converged**.
+Outcome: **Converged** (with AC6 FAILED follow-up: owner to confirm the added MX).
 
 ## Checks
 
