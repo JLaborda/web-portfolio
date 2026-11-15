@@ -172,8 +172,8 @@ grep -Fi 'fintech-sec-rag-agent' public/now/index.html
 # AC-N1: this feature (008) adds no fintech-sec-rag-agent case study.
 # The former `! test -f public/projects/fintech-sec-rag-agent/index.html`
 # guard is superseded by #104 / spec 010, which ships that page on purpose.
-# menu + lang
-menu=$(sed -n '/<ul id="menu"/,/<\/ul>/p' public/index.html)
+# menu + lang (minify-safe: hugo --minify may emit id=menu)
+menu=$(sed -n -E '/<ul id="?menu"?/,/<\/ul>/p' public/index.html)
 printf '%s\n' "$menu" | grep -F 'Projects'
 printf '%s\n' "$menu" | grep -F 'Now'
 printf '%s\n' "$menu" | grep -F 'About'
